@@ -1,0 +1,2568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MetaLens — Meta-Analysis Studio by Bayu Satria Wiratama</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap');
+:root{--bg:#0d1117;--surface:#161b22;--surface2:#21262d;--border:#30363d;--accent:#58a6ff;--accent2:#3fb950;--accent3:#f78166;--accent4:#d2a8ff;--text:#e6edf3;--text2:#8b949e;--text3:#6e7681;--warn:#e3b341;--danger:#f85149;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;}
+.app{display:flex;height:100vh;overflow:hidden;}
+.sidebar{width:230px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;}
+.logo{padding:16px 16px 12px;border-bottom:1px solid var(--border);}
+.logo h1{font-family:'DM Serif Display',serif;font-size:20px;color:var(--accent);letter-spacing:-0.5px;}
+.logo p{font-size:10px;color:var(--text3);margin-top:2px;}
+.nav{padding:6px 0;flex:1;}
+.nav-section{padding:14px 14px 5px;font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:1px;}
+.nav-item{display:flex;align-items:center;gap:8px;padding:7px 14px;cursor:pointer;font-size:12px;color:var(--text2);border-left:2px solid transparent;transition:all .15s;}
+.nav-item:hover{color:var(--text);background:var(--surface2);}
+.nav-item.active{color:var(--accent);border-left-color:var(--accent);background:rgba(88,166,255,.07);}
+.nav-item .icon{font-size:14px;width:16px;text-align:center;}
+.nav-sub{padding-left:28px;font-size:11px;}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.topbar{height:48px;flex-shrink:0;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:12px;background:var(--surface);}
+.topbar h2{font-size:14px;font-weight:600;}
+.topbar .badge{font-size:11px;padding:2px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:20px;color:var(--text2);}
+.spacer{flex:1;}
+.content{flex:1;overflow-y:auto;padding:18px;}
+.panel{display:none;animation:fadeIn .2s ease;}
+.panel.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:14px;}
+.card-title{font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+.card-title span{color:var(--text3);font-size:11px;font-weight:400;text-transform:none;letter-spacing:0;}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+.grid-4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px;}
+label{display:block;font-size:11px;color:var(--text2);margin-bottom:4px;}
+input,select,textarea{width:100%;padding:6px 9px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:inherit;font-size:12px;outline:none;transition:border-color .15s;}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);}
+textarea{resize:vertical;min-height:72px;line-height:1.5;}
+select option{background:var(--surface2);}
+.form-row{margin-bottom:10px;}
+.form-group{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.form-group-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+.form-group-4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid transparent;transition:all .15s;font-family:inherit;}
+.btn-primary{background:var(--accent);color:#0d1117;border-color:var(--accent);}
+.btn-primary:hover{background:#79b8ff;}
+.btn-secondary{background:var(--surface2);color:var(--text);border-color:var(--border);}
+.btn-secondary:hover{border-color:var(--accent);color:var(--accent);}
+.btn-danger{background:transparent;color:var(--danger);border-color:var(--danger);}
+.btn-danger:hover{background:rgba(248,81,73,.1);}
+.btn-success{background:var(--accent2);color:#0d1117;border-color:var(--accent2);}
+.btn-sm{padding:3px 9px;font-size:11px;}
+.btn-warn{background:var(--warn);color:#0d1117;border-color:var(--warn);}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+th{padding:7px 9px;text-align:left;background:var(--surface2);border-bottom:1px solid var(--border);color:var(--text2);font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;}
+td{padding:7px 9px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle;}
+tr:hover td{background:rgba(255,255,255,.02);}
+tr:last-child td{border-bottom:none;}
+.table-wrap{overflow-x:auto;}
+.stat-box{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:12px;text-align:center;}
+.stat-box .val{font-family:'DM Mono',monospace;font-size:20px;font-weight:500;color:var(--accent);}
+.stat-box .lbl{font-size:10px;color:var(--text3);margin-top:3px;}
+.stat-box .sub{font-size:10px;color:var(--text2);margin-top:2px;}
+.result-block{background:var(--surface2);border-left:3px solid var(--accent);border-radius:0 6px 6px 0;padding:11px 13px;margin-bottom:8px;font-family:'DM Mono',monospace;font-size:11px;line-height:1.7;white-space:pre-wrap;}
+.result-block.success{border-left-color:var(--accent2);}
+.result-block.warn{border-left-color:var(--warn);}
+.result-block.danger{border-left-color:var(--danger);}
+.tag{display:inline-block;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:500;}
+.tag-blue{background:rgba(88,166,255,.15);color:var(--accent);}
+.tag-green{background:rgba(63,185,80,.15);color:var(--accent2);}
+.tag-red{background:rgba(248,81,73,.15);color:var(--danger);}
+.tag-yellow{background:rgba(227,179,65,.15);color:var(--warn);}
+.tag-purple{background:rgba(210,168,255,.15);color:var(--accent4);}
+.tag-orange{background:rgba(247,129,102,.15);color:var(--accent3);}
+.notice{padding:9px 13px;border-radius:6px;font-size:12px;margin-bottom:10px;display:flex;align-items:flex-start;gap:8px;}
+.notice-info{background:rgba(88,166,255,.1);border:1px solid rgba(88,166,255,.25);}
+.notice-warn{background:rgba(227,179,65,.1);border:1px solid rgba(227,179,65,.25);color:var(--warn);}
+.divider{border:none;border-top:1px solid var(--border);margin:14px 0;}
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:14px;}
+.tab{padding:7px 14px;font-size:12px;cursor:pointer;color:var(--text2);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;}
+.tab:hover{color:var(--text);}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px;}
+.chip{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;background:var(--surface2);border:1px solid var(--border);font-size:11px;cursor:pointer;transition:all .15s;}
+.chip:hover{border-color:var(--accent);color:var(--accent);}
+.chip.selected{background:rgba(88,166,255,.15);border-color:var(--accent);color:var(--accent);}
+.file-drop{border:2px dashed var(--border);border-radius:8px;padding:28px;text-align:center;cursor:pointer;transition:all .2s;color:var(--text2);}
+.file-drop:hover,.file-drop.drag{border-color:var(--accent);color:var(--accent);}
+.file-drop .icon{font-size:28px;display:block;margin-bottom:8px;}
+.empty-state{text-align:center;padding:36px 20px;color:var(--text3);}
+.empty-state .icon{font-size:36px;display:block;margin-bottom:10px;}
+.empty-state p{font-size:12px;}
+.forest-container{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;overflow-x:auto;}
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+canvas{max-width:100%;}
+.mono{font-family:'DM Mono',monospace;}
+.text-sm{font-size:11px;color:var(--text2);}
+.text-xs{font-size:10px;color:var(--text3);}
+.mt-2{margin-top:8px;}
+.mb-2{margin-bottom:8px;}
+.flex{display:flex;}
+.items-center{align-items:center;}
+.gap-2{gap:8px;}
+.gap-3{gap:12px;}
+.type-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:4px;font-size:11px;font-weight:600;margin-bottom:12px;}
+.type-effect{background:rgba(88,166,255,.15);color:var(--accent);border:1px solid rgba(88,166,255,.3);}
+.type-diag{background:rgba(63,185,80,.15);color:var(--accent2);border:1px solid rgba(63,185,80,.3);}
+.type-prev{background:rgba(210,168,255,.15);color:var(--accent4);border:1px solid rgba(210,168,255,.3);}
+.type-assoc{background:rgba(227,179,65,.15);color:var(--warn);border:1px solid rgba(227,179,65,.3);}
+.loading{display:flex;align-items:center;gap:10px;color:var(--text2);font-size:12px;padding:10px;}
+.spinner{width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.section-header{display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border);}
+.section-header h3{font-size:14px;font-weight:600;}
+.sidebar-footer{padding:12px 14px;border-top:1px solid var(--border);margin-top:auto;}
+.sidebar-footer .owner-name{font-size:11px;font-weight:600;color:var(--text);line-height:1.4;}
+.sidebar-footer .owner-dept{font-size:9px;color:var(--text3);line-height:1.5;margin-top:2px;}
+.sidebar-footer .owner-contact{font-size:10px;color:var(--accent);margin-top:4px;text-decoration:none;display:block;}
+.sidebar-footer .owner-contact:hover{text-decoration:underline;}
+.about-hero{background:linear-gradient(135deg,rgba(88,166,255,.12),rgba(63,185,80,.08));border:1px solid rgba(88,166,255,.2);border-radius:10px;padding:28px;margin-bottom:16px;display:flex;align-items:center;gap:24px;}
+.about-avatar{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;}
+.about-hero-text h2{font-family:'DM Serif Display',serif;font-size:20px;color:var(--text);margin-bottom:4px;}
+.about-hero-text .title{font-size:12px;color:var(--accent);font-weight:500;margin-bottom:2px;}
+.about-hero-text .dept{font-size:11px;color:var(--text2);line-height:1.6;}
+.about-hero-text .uni{font-size:11px;color:var(--text2);}
+.about-contact-row{display:flex;align-items:center;gap:8px;margin-top:10px;}
+.about-contact-row a{color:var(--accent);font-size:12px;text-decoration:none;}
+.about-contact-row a:hover{text-decoration:underline;}
+.gh-step{display:flex;gap:14px;align-items:flex-start;margin-bottom:14px;}
+.gh-step-num{width:28px;height:28px;border-radius:50%;background:var(--accent);color:#0d1117;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+.gh-step-body h4{font-size:13px;font-weight:600;margin-bottom:4px;}
+.gh-step-body p{font-size:12px;color:var(--text2);line-height:1.6;}
+.code-block{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;font-family:'DM Mono',monospace;font-size:11px;color:var(--accent2);margin:6px 0;white-space:pre;overflow-x:auto;}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ═══ SIDEBAR ═══ -->
+<aside class="sidebar">
+  <div class="logo">
+    <h1>MetaLens</h1>
+    <p>Meta-Analysis Studio v5</p>
+  </div>
+  <nav class="nav">
+    <div class="nav-section" data-i18n="nav_setup">Setup</div>
+    <div class="nav-item" onclick="showPanel('setup')"><span class="icon">⚙️</span> <span data-i18n="nav_project_setup">Project Setup</span></div>
+    <div class="nav-item" onclick="showPanel('about')"><span class="icon">ℹ️</span> About & Help</div>
+
+    <div class="nav-section" data-i18n="nav_data">Data</div>
+    <div class="nav-item" onclick="showPanel('import')"><span class="icon">📥</span> <span data-i18n="nav_import">Import / Add Data</span></div>
+    <div class="nav-item" onclick="showPanel('table')">
+      <span class="icon">📊</span> <span data-i18n="nav_table">Data Table</span>
+      <span id="study-count" class="tag tag-blue" style="margin-left:auto;font-size:9px;padding:1px 5px;"></span>
+    </div>
+    <div class="nav-item" onclick="showPanel('converter')"><span class="icon">🔄</span> <span data-i18n="nav_converter">Effect Converter</span></div>
+
+    <div class="nav-section" data-i18n="nav_effectiveness">Effectiveness</div>
+    <div class="nav-item nav-sub" onclick="showAnalysis('eff','pooled')"><span class="icon">🎯</span> <span data-i18n="nav_pooled">Pooled Effect</span></div>
+    <div class="nav-item nav-sub" onclick="showAnalysis('eff','forest')"><span class="icon">🌲</span> <span data-i18n="nav_forest">Forest Plot</span></div>
+    <div class="nav-item nav-sub" onclick="showAnalysis('eff','het')"><span class="icon">📐</span> <span data-i18n="nav_het">Heterogeneity</span></div>
+    <div class="nav-item nav-sub" onclick="showAnalysis('eff','bias')"><span class="icon">🔭</span> <span data-i18n="nav_bias">Pub. Bias</span></div>
+    <div class="nav-item nav-sub" onclick="showAnalysis('eff','subgroup')"><span class="icon">🗂️</span> <span data-i18n="nav_subgroup">Subgroup</span></div>
+    <div class="nav-item nav-sub" onclick="showAnalysis('eff','regression')"><span class="icon">📈</span> <span data-i18n="nav_regression">Meta-Regression</span></div>
+
+    <div class="nav-section" data-i18n="nav_diagnostic">Diagnostic</div>
+    <div class="nav-item nav-sub" onclick="showAnalysis('diag','pooled')"><span class="icon">🎯</span> <span data-i18n="nav_diag_pooled">Pooled Accuracy</span></div>
+    <div class="nav-item nav-sub" onclick="showAnalysis('diag','forest')"><span class="icon">🌲</span> <span data-i18n="nav_forest">Forest Plot</span></div>
+    <div class="nav-item nav-sub" onclick="showAnalysis('diag','sroc')"><span class="icon">📈</span> <span data-i18n="nav_sroc">SROC Curve</span></div>
+    <div class="nav-item nav-sub" onclick="showAnalysis('diag','bias')"><span class="icon">🔭</span> <span data-i18n="nav_bias">Pub. Bias</span></div>
+    <div class="nav-item nav-sub" onclick="showAnalysis('diag','subgroup')"><span class="icon">🗂️</span> <span data-i18n="nav_subgroup">Subgroup</span></div>
+    <div class="nav-item nav-sub" onclick="showAnalysis('diag','regression')"><span class="icon">📈</span> <span data-i18n="nav_regression">Meta-Regression</span></div>
+
+    <div class="nav-section" data-i18n="nav_prevalence">Prevalence</div>
+    <div class="nav-item nav-sub" onclick="showAnalysis('prev','pooled')"><span class="icon">🎯</span> <span data-i18n="nav_prev_pooled">Pooled Prevalence</span></div>
+    <div class="nav-item nav-sub" onclick="showAnalysis('prev','forest')"><span class="icon">🌲</span> <span data-i18n="nav_forest">Forest Plot</span></div>
+    <div class="nav-item nav-sub" onclick="showAnalysis('prev','het')"><span class="icon">📐</span> <span data-i18n="nav_het">Heterogeneity</span></div>
+    <div class="nav-item nav-sub" onclick="showAnalysis('prev','bias')"><span class="icon">🔭</span> <span data-i18n="nav_bias">Pub. Bias</span></div>
+    <div class="nav-item nav-sub" onclick="showAnalysis('prev','subgroup')"><span class="icon">🗂️</span> <span data-i18n="nav_subgroup">Subgroup</span></div>
+    <div class="nav-item nav-sub" onclick="showAnalysis('prev','regression')"><span class="icon">📈</span> <span data-i18n="nav_regression">Meta-Regression</span></div>
+
+    <div class="nav-section" data-i18n="nav_association">Association</div>
+    <div class="nav-item nav-sub" onclick="showAnalysis('assoc','pooled')"><span class="icon">🎯</span> <span data-i18n="nav_pooled">Pooled Effect</span></div>
+    <div class="nav-item nav-sub" onclick="showAnalysis('assoc','forest')"><span class="icon">🌲</span> <span data-i18n="nav_forest">Forest Plot</span></div>
+    <div class="nav-item nav-sub" onclick="showAnalysis('assoc','het')"><span class="icon">📐</span> <span data-i18n="nav_het">Heterogeneity</span></div>
+    <div class="nav-item nav-sub" onclick="showAnalysis('assoc','bias')"><span class="icon">🔭</span> <span data-i18n="nav_bias">Pub. Bias</span></div>
+    <div class="nav-item nav-sub" onclick="showAnalysis('assoc','subgroup')"><span class="icon">🗂️</span> <span data-i18n="nav_subgroup">Subgroup</span></div>
+    <div class="nav-item nav-sub" onclick="showAnalysis('assoc','regression')"><span class="icon">📈</span> <span data-i18n="nav_regression">Meta-Regression</span></div>
+
+    <div class="nav-section" data-i18n="nav_export">Export</div>
+    <div class="nav-item" onclick="showPanel('export')"><span class="icon">💾</span> <span data-i18n="nav_export_results">Export Results</span></div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="owner-name">Bayu Satria Wiratama, Ph.D</div>
+    <div class="owner-dept">Dept. Biostatistics, Epidemiology &amp;<br>Population Health · FK-KMK UGM</div>
+    <a class="owner-contact" href="mailto:bayu.satria@ugm.ac.id">✉ bayu&#46;satria&#64;ugm&#46;ac&#46;id</a>
+  </div>
+</aside>
+
+<!-- ═══ MAIN ═══ -->
+<div class="main">
+  <div class="topbar">
+    <h2 id="panel-title">Project Setup</h2>
+    <span id="panel-badge" class="badge">Configure your meta-analysis</span>
+    <div class="spacer"></div>
+    <span id="type-indicator" style="display:none"></span>
+    <button class="btn btn-sm btn-secondary" onclick="showPanel('table')">📊 <span id="study-badge-top">0 studies</span></button>
+    <button class="btn btn-sm btn-secondary" id="lang-toggle" onclick="toggleLanguage()" style="margin-left:6px;font-weight:600;min-width:52px">🇮🇩 ID</button>
+  </div>
+  <div class="content">
+
+  <!-- ═══ SETUP ═══ -->
+  <div id="panel-setup" class="panel active">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">📋 <span data-i18n="setup_proj_info">Project Information</span></div>
+        <div class="form-row"><label data-i18n="setup_title_label">Project / Review Title</label><input type="text" id="proj-title" placeholder="e.g. Effect of exercise on depression"></div>
+        <div class="form-row"><label data-i18n="setup_pico_label">Research Question (PICO/PICOS)</label><textarea id="proj-pico" placeholder="Population, Intervention, Comparison, Outcome..."></textarea></div>
+        <div class="form-group">
+          <div><label data-i18n="setup_review_type">Review Type</label>
+            <select id="proj-type">
+              <option>Systematic Review & Meta-Analysis</option>
+              <option>Meta-Analysis Only</option>
+              <option>Rapid Review</option>
+            </select></div>
+          <div><label data-i18n="setup_date">Date</label><input type="date" id="proj-date"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">📏 <span data-i18n="setup_analysis_config">Analysis Configuration</span></div>
+        <div class="form-row"><label data-i18n="setup_model">Statistical Model</label>
+          <select id="model-type">
+            <option value="RE">Random-Effects (DerSimonian-Laird)</option>
+            <option value="FE">Fixed-Effect (Inverse Variance)</option>
+            <option value="RE-REML">Random-Effects (REML)</option>
+          </select></div>
+        <div class="form-row"><label data-i18n="setup_ci">Confidence Interval Level</label>
+          <select id="ci-level">
+            <option value="0.95">95%</option>
+            <option value="0.90">90%</option>
+            <option value="0.99">99%</option>
+          </select></div>
+        <div class="form-row"><label data-i18n="setup_prev_transform">Prevalence Transform</label>
+          <select id="prev-transform-global">
+            <option value="ft">Freeman-Tukey (recommended)</option>
+            <option value="logit">Logit</option>
+            <option value="raw">Raw proportion</option>
+          </select></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">🎛️ <span data-i18n="setup_moderators">Custom Moderator Variables</span> <span>— <span data-i18n="setup_moderators_sub">for subgroup and meta-regression</span></span></div>
+      <div id="mod-list"></div>
+      <div class="flex gap-2 mt-2">
+        <button class="btn btn-secondary btn-sm" onclick="addMod('Study Design','categorical')">+ Study Design</button>
+        <button class="btn btn-secondary btn-sm" onclick="addMod('Country','categorical')">+ Country</button>
+        <button class="btn btn-secondary btn-sm" onclick="addMod('Year','continuous')">+ Year</button>
+        <button class="btn btn-secondary btn-sm" onclick="addMod('Risk of Bias','categorical')">+ Risk of Bias</button>
+        <button class="btn btn-secondary btn-sm" onclick="addMod('Age','continuous')">+ Age</button>
+        <button class="btn btn-sm btn-primary" onclick="addMod('','categorical')">+ Custom</button>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="saveSetup()">✓ Save Setup & Continue</button>
+  </div>
+
+  <!-- ═══ IMPORT ═══ -->
+  <div id="panel-import" class="panel">
+    <div class="notice notice-info"><span>💡</span>
+      <div data-i18n="import_notice">Choose your study type, then import via Excel/CSV or enter studies manually. Each study type has its own dataset.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">📂 Select Study Type & Import</div>
+      <div class="form-row"><label data-i18n="import_type_label">Study Type to Import</label>
+        <select id="import-type">
+          <option value="eff">Effectiveness (RCT, intervention — SMD, MD, OR, RR, HR, RD)</option>
+          <option value="diag">Diagnostic (sensitivity/specificity from 2×2 tables)</option>
+          <option value="prev">Prevalence (cases / total N per study)</option>
+          <option value="assoc">Association (correlation r, OR, RR from observational studies)</option>
+        </select>
+      </div>
+      <div id="import-template-info" class="result-block" style="font-size:11px;margin-bottom:10px;"></div>
+      <div class="grid-2" style="align-items:start">
+        <div>
+          <div class="file-drop" id="file-drop" onclick="document.getElementById('file-input').click()"
+            ondragover="event.preventDefault();this.classList.add('drag')"
+            ondragleave="this.classList.remove('drag')" ondrop="handleFileDrop(event)">
+            <span class="icon">📂</span>
+            <strong>Click or drag & drop Excel / CSV</strong>
+            <p class="text-xs mt-2">Supports .xlsx, .xls, .csv</p>
+          </div>
+          <input type="file" id="file-input" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleFileSelect(event)">
+          <button class="btn btn-secondary btn-sm mt-2" onclick="downloadTemplate()"><span data-i18n="import_template">⬇️ Download Template</span></button>
+        </div>
+        <div>
+          <div class="card" style="margin-bottom:0">
+            <div class="card-title">✏️ <span data-i18n="import_manual">Add Single Study Manually</span></div>
+            <div id="manual-entry-form"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card" id="import-preview" style="display:none">
+      <div class="card-title">👁️ Import Preview <span id="import-count"></span></div>
+      <div class="table-wrap" id="import-table"></div>
+      <hr class="divider">
+      <div class="flex gap-2">
+        <button class="btn btn-success" onclick="confirmImport()"><span data-i18n="import_confirm">✓ Import All</span></button>
+        <button class="btn btn-secondary" onclick="document.getElementById('import-preview').style.display='none'">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ DATA TABLE ═══ -->
+  <div id="panel-table" class="panel">
+    <div class="tabs" id="data-type-tabs">
+      <div class="tab active" onclick="switchDataTab('eff')">🎯 <span data-i18n="tab_eff">Effectiveness</span> (<span id="cnt-eff">0</span>)</div>
+      <div class="tab" onclick="switchDataTab('diag')">🩺 <span data-i18n="tab_diag">Diagnostic</span> (<span id="cnt-diag">0</span>)</div>
+      <div class="tab" onclick="switchDataTab('prev')">📉 <span data-i18n="tab_prev">Prevalence</span> (<span id="cnt-prev">0</span>)</div>
+      <div class="tab" onclick="switchDataTab('assoc')">🔗 <span data-i18n="tab_assoc">Association</span> (<span id="cnt-assoc">0</span>)</div>
+    </div>
+    <div class="flex gap-2 mb-2" style="flex-wrap:wrap">
+      <button class="btn btn-secondary btn-sm" onclick="clearTypeStudies()"><span data-i18n="table_clear">🗑️ Clear This Type</span></button>
+      <button class="btn btn-secondary btn-sm" onclick="exportTypeCSV()"><span data-i18n="table_export_csv">⬇️ Export CSV</span></button>
+      <div class="spacer"></div>
+      <input type="text" placeholder="" data-i18n-placeholder="table_search" style="width:180px" oninput="filterTable(this.value)">
+    </div>
+    <div class="card" style="padding:0">
+      <div class="table-wrap"><table id="studies-table"><thead id="studies-thead"></thead><tbody id="studies-tbody"></tbody></table></div>
+      <div id="table-empty" class="empty-state"><span class="icon">📭</span><p data-i18n="table_empty">No studies yet for this type.</p></div>
+    </div>
+  </div>
+
+  <!-- ═══ EFFECT CONVERTER ═══ -->
+  <div id="panel-converter" class="panel">
+    <div class="notice notice-info"><span>🔄</span><div>Convert raw statistics into effect sizes. Use "Add to Dataset" to send the result directly into the correct analysis module.</div></div>
+    <div class="tabs" id="conv-tabs">
+      <div class="tab active" onclick="convTab('means',event)">Means & SDs</div>
+      <div class="tab" onclick="convTab('prop',event)" data-i18n="conv_prop">2×2 Table</div>
+      <div class="tab" onclick="convTab('corr',event)" data-i18n="conv_corr">Correlation r</div>
+      <div class="tab" onclick="convTab('tstat',event)" data-i18n="conv_tstat">t / F stat</div>
+      <div class="tab" onclick="convTab('cross',event)">d ↔ r ↔ OR</div>
+    </div>
+    <div id="conv-means" class="tab-panel active">
+      <div class="card">
+        <div class="card-title">📊 Two-Group Means & SDs → SMD / MD</div>
+        <div class="grid-2">
+          <div>
+            <div style="font-size:11px;color:var(--accent);font-weight:600;margin-bottom:8px;">Intervention Group</div>
+            <div class="form-row"><label>Mean (M₁)</label><input type="number" id="cv-m1" placeholder="12.5"></div>
+            <div class="form-row"><label>SD (SD₁)</label><input type="number" id="cv-sd1" placeholder="3.2"></div>
+            <div class="form-row"><label>N₁</label><input type="number" id="cv-n1" placeholder="50"></div>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:8px;">Control Group</div>
+            <div class="form-row"><label>Mean (M₂)</label><input type="number" id="cv-m2" placeholder="9.1"></div>
+            <div class="form-row"><label>SD (SD₂)</label><input type="number" id="cv-sd2" placeholder="3.0"></div>
+            <div class="form-row"><label>N₂</label><input type="number" id="cv-n2" placeholder="50"></div>
+          </div>
+        </div>
+        <div class="form-row"><label>SMD Method</label>
+          <select id="cv-smd-method">
+            <option value="cohen">Cohen's d (pooled SD)</option>
+            <option value="hedges">Hedges' g (bias-corrected)</option>
+            <option value="glass">Glass's Δ (control SD only)</option>
+          </select></div>
+        <button class="btn btn-primary" onclick="convertMeans()">Calculate</button>
+      </div>
+      <div id="cv-means-result"></div>
+    </div>
+    <div id="conv-prop" class="tab-panel">
+      <div class="card">
+        <div class="card-title">📊 2×2 Table → OR, RR, RD, NNT</div>
+        <div class="form-group-4" style="margin-bottom:10px">
+          <div><label>Events – Intervention (a)</label><input type="number" id="cv-a" placeholder="0"></div>
+          <div><label>No Events – Intervention (b)</label><input type="number" id="cv-b" placeholder="0"></div>
+          <div><label>Events – Control (c)</label><input type="number" id="cv-c" placeholder="0"></div>
+          <div><label>No Events – Control (d)</label><input type="number" id="cv-d" placeholder="0"></div>
+        </div>
+        <button class="btn btn-primary" onclick="convertProp()">Calculate</button>
+      </div>
+      <div id="cv-prop-result"></div>
+    </div>
+    <div id="conv-corr" class="tab-panel">
+      <div class="card">
+        <div class="card-title">📊 Correlation r → Fisher's z</div>
+        <div class="form-group">
+          <div><div class="form-row"><label>Pearson r</label><input type="number" id="cv-r" placeholder="-1 to 1" step="0.01"></div></div>
+          <div><div class="form-row"><label>Sample size N</label><input type="number" id="cv-rn" placeholder="120"></div></div>
+        </div>
+        <button class="btn btn-primary" onclick="convertCorr()">Calculate</button>
+      </div>
+      <div id="cv-corr-result"></div>
+    </div>
+    <div id="conv-tstat" class="tab-panel">
+      <div class="card">
+        <div class="card-title">📊 t-statistic / F-statistic → d</div>
+        <div class="grid-2">
+          <div>
+            <div class="form-row"><label>Statistic type</label>
+              <select id="cv-stat-type"><option value="t">t-statistic</option><option value="f">F-statistic (1 df)</option></select></div>
+            <div class="form-row"><label>Value</label><input type="number" id="cv-stat-val" placeholder="2.34"></div>
+          </div>
+          <div>
+            <div class="form-row"><label>N₁</label><input type="number" id="cv-stat-n1" placeholder="40"></div>
+            <div class="form-row"><label>N₂</label><input type="number" id="cv-stat-n2" placeholder="40"></div>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="convertTstat()">Calculate</button>
+      </div>
+      <div id="cv-tstat-result"></div>
+    </div>
+    <div id="conv-cross" class="tab-panel">
+      <div class="card">
+        <div class="card-title">📊 Cross-measure: d ↔ r ↔ OR ↔ logOR</div>
+        <div class="grid-2">
+          <div>
+            <div class="form-row"><label>Input measure</label>
+              <select id="cv-cross-from">
+                <option value="d">Cohen's d / Hedges' g</option>
+                <option value="r">Correlation r</option>
+                <option value="or">Odds Ratio (OR)</option>
+                <option value="logOR">log(OR)</option>
+              </select></div>
+            <div class="form-row"><label>Value</label><input type="number" id="cv-cross-val" placeholder="0.5" step="0.01"></div>
+          </div>
+          <div>
+            <div class="form-row"><label>N (for variance, optional)</label><input type="number" id="cv-cross-n" placeholder="optional"></div>
+            <div class="form-row"><label>n₁:n₂ ratio (default 1)</label><input type="number" id="cv-cross-ratio" value="1" step="0.1"></div>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="convertCross()">Calculate</button>
+      </div>
+      <div id="cv-cross-result"></div>
+    </div>
+    <div id="conv-add-row" style="display:none" class="card">
+      <div class="card-title">➕ Add Converted Result to Dataset</div>
+      <div class="form-group">
+        <div><label>Author</label><input type="text" id="conv-add-author" placeholder="Author name"></div>
+        <div><label>Year</label><input type="number" id="conv-add-year" placeholder="2024"></div>
+      </div>
+      <div class="result-block" id="conv-add-summary" style="margin-bottom:10px;font-size:11px;"></div>
+      <button class="btn btn-success" onclick="addConvertedToDataset()">✓ Add to Dataset</button>
+    </div>
+  </div>
+
+  <!-- ═══ ANALYSIS PANEL (shared, switched by type+section) ═══ -->
+  <div id="panel-analysis" class="panel">
+    <div class="section-header">
+      <span id="analysis-type-badge"></span>
+      <h3 id="analysis-section-title"></h3>
+      <div class="spacer"></div>
+      <button class="btn btn-secondary btn-sm" onclick="downloadAnalysisPlot()">⬇️ Download Plot</button>
+    </div>
+    <div id="analysis-content"></div>
+  </div>
+
+  <!-- ═══ EXPORT ═══ -->
+  <div id="panel-export" class="panel">
+    <div class="notice notice-info"><span>💡</span><div>Generates a comprehensive report across all study types and analyses run in this session.</div></div>
+    <div class="card">
+      <div class="card-title">📥 <span data-i18n="export_downloads">Downloads</span></div>
+      <div class="flex gap-2" style="flex-wrap:wrap">
+        <button class="btn btn-primary" onclick="exportFullReport()"><span data-i18n="export_report">📄 Full Report (.txt)</span></button>
+        <button class="btn btn-secondary" onclick="exportAllCSV()"><span data-i18n="export_csv">📊 All Data (.csv)</span></button>
+        <button class="btn btn-secondary" onclick="buildExportPanel()"><span data-i18n="export_refresh">🔄 Refresh Preview</span></button>
+      </div>
+    </div>
+    <div id="export-content"></div>
+  </div>
+
+  <!-- ═══ ABOUT ═══ -->
+  <div id="panel-about" class="panel">
+
+    <!-- Hero / owner card -->
+    <div class="about-hero">
+      <div class="about-avatar">👨‍🔬</div>
+      <div class="about-hero-text">
+        <h2>Bayu Satria Wiratama, Ph.D</h2>
+        <div class="title" data-i18n="about_position">Assistant Professor</div>
+        <div class="dept" data-i18n="about_dept">Department of Biostatistics, Epidemiology, and Population Health</div>
+        <div class="uni" data-i18n="about_uni">Faculty of Medicine, Public Health, and Nursing (FK-KMK)<br>Universitas Gadjah Mada, Yogyakarta, Indonesia</div>
+        <div class="about-contact-row">
+          <span>✉</span><a href="mailto:bayu.satria@ugm.ac.id" style="color:var(--accent)">bayu&#46;satria&#64;ugm&#46;ac&#46;id</a>
+          <span style="color:var(--border)">|</span>
+          <span>🏛</span><a href="https://fkkmk.ugm.ac.id" target="_blank" rel="noopener">fkkmk.ugm.ac.id</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-2" style="align-items:start">
+
+      <!-- About the app -->
+      <div>
+        <div class="card">
+          <div class="card-title">📖 <span data-i18n="about_title">About MetaLens</span></div>
+          <p style="font-size:12px;color:var(--text2);line-height:1.8;margin-bottom:10px">
+            <strong style="color:var(--text)">MetaLens</strong> is a free, browser-based meta-analysis studio developed for researchers and students in health sciences. It supports the full meta-analysis workflow — from data import and effect size conversion to pooling, heterogeneity testing, publication bias assessment, subgroup analysis, and meta-regression.
+          </p>
+          <p style="font-size:12px;color:var(--text2);line-height:1.8;margin-bottom:10px">
+            The tool handles four study types in a single workspace: <strong style="color:var(--accent)">Effectiveness</strong> (RCTs and interventions), <strong style="color:var(--accent2)">Diagnostic accuracy</strong> (sensitivity/specificity/SROC), <strong style="color:var(--accent4)">Prevalence</strong> (Freeman-Tukey/logit transforms), and <strong style="color:var(--warn)">Association</strong> (observational correlations and ratios).
+          </p>
+          <p style="font-size:12px;color:var(--text2);line-height:1.8">
+            All computations run entirely in your browser — no data is ever sent to any server. Your study data stays on your device.
+          </p>
+        </div>
+
+        <div class="card">
+          <div class="card-title">📋 <span data-i18n="about_citation_title">Citation</span></div>
+          <div class="result-block" style="font-size:11px;line-height:1.9">
+Wiratama BS. MetaLens: A browser-based meta-analysis studio
+[Software]. Department of Biostatistics, Epidemiology, and
+Population Health, FK-KMK, Universitas Gadjah Mada; 2025.
+Available at: https://github.com/[your-username]/metalens</div>
+          <p class="text-xs mt-2" data-i18n="about_citation_note">Please acknowledge this tool in your publications when using it to conduct or assist your meta-analysis.</p>
+        </div>
+
+        <div class="card">
+          <div class="card-title">⚖️ <span data-i18n="about_license_title">License &amp; Terms</span></div>
+          <p style="font-size:12px;color:var(--text2);line-height:1.8">
+            MetaLens is released for free academic and research use. Redistribution with attribution is permitted. The software is provided "as is" without warranty. Always verify statistical results independently for publication.
+          </p>
+          <p style="font-size:12px;color:var(--text2);line-height:1.8;margin-top:8px">
+            For questions, bug reports, or feature requests, contact <a href="mailto:bayu.satria@ugm.ac.id" style="color:var(--accent)">bayu&#46;satria&#64;ugm&#46;ac&#46;id</a>.
+          </p>
+        </div>
+      </div>
+
+      <!-- Privacy & stats methods -->
+      <div>
+        <div class="card">
+          <div class="card-title">📊 <span data-i18n="about_methods_title">Statistical Methods</span></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th data-i18n="about_analysis">Analysis</th><th data-i18n="about_method">Method</th></tr></thead>
+              <tbody>
+                <tr><td data-i18n="about_m1">Pooling (RE)</td><td>DerSimonian-Laird</td></tr>
+                <tr><td data-i18n="about_m2">Pooling (FE)</td><td>Inverse-variance</td></tr>
+                <tr><td data-i18n="about_m3">Heterogeneity</td><td>Q, I², τ², H²</td></tr>
+                <tr><td data-i18n="about_m4">Publication bias</td><td>Egger, Begg &amp; Mazumdar, FSN</td></tr>
+                <tr><td data-i18n="about_m5">Subgroup</td><td>Between-group Q (Qb)</td></tr>
+                <tr><td data-i18n="about_m6">Meta-regression</td><td>WLS, tau² null model</td></tr>
+                <tr><td data-i18n="about_m7">Diagnostic</td><td>Moses-Littenberg SROC, logit RE</td></tr>
+                <tr><td data-i18n="about_m8">Prevalence</td><td>Freeman-Tukey arcsine</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">🔒 <span data-i18n="about_privacy_title">Privacy &amp; Data</span></div>
+          <p style="font-size:12px;color:var(--text2);line-height:1.8" data-i18n="about_privacy_body">
+            All study data you enter is stored only in your browser's localStorage — it never leaves your device. No analytics or tracking are added by this app.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+</div><!-- /app -->
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════════════════════
+const TYPES = { eff:'Effectiveness', diag:'Diagnostic', prev:'Prevalence', assoc:'Association' };
+const TYPE_ICONS = { eff:'🎯', diag:'🩺', prev:'📉', assoc:'🔗' };
+const TYPE_BADGE = { eff:'type-effect', diag:'type-diag', prev:'type-prev', assoc:'type-assoc' };
+
+let state = {
+  project: { title:'', pico:'', type:'', date:'', model:'RE', ci:0.95, prevTransform:'ft' },
+  moderators: [],
+  studies: { eff:[], diag:[], prev:[], assoc:[] },
+  currentDataTab: 'eff',
+  currentAnalysis: { type:'eff', section:'pooled' },
+  lastConverted: null
+};
+
+try {
+  const s = localStorage.getItem('metalens5');
+  if (s) Object.assign(state, JSON.parse(s));
+} catch(e) {}
+
+function save() { try { localStorage.setItem('metalens5', JSON.stringify(state)); } catch(e) {} }
+
+// ═══════════════════════════════════════════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════════════════════════════════════════
+const PANEL_META = {
+  setup:['Project Setup','Configure your meta-analysis'],
+  import:['Import / Add Data','Load studies by type'],
+  table:['Data Table','View and edit all studies'],
+  converter:['Effect Size Converter','Transform raw statistics into effect sizes'],
+  analysis:['Analysis',''],
+  about:['About MetaLens','Developer information, citation, and GitHub deployment guide'],
+  export:['Export Results','Download reports and plots']
+};
+
+function showPanel(id) {
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const el = document.getElementById('panel-'+id);
+  if (el) el.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(item=>{
+    const oc = item.getAttribute('onclick')||'';
+    if (oc.includes(`'${id}'`)) item.classList.add('active');
+  });
+  const [title,badge] = PANEL_META[id]||[id,''];
+  document.getElementById('panel-title').textContent = title;
+  document.getElementById('panel-badge').textContent = badge;
+  document.getElementById('type-indicator').style.display = 'none';
+  if (id==='table') { renderTable(); updateCounts(); }
+  if (id==='import') { updateImportInfo(); updateManualForm(); }
+  if (id==='export') { buildExportPanel(); }
+  updateStudyCount();
+}
+
+function showAnalysis(type, section) {
+  state.currentAnalysis = { type, section };
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('panel-analysis').classList.add('active');
+
+  // Highlight nav item
+  document.querySelectorAll('.nav-item').forEach(item=>{
+    const oc = item.getAttribute('onclick')||'';
+    if (oc.includes(`'${type}'`) && oc.includes(`'${section}'`)) item.classList.add('active');
+  });
+
+  const typeLabel = TYPES[type];
+  const badge = document.getElementById('analysis-type-badge');
+  badge.className = `type-badge ${TYPE_BADGE[type]}`;
+  badge.textContent = TYPE_ICONS[type]+' '+typeLabel;
+  document.getElementById('panel-title').textContent = typeLabel+' Analysis';
+  document.getElementById('panel-badge').textContent = sectionLabel(section);
+  document.getElementById('analysis-section-title').textContent = sectionLabel(section);
+
+  const ti = document.getElementById('type-indicator');
+  ti.style.display = '';
+  ti.className = `type-badge ${TYPE_BADGE[type]}`;
+  ti.textContent = TYPE_ICONS[type]+' '+typeLabel;
+
+  runAnalysisSection(type, section);
+  updateStudyCount();
+}
+
+function sectionLabel(s) {
+  const map = {
+    pooled: t('section_pooled'), forest: t('section_forest'),
+    het: t('section_het'), bias: t('section_bias'),
+    subgroup: t('section_subgroup'), regression: t('section_regression'),
+    sroc: t('section_sroc')
+  };
+  return map[s] || s;
+}
+
+function updateStudyCount() {
+  const n = Object.values(state.studies).flat().length;
+  document.getElementById('study-count').textContent = n||'';
+  document.getElementById('study-badge-top').textContent = n+' studies';
+  updateCounts();
+}
+
+function updateCounts() {
+  ['eff','diag','prev','assoc'].forEach(t=>{
+    const el = document.getElementById('cnt-'+t);
+    if (el) el.textContent = (state.studies[t]||[]).length;
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  SETUP
+// ═══════════════════════════════════════════════════════════════════════
+function addMod(name,type) { state.moderators.push({name:name||'',type:type||'categorical'}); renderModList(); save(); }
+
+function renderModList() {
+  document.getElementById('mod-list').innerHTML = state.moderators.map((m,i)=>`
+    <div class="flex items-center gap-2 mb-2">
+      <input type="text" value="${m.name}" placeholder="Moderator name" onchange="state.moderators[${i}].name=this.value;save()" style="flex:2">
+      <select onchange="state.moderators[${i}].type=this.value;save()" style="flex:1">
+        ${['categorical','continuous'].map(t=>`<option value="${t}" ${m.type===t?'selected':''}>${t}</option>`).join('')}
+      </select>
+      <button class="btn btn-danger btn-sm" onclick="state.moderators.splice(${i},1);renderModList();save()">✕</button>
+    </div>`).join('');
+}
+
+function saveSetup() {
+  state.project.title=document.getElementById('proj-title').value;
+  state.project.pico=document.getElementById('proj-pico').value;
+  state.project.type=document.getElementById('proj-type').value;
+  state.project.date=document.getElementById('proj-date').value;
+  state.project.model=document.getElementById('model-type').value;
+  state.project.ci=parseFloat(document.getElementById('ci-level').value);
+  state.project.prevTransform=document.getElementById('prev-transform-global').value;
+  save(); showPanel('import');
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  IMPORT
+// ═══════════════════════════════════════════════════════════════════════
+const IMPORT_COLS = {
+  eff: { required:['author','year','effect_size','variance'], optional:['se','ci_lower','ci_upper','n_total','n_intervention','n_control','effect_type'] },
+  diag: { required:['author','year','tp','fp','fn','tn'], optional:['n_total','threshold','index_test'] },
+  prev: { required:['author','year','cases','n'], optional:['subgroup','country','age_mean'] },
+  assoc: { required:['author','year','effect_size','variance'], optional:['se','ci_lower','ci_upper','n_total','exposure','outcome','effect_type'] }
+};
+
+const IMPORT_DESC = {
+  eff:'Required: author, year, effect_size (SMD/MD/OR/RR/HR/RD), variance or se. Optionally: ci_lower, ci_upper, n_total, effect_type, plus any moderators.',
+  diag:'Required: author, year, tp (true positives), fp (false positives), fn (false negatives), tn (true negatives). Optionally: n_total, threshold, index_test, plus moderators.',
+  prev:'Required: author, year, cases (event count), n (total sample). Optionally: subgroup, country, age_mean, plus moderators.',
+  assoc:'Required: author, year, effect_size (r/OR/HR/RR), variance or se. Optionally: ci_lower, ci_upper, n_total, exposure, outcome, effect_type, plus moderators.'
+};
+
+function updateImportInfo() {
+  const t = document.getElementById('import-type').value;
+  document.getElementById('import-template-info').textContent = IMPORT_DESC[t];
+}
+
+function updateManualForm() {
+  const t = document.getElementById('import-type').value;
+  const cols = IMPORT_COLS[t];
+  const all = [...cols.required, ...cols.optional, ...state.moderators.map(m=>m.name).filter(Boolean)];
+  const form = document.getElementById('manual-entry-form');
+  form.innerHTML = all.map(k=>`<div class="form-row"><label>${k.replace(/_/g,' ')} ${cols.required.includes(k)?'<span style="color:var(--danger)">*</span>':''}</label><input type="text" id="manual-${k}" placeholder="${k}"></div>`).join('')
+    + `<button class="btn btn-primary btn-sm mt-2" onclick="addManualStudy()">+ Add Study</button>`;
+}
+
+document.addEventListener('DOMContentLoaded', ()=>{
+  const sel = document.getElementById('import-type');
+  if(sel) sel.addEventListener('change', ()=>{ updateImportInfo(); updateManualForm(); });
+});
+
+function addManualStudy() {
+  const t = document.getElementById('import-type').value;
+  const cols = IMPORT_COLS[t];
+  const all = [...cols.required, ...cols.optional, ...state.moderators.map(m=>m.name).filter(Boolean)];
+  const s = { id: Date.now(), study_type: t };
+  all.forEach(k=>{
+    const val = document.getElementById('manual-'+k)?.value.trim();
+    if (val) s[k] = isNaN(val) ? val : parseFloat(val);
+  });
+  // Compute variance from SE or CI if missing
+  normalizeStudy(s);
+  if (!validateStudy(s, t)) return;
+  state.studies[t].push(s);
+  save(); updateStudyCount();
+  all.forEach(k=>{ const el=document.getElementById('manual-'+k); if(el) el.value=''; });
+  alert('Study added! Go to Data Table to review.');
+}
+
+function validateStudy(s, t) {
+  if (!s.author || !s.year) { alert('Author and Year are required.'); return false; }
+  if (t==='diag' && (s.tp==null||s.fp==null||s.fn==null||s.tn==null)) { alert('TP, FP, FN, TN are required for diagnostic studies.'); return false; }
+  if (t==='prev' && (s.cases==null||s.n==null)) { alert('Cases and N are required for prevalence studies.'); return false; }
+  if ((t==='eff'||t==='assoc') && (s.effect_size==null||s.variance==null)) { alert('Effect size and variance (or SE) are required.'); return false; }
+  return true;
+}
+
+function normalizeStudy(s) {
+  if (!s.variance && s.se) s.variance = s.se**2;
+  if (!s.variance && s.ci_lower!=null && s.ci_upper!=null) {
+    const se = (parseFloat(s.ci_upper)-parseFloat(s.ci_lower))/(2*1.96);
+    s.variance = se**2;
+  }
+}
+
+function handleFileDrop(e) {
+  e.preventDefault();
+  document.getElementById('file-drop').classList.remove('drag');
+  const file = e.dataTransfer.files[0];
+  if (file) processFile(file);
+}
+function handleFileSelect(e) { if(e.target.files[0]) processFile(e.target.files[0]); }
+
+function processFile(file) {
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    let data;
+    if (file.name.endsWith('.csv')) {
+      const rows = e.target.result.split('\n').filter(r=>r.trim());
+      const headers = rows[0].split(',').map(h=>h.trim().replace(/"/g,''));
+      data = rows.slice(1).map(row=>{
+        const vals = row.split(',').map(v=>v.trim().replace(/"/g,''));
+        const obj = {};
+        headers.forEach((h,i)=>{ obj[h] = isNaN(vals[i])||vals[i]===''?vals[i]:parseFloat(vals[i]); });
+        return obj;
+      }).filter(r=>Object.values(r).some(v=>v!==''&&v!=null));
+    } else {
+      const wb = XLSX.read(e.target.result, {type:'binary'});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      data = XLSX.utils.sheet_to_json(ws);
+    }
+    showImportPreview(data);
+  };
+  file.name.endsWith('.csv') ? reader.readAsText(file) : reader.readAsBinaryString(file);
+}
+
+function showImportPreview(data) {
+  if (!data.length) return;
+  const keys = Object.keys(data[0]);
+  document.getElementById('import-count').textContent = `— ${data.length} rows`;
+  const html = `<table><thead><tr>${keys.map(k=>`<th>${k}</th>`).join('')}</tr></thead>
+    <tbody>${data.slice(0,8).map(row=>`<tr>${keys.map(k=>`<td>${row[k]??''}</td>`).join('')}</tr>`).join('')}
+    ${data.length>8?`<tr><td colspan="${keys.length}" class="text-xs" style="text-align:center">...and ${data.length-8} more</td></tr>`:''}</tbody></table>`;
+  document.getElementById('import-table').innerHTML = html;
+  document.getElementById('import-preview').style.display = 'block';
+  document.getElementById('import-preview')._data = data;
+}
+
+function confirmImport() {
+  const data = document.getElementById('import-preview')._data;
+  if (!data) return;
+  const t = document.getElementById('import-type').value;
+  const normalized = data.map(row=>{
+    const clean = { id:Date.now()+Math.random(), study_type:t };
+    Object.entries(row).forEach(([k,v])=>{ clean[String(k).trim()] = typeof v==='string'?v.trim():v; });
+    normalizeStudy(clean);
+    return clean;
+  });
+  state.studies[t].push(...normalized);
+  save(); updateStudyCount();
+  document.getElementById('import-preview').style.display = 'none';
+  alert(`Imported ${normalized.length} ${TYPES[t]} studies!`);
+  showPanel('table'); switchDataTab(t);
+}
+
+function downloadTemplate() {
+  const t = document.getElementById('import-type').value;
+  const cols = IMPORT_COLS[t];
+  const headers = [...cols.required, ...cols.optional, ...state.moderators.map(m=>m.name).filter(Boolean)];
+  const ws = XLSX.utils.aoa_to_sheet([headers, headers.map(_=>'')]);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Studies');
+  XLSX.writeFile(wb, `metalens_${t}_template.xlsx`);
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  DATA TABLE
+// ═══════════════════════════════════════════════════════════════════════
+function switchDataTab(t) {
+  state.currentDataTab = t;
+  document.querySelectorAll('#data-type-tabs .tab').forEach((tab,i)=>{
+    tab.classList.toggle('active', ['eff','diag','prev','assoc'][i]===t);
+  });
+  renderTable();
+}
+
+function renderTable() {
+  const t = state.currentDataTab;
+  const studies = state.studies[t]||[];
+  document.getElementById('table-empty').style.display = studies.length ? 'none':'block';
+  const skip = new Set(['id','study_type']);
+  const cols = studies.length ? Object.keys(studies[0]).filter(k=>!skip.has(k)).slice(0,10) : [];
+  document.getElementById('studies-thead').innerHTML = `<tr>${cols.map(k=>`<th>${k.replace(/_/g,' ')}</th>`).join('')}<th>Actions</th></tr>`;
+  document.getElementById('studies-tbody').innerHTML = studies.map((s,i)=>`<tr>
+    ${cols.map(k=>`<td class="${typeof s[k]==='number'?'mono':''}">${s[k]??'—'}</td>`).join('')}
+    <td><button class="btn btn-danger btn-sm" onclick="deleteStudy('${t}',${i})">✕</button></td>
+  </tr>`).join('');
+}
+
+function deleteStudy(t,i) {
+  if(confirm('Delete?')){ state.studies[t].splice(i,1); save(); renderTable(); updateStudyCount(); }
+}
+function clearTypeStudies() {
+  const t = state.currentDataTab;
+  if(confirm(`Delete ALL ${TYPES[t]} studies?`)){ state.studies[t]=[]; save(); renderTable(); updateStudyCount(); }
+}
+function filterTable(q) {
+  document.querySelectorAll('#studies-tbody tr').forEach(row=>{
+    row.style.display = row.textContent.toLowerCase().includes(q.toLowerCase())?'':'none';
+  });
+}
+function exportTypeCSV() {
+  const t = state.currentDataTab;
+  const studies = state.studies[t];
+  if (!studies.length) return alert('No data.');
+  const keys = Object.keys(studies[0]).filter(k=>k!=='id');
+  const csv = [keys.join(','), ...studies.map(s=>keys.map(k=>JSON.stringify(s[k]??'')).join(','))].join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download = `metalens_${t}_data.csv`; a.click();
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  STATISTICS ENGINE (shared)
+// ═══════════════════════════════════════════════════════════════════════
+function computePooled(ys, vs, model) {
+  model = model || state.project.model || 'RE';
+  const n = ys.length;
+  if (n===0) return null;
+  const wi_fe = vs.map(v=>1/v);
+  const W = wi_fe.reduce((a,b)=>a+b,0);
+  const theta_fe = wi_fe.reduce((s,w,i)=>s+w*ys[i],0)/W;
+  const Q = wi_fe.reduce((s,w,i)=>s+w*(ys[i]-theta_fe)**2,0);
+  const df = n-1;
+  const Qp = 1-chiSqCDF(Q,df);
+  const C = W - wi_fe.reduce((s,w)=>s+w*w,0)/W;
+  const tau2_DL = Math.max(0,(Q-df)/C);
+  const I2 = Math.max(0,((Q-df)/Q)*100);
+  const H2 = Q/df;
+  let theta, se_theta, wi_final;
+  if (model==='FE') { theta=theta_fe; se_theta=Math.sqrt(1/W); wi_final=wi_fe; }
+  else { const wi_re=vs.map(v=>1/(v+tau2_DL)); const W_re=wi_re.reduce((a,b)=>a+b,0); theta=wi_re.reduce((s,w,i)=>s+w*ys[i],0)/W_re; se_theta=Math.sqrt(1/W_re); wi_final=wi_re; }
+  const z_c = zCrit(state.project.ci||0.95);
+  const ci_lo=theta-z_c*se_theta, ci_hi=theta+z_c*se_theta;
+  const z=theta/se_theta, p=2*(1-normCDF(Math.abs(z)));
+  const tau2=model==='FE'?0:tau2_DL;
+  const weights=wi_final.map(w=>w/wi_final.reduce((a,b)=>a+b,0)*100);
+  return {theta,se:se_theta,ci_lo,ci_hi,z,p,Q,df,Qp,I2,H2,tau2,tau:Math.sqrt(tau2),n,weights,ys,vs,wi:wi_final,model};
+}
+
+function chiSqCDF(x,k) { if(x<0)return 0; return regGammaP(k/2,x/2); }
+function regGammaP(a,x) {
+  if(x<0||a<=0)return 0; if(x===0)return 0; if(x>1e8)return 1;
+  let sum=0,term=1/a;
+  for(let i=0;i<200;i++){sum+=term;term*=x/(a+i+1);if(term<1e-10)break;}
+  return Math.exp(-x+a*Math.log(x)-logGamma(a))*sum;
+}
+function logGamma(x) {
+  const c=[76.18009172947146,-86.50532032941677,24.01409824083091,-1.231739572450155,0.1208650973866179e-2,-0.5395239384953e-5];
+  let y=x,tmp=x+5.5; tmp-=(x+0.5)*Math.log(tmp); let ser=1.000000000190015;
+  for(let j=0;j<6;j++) ser+=c[j]/++y;
+  return -tmp+Math.log(2.5066282746310005*ser/x);
+}
+function normCDF(x) {
+  const t=1/(1+0.2316419*Math.abs(x)), d=0.3989422820*Math.exp(-x*x/2);
+  const p=d*t*(0.3193815+t*(-0.3565638+t*(1.7814779+t*(-1.8212560+t*1.3302745))));
+  return x>0?1-p:p;
+}
+function zCrit(ci) {
+  const alpha=(1-ci)/2; let z=1.96;
+  for(let i=0;i<50;i++){const f=normCDF(z)-(1-alpha);z-=f/(Math.exp(-z*z/2)/Math.sqrt(2*Math.PI));}
+  return z;
+}
+function tCDF(t,df) { const x=df/(df+t*t); return 1-0.5*regBetaI(df/2,0.5,x); }
+function regBetaI(a,b,x) {
+  if(x<=0)return 0;if(x>=1)return 1;
+  const lbeta=logGamma(a)+logGamma(b)-logGamma(a+b);
+  const front=Math.exp(Math.log(x)*a+Math.log(1-x)*b-lbeta)/a;
+  let f=1,c=1,d=1-((a+b)*x/(a+1)),eps=1e-10;
+  d=1/d;f=d;
+  for(let m=1;m<=200;m++){
+    let aa=m*(b-m)*x/((a+2*m-1)*(a+2*m));
+    d=1+aa*d;if(Math.abs(d)<eps)d=eps;d=1/d;c=1+aa/c;if(Math.abs(c)<eps)c=eps;f*=c*d;
+    aa=-(a+m)*(a+b+m)*x/((a+2*m)*(a+2*m+1));
+    d=1+aa*d;if(Math.abs(d)<eps)d=eps;d=1/d;c=1+aa/c;if(Math.abs(c)<eps)c=eps;
+    const del=c*d;f*=del;if(Math.abs(del-1)<1e-8)break;
+  }
+  return front*f;
+}
+function kendallTau(a,b) {
+  let nc=0,nd=0;
+  for(let i=0;i<a.length-1;i++) for(let j=i+1;j<a.length;j++) {
+    const s=(a[i]-a[j])*(b[i]-b[j]);
+    if(s>0)nc++;else if(s<0)nd++;
+  }
+  const n=a.length; return(nc-nd)/(n*(n-1)/2);
+}
+function rankData(arr) {
+  const sorted=[...arr].map((v,i)=>({v,i})).sort((a,b)=>a.v-b.v);
+  const ranks=new Array(arr.length);
+  sorted.forEach((s,r)=>ranks[s.i]=r+1); return ranks;
+}
+function simpleRegression(x,y) {
+  const n=x.length,mx=x.reduce((a,b)=>a+b)/n,my=y.reduce((a,b)=>a+b)/n;
+  const ss=x.reduce((s,xi)=>s+(xi-mx)**2,0);
+  const sc=x.reduce((s,xi,i)=>s+(xi-mx)*(y[i]-my),0);
+  const slope=sc/ss,intercept=my-slope*mx;
+  const res=y.map((yi,i)=>yi-(intercept+slope*x[i]));
+  const mse=res.reduce((s,r)=>s+r*r,0)/(n-2);
+  return {slope,intercept,se_slope:Math.sqrt(mse/ss)};
+}
+function fmt(n,d=3){return n==null||isNaN(n)?'—':Number(n).toFixed(d);}
+function fmtP(p){if(p==null||isNaN(p))return'—';if(p<0.001)return'< 0.001';return p.toFixed(3);}
+function logitInv(x){return 1/(1+Math.exp(-x));}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  CANVAS DRAWING UTILITIES
+// ═══════════════════════════════════════════════════════════════════════
+const C = { bg:'#0d1117',surface:'#161b22',text:'#e6edf3',text2:'#8b949e',text3:'#6e7681',accent:'#58a6ff',green:'#3fb950',warn:'#e3b341',danger:'#f85149',border:'#30363d',purple:'#d2a8ff' };
+const GRP_COLORS = ['#58a6ff','#3fb950','#f78166','#d2a8ff','#e3b341','#79c0ff','#56d364','#ff7b72'];
+
+function makeCanvas(id, w, h) {
+  const canvas = document.getElementById(id);
+  canvas.width=w; canvas.height=h;
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,w,h);
+  ctx.fillStyle=C.bg; ctx.fillRect(0,0,w,h);
+  return {canvas,ctx};
+}
+
+function drawForestCore(ctx,canvas,sorted,pooled,label,ciPct,z_c,opts={}) {
+  const rowH=28,hH=50,fH=70,totalRows=sorted.length+1;
+  canvas.height=hH+totalRows*rowH+fH;
+  ctx.fillStyle=C.bg; ctx.fillRect(0,0,canvas.width,canvas.height);
+  const lW=opts.lW||190,esW=opts.esW||78,ciW=opts.ciW||130;
+  const plotX=lW+esW+ciW+10,plotW=canvas.width-plotX-95,wX=canvas.width-88;
+
+  const allLo=sorted.map(s=>s._lo),allHi=sorted.map(s=>s._hi);
+  const mn=Math.min(...allLo,pooled.ci_lo,-0.1),mx=Math.max(...allHi,pooled.ci_hi,0.1);
+  const rng=mx-mn,pMin=mn-rng*0.05,pMax=mx+rng*0.05;
+  const toX=v=>plotX+((v-pMin)/(pMax-pMin))*plotW;
+
+  ctx.fillStyle=C.text2;ctx.font='600 10px DM Sans,sans-serif';
+  ctx.fillText('Study',8,30);ctx.fillText('ES',lW+8,30);ctx.fillText(ciPct+'% CI',lW+esW+8,30);ctx.fillText('Weight',wX,30);
+  ctx.strokeStyle=C.border;ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(0,hH-6);ctx.lineTo(canvas.width,hH-6);ctx.stroke();
+
+  const zeroX=toX(0);
+  ctx.strokeStyle='#3a4048';ctx.setLineDash([4,4]);
+  ctx.beginPath();ctx.moveTo(zeroX,hH-6);ctx.lineTo(zeroX,hH+totalRows*rowH);ctx.stroke();
+  ctx.setLineDash([]);
+
+  sorted.forEach((s,i)=>{
+    const y=hH+i*rowH+rowH/2;
+    const es=s._es,lo=s._lo,hi=s._hi,w=pooled.weights[i];
+    const bz=Math.max(3,Math.min(11,w*0.4+3));
+    const col=opts.colors?opts.colors[i]:C.accent;
+    ctx.fillStyle=C.text;ctx.font='11px DM Sans,sans-serif';
+    ctx.fillText((s.author||'?')+' ('+(s.year||'?')+')'.slice(0,22),8,y+4);
+    ctx.fillStyle=C.text2;ctx.font='10px DM Mono,monospace';
+    ctx.fillText(fmt(es),lW+8,y+4);
+    ctx.fillText('['+fmt(lo)+', '+fmt(hi)+']',lW+esW+8,y+4);
+    const x1=toX(lo),x2=toX(hi),xm=toX(es);
+    ctx.strokeStyle=col;ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(x1,y);ctx.lineTo(x2,y);ctx.stroke();
+    [x1,x2].forEach(x=>{ctx.beginPath();ctx.moveTo(x,y-4);ctx.lineTo(x,y+4);ctx.stroke();});
+    ctx.fillStyle=col;ctx.fillRect(xm-bz/2,y-bz/2,bz,bz);
+    ctx.fillStyle=C.text2;ctx.font='10px DM Mono,monospace';
+    ctx.fillText(fmt(w,1)+'%',wX,y+4);
+  });
+
+  // Pooled diamond
+  const py=hH+sorted.length*rowH+rowH/2;
+  ctx.strokeStyle=C.border;ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(0,py-rowH/2);ctx.lineTo(canvas.width,py-rowH/2);ctx.stroke();
+  ctx.fillStyle=C.green;ctx.font='bold 11px DM Sans,sans-serif';
+  ctx.fillText('Pooled ('+pooled.model+')',8,py+4);
+  ctx.fillStyle=C.text2;ctx.font='10px DM Mono,monospace';
+  ctx.fillText(fmt(pooled.theta),lW+8,py+4);
+  ctx.fillText('['+fmt(pooled.ci_lo)+', '+fmt(pooled.ci_hi)+']',lW+esW+8,py+4);
+  const dl=toX(pooled.ci_lo),dr=toX(pooled.ci_hi),dc=toX(pooled.theta);
+  ctx.fillStyle=C.green;ctx.beginPath();ctx.moveTo(dl,py);ctx.lineTo(dc,py-8);ctx.lineTo(dr,py);ctx.lineTo(dc,py+8);ctx.closePath();ctx.fill();
+
+  // Axis
+  const axY=hH+totalRows*rowH+18;
+  ctx.strokeStyle=C.border;ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(plotX,axY);ctx.lineTo(plotX+plotW,axY);ctx.stroke();
+  ctx.fillStyle=C.text2;ctx.font='9px DM Mono,monospace';ctx.textAlign='center';
+  for(let t=0;t<=5;t++){
+    const v=pMin+t/5*(pMax-pMin),tx=toX(v);
+    ctx.beginPath();ctx.moveTo(tx,axY);ctx.lineTo(tx,axY+4);ctx.stroke();
+    ctx.fillText(fmt(v,2),tx,axY+13);
+  }
+  ctx.textAlign='left';
+  ctx.fillStyle=C.text3;ctx.font='9px DM Mono,monospace';
+  ctx.fillText(`I²=${fmt(pooled.I2,1)}%  τ²=${fmt(pooled.tau2)}  Q=${fmt(pooled.Q,2)},p=${fmtP(pooled.Qp)}  ${label}`,plotX,axY+30);
+}
+
+function drawSubgroupForestCore(ctx,canvas,groupPooled,rAll,label,ciPct) {
+  const rowH=26,hH=50,fH=60,gap=12;
+  let total=0;
+  groupPooled.forEach(({gs})=>{ total+=gs.length+1; }); // +1 pooled per group
+  total+=groupPooled.length-1+2; // separators + overall
+  canvas.height=hH+total*rowH+gap*groupPooled.length+fH;
+  ctx.fillStyle=C.bg;ctx.fillRect(0,0,canvas.width,canvas.height);
+  const lW=200,esW=72,ciW=128,plotX=lW+esW+ciW+10,plotW=canvas.width-plotX-88,wX=canvas.width-82;
+
+  const allVals=[];
+  groupPooled.forEach(({gs,r})=>{gs.forEach(s=>{allVals.push(s._lo,s._hi);});allVals.push(r.ci_lo,r.ci_hi);});
+  allVals.push(rAll.ci_lo,rAll.ci_hi);
+  const mn=Math.min(...allVals,-0.1),mx=Math.max(...allVals,0.1);
+  const rng=mx-mn,pMin=mn-rng*0.06,pMax=mx+rng*0.06;
+  const toX=v=>plotX+((v-pMin)/(pMax-pMin))*plotW;
+
+  ctx.fillStyle=C.text2;ctx.font='600 10px DM Sans,sans-serif';
+  ctx.fillText('Study',8,30);ctx.fillText('ES',lW+8,30);ctx.fillText(ciPct+'% CI',lW+esW+8,30);ctx.fillText('Wt %',wX,30);
+  ctx.strokeStyle=C.border;ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(0,hH-6);ctx.lineTo(canvas.width,hH-6);ctx.stroke();
+  ctx.strokeStyle='#3a4048';ctx.setLineDash([4,4]);
+  ctx.beginPath();ctx.moveTo(toX(0),hH-6);ctx.lineTo(toX(0),canvas.height-fH);ctx.stroke();
+  ctx.setLineDash([]);
+
+  let curY=hH;
+  groupPooled.forEach(({grp,gs,r},gi)=>{
+    const col=GRP_COLORS[gi%GRP_COLORS.length];
+    ctx.fillStyle=col;ctx.font='bold 11px DM Sans,sans-serif';
+    ctx.fillText('▸ '+grp,8,curY+rowH*0.65);curY+=rowH;
+    gs.forEach((s,si)=>{
+      const y=curY+rowH/2;
+      const w=r.weights?r.weights[si]:null;
+      const bz=w?Math.max(3,Math.min(10,w*0.4+3)):5;
+      ctx.fillStyle=C.text;ctx.font='11px DM Sans,sans-serif';
+      ctx.fillText('  '+(s.author||'?')+' ('+(s.year||'?')+')',8,y+4);
+      ctx.fillStyle=C.text2;ctx.font='10px DM Mono,monospace';
+      ctx.fillText(fmt(s._es),lW+8,y+4);
+      ctx.fillText('['+fmt(s._lo)+', '+fmt(s._hi)+']',lW+esW+8,y+4);
+      const x1=toX(s._lo),x2=toX(s._hi),xm=toX(s._es);
+      ctx.strokeStyle=col;ctx.lineWidth=1.5;
+      ctx.beginPath();ctx.moveTo(x1,y);ctx.lineTo(x2,y);ctx.stroke();
+      [x1,x2].forEach(x=>{ctx.beginPath();ctx.moveTo(x,y-4);ctx.lineTo(x,y+4);ctx.stroke();});
+      ctx.fillStyle=col;ctx.fillRect(xm-bz/2,y-bz/2,bz,bz);
+      if(w) {ctx.fillStyle=C.text2;ctx.font='10px DM Mono,monospace';ctx.fillText(fmt(w,1)+'%',wX,y+4);}
+      curY+=rowH;
+    });
+    const py=curY+rowH/2;
+    ctx.strokeStyle=C.border;ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(8,py-rowH/2+2);ctx.lineTo(canvas.width-8,py-rowH/2+2);ctx.stroke();
+    ctx.fillStyle=col;ctx.font='bold 11px DM Sans,sans-serif';ctx.fillText('  Subtotal — '+grp,8,py+4);
+    ctx.fillStyle=C.text2;ctx.font='10px DM Mono,monospace';
+    ctx.fillText(fmt(r.theta),lW+8,py+4);
+    ctx.fillText('['+fmt(r.ci_lo)+', '+fmt(r.ci_hi)+']',lW+esW+8,py+4);
+    ctx.fillStyle=r.I2<50?C.green:C.warn;ctx.font='9px DM Mono,monospace';
+    ctx.fillText('I²='+fmt(r.I2,1)+'%',wX,py+4);
+    const dl=toX(r.ci_lo),dr=toX(r.ci_hi),dc=toX(r.theta);
+    ctx.fillStyle=col;ctx.beginPath();ctx.moveTo(dl,py);ctx.lineTo(dc,py-7);ctx.lineTo(dr,py);ctx.lineTo(dc,py+7);ctx.closePath();ctx.fill();
+    curY+=rowH;
+    if(gi<groupPooled.length-1) curY+=gap;
+  });
+
+  curY+=4;
+  ctx.strokeStyle=C.border;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(0,curY);ctx.lineTo(canvas.width,curY);ctx.stroke();curY+=4;
+  const opy=curY+rowH/2;
+  ctx.fillStyle=C.green;ctx.font='bold 11px DM Sans,sans-serif';ctx.fillText('Overall Pooled',8,opy+4);
+  ctx.fillStyle=C.text2;ctx.font='10px DM Mono,monospace';
+  ctx.fillText(fmt(rAll.theta),lW+8,opy+4);
+  ctx.fillText('['+fmt(rAll.ci_lo)+', '+fmt(rAll.ci_hi)+']',lW+esW+8,opy+4);
+  const odl=toX(rAll.ci_lo),odr=toX(rAll.ci_hi),odc=toX(rAll.theta);
+  ctx.fillStyle=C.green;ctx.beginPath();ctx.moveTo(odl,opy);ctx.lineTo(odc,opy-9);ctx.lineTo(odr,opy);ctx.lineTo(odc,opy+9);ctx.closePath();ctx.fill();
+  curY+=rowH+6;
+  ctx.strokeStyle=C.border;ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(plotX,curY);ctx.lineTo(plotX+plotW,curY);ctx.stroke();
+  ctx.fillStyle=C.text2;ctx.font='9px DM Mono,monospace';ctx.textAlign='center';
+  for(let t=0;t<=5;t++){const v=pMin+t/5*(pMax-pMin),tx=toX(v);ctx.beginPath();ctx.moveTo(tx,curY);ctx.lineTo(tx,curY+4);ctx.stroke();ctx.fillText(fmt(v,2),tx,curY+13);}
+  ctx.textAlign='left';
+  ctx.fillStyle=C.text3;ctx.font='9px DM Mono,monospace';
+  ctx.fillText(`Overall: I²=${fmt(rAll.I2,1)}%  Q=${fmt(rAll.Q,2)},p=${fmtP(rAll.Qp)}  ${label}`,plotX,curY+30);
+  let lgx=plotX;
+  groupPooled.forEach(({grp},gi)=>{
+    const col=GRP_COLORS[gi%GRP_COLORS.length];
+    ctx.fillStyle=col;ctx.fillRect(lgx,curY+42,9,9);
+    ctx.fillStyle=C.text2;ctx.font='9px DM Sans,sans-serif';ctx.textAlign='left';
+    ctx.fillText(grp.slice(0,12),lgx+12,curY+50);lgx+=ctx.measureText(grp.slice(0,12)).width+26;
+  });
+}
+
+function drawFunnelCore(ctx,canvas,ys,ses,pooledTheta) {
+  canvas.width=560;canvas.height=380;
+  ctx.fillStyle=C.surface;ctx.fillRect(0,0,canvas.width,canvas.height);
+  const m={t:30,r:40,b:60,l:70};
+  const W=canvas.width-m.l-m.r,H=canvas.height-m.t-m.b;
+  const maxSE=Math.max(...ses)*1.1;
+  const minES=Math.min(...ys)-0.5,maxES=Math.max(...ys)+0.5;
+  const px=es=>m.l+(es-minES)/(maxES-minES)*W;
+  const py=se=>m.t+(se/maxSE)*H;
+  // Pseudo CI funnel
+  ctx.strokeStyle='#333';ctx.setLineDash([5,5]);
+  const topSE=0;
+  [[1.96,'#3a3050'],[1.645,'#2a4030']].forEach(([z,col])=>{
+    ctx.fillStyle=col+'50';
+    ctx.beginPath();
+    ctx.moveTo(px(pooledTheta),py(0));
+    ctx.lineTo(px(pooledTheta+z*maxSE),py(maxSE));
+    ctx.lineTo(px(pooledTheta-z*maxSE),py(maxSE));
+    ctx.closePath();ctx.fill();
+  });
+  ctx.setLineDash([]);
+  // Center line
+  ctx.strokeStyle=C.accent;ctx.lineWidth=1.5;ctx.setLineDash([4,4]);
+  ctx.beginPath();ctx.moveTo(px(pooledTheta),py(0));ctx.lineTo(px(pooledTheta),py(maxSE));ctx.stroke();
+  ctx.setLineDash([]);
+  // Studies
+  ys.forEach((y,i)=>{
+    ctx.fillStyle=C.warn;ctx.strokeStyle=C.bg;ctx.lineWidth=1;
+    ctx.beginPath();ctx.arc(px(y),py(ses[i]),5,0,Math.PI*2);ctx.fill();ctx.stroke();
+  });
+  // Axes
+  ctx.strokeStyle=C.text2;ctx.lineWidth=1.2;
+  ctx.beginPath();ctx.moveTo(m.l,m.t);ctx.lineTo(m.l,m.t+H);ctx.lineTo(m.l+W,m.t+H);ctx.stroke();
+  ctx.fillStyle=C.text2;ctx.font='9px DM Mono,monospace';ctx.textAlign='center';
+  for(let t=0;t<=5;t++){
+    const v=minES+t/5*(maxES-minES),x=px(v);
+    ctx.beginPath();ctx.moveTo(x,m.t+H);ctx.lineTo(x,m.t+H+4);ctx.stroke();
+    ctx.fillText(fmt(v,2),x,m.t+H+14);
+  }
+  ctx.textAlign='right';
+  [0,0.25,0.5,0.75,1].forEach(t=>{
+    const v=maxSE*t,y=py(v);
+    ctx.beginPath();ctx.moveTo(m.l-4,y);ctx.lineTo(m.l,y);ctx.stroke();
+    ctx.fillText(fmt(v,3),m.l-7,y+3);
+  });
+  ctx.fillStyle=C.text;ctx.font='bold 11px DM Sans,sans-serif';ctx.textAlign='center';
+  ctx.fillText('Effect Size',m.l+W/2,m.t+H+34);
+  ctx.save();ctx.translate(16,m.t+H/2);ctx.rotate(-Math.PI/2);ctx.fillText('Standard Error',0,0);ctx.restore();
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  ANALYSIS ROUTING
+// ═══════════════════════════════════════════════════════════════════════
+let lastPlotCanvas = null; // for download
+
+function runAnalysisSection(type, section) {
+  const el = document.getElementById('analysis-content');
+  el.innerHTML = '<div class="loading"><div class="spinner"></div>Computing...</div>';
+  setTimeout(()=>{
+    try {
+      if (type==='eff'||type==='assoc') runStandardSection(type,section,el);
+      else if (type==='diag') runDiagSection(section,el);
+      else if (type==='prev') runPrevSection(section,el);
+    } catch(e) { el.innerHTML = `<div class="notice notice-warn"><span>⚠️</span><div>Error: ${e.message}</div></div>`; console.error(e); }
+  },10);
+}
+
+// ─────────────────────────────────────────────────────────────────────
+//  EFFECTIVENESS / ASSOCIATION — all sections
+// ─────────────────────────────────────────────────────────────────────
+function getEffStudies(type) {
+  return (state.studies[type]||[]).filter(s=>!isNaN(parseFloat(s.effect_size))&&!isNaN(parseFloat(s.variance))&&parseFloat(s.variance)>0);
+}
+
+function getEffTransformed(studies, type) {
+  // For ratio measures (OR,RR,HR) — work on log scale
+  const logTypes = new Set(['OR','RR','HR']);
+  return studies.map(s=>{
+    const et = (s.effect_type||state.project.effectType||'').toUpperCase();
+    const es = parseFloat(s.effect_size);
+    const v = parseFloat(s.variance);
+    if (logTypes.has(et) && es>0) return {es:Math.log(es),v,_raw:es,_isLog:true};
+    return {es,v,_isLog:false};
+  });
+}
+
+function runStandardSection(type, section, el) {
+  const studies = getEffStudies(type);
+  const et = type==='assoc'?'Effect Size (OR/RR/r)':'Effect Size';
+  const ciPct = Math.round((state.project.ci||0.95)*100);
+  const z_c = zCrit(state.project.ci||0.95);
+
+  if (studies.length<2 && section!=='subgroup' && section!=='regression') {
+    el.innerHTML = emptyState(t('notice_need2'));
+    return;
+  }
+
+  const transformed = getEffTransformed(studies, type);
+  const ys = transformed.map(t=>t.es), vs = transformed.map(t=>t.v);
+  const pooled = studies.length>=2 ? computePooled(ys,vs) : null;
+
+  // Annotate studies with CI bounds
+  studies.forEach((s,i)=>{
+    s._es=transformed[i].es;s._lo=transformed[i].es-z_c*Math.sqrt(vs[i]);s._hi=transformed[i].es+z_c*Math.sqrt(vs[i]);
+    s._isLog=transformed[i]._isLog;
+  });
+
+  if (section==='pooled') el.innerHTML = renderStdPooled(studies,pooled,et,ciPct,z_c,type);
+  else if (section==='forest') { el.innerHTML = renderForestControls('std'); renderStdForest(studies,pooled,et,ciPct,z_c); }
+  else if (section==='het') el.innerHTML = renderHet(pooled);
+  else if (section==='bias') renderBiasSection(studies,ys,vs,pooled,el);
+  else if (section==='subgroup') el.innerHTML = renderSubgroupSection(studies,pooled,ys,vs,z_c,ciPct,et,type);
+  else if (section==='regression') el.innerHTML = renderRegressionSection(studies,ys,vs);
+}
+
+function renderStdPooled(studies,r,et,ciPct,z_c,type) {
+  if (!r) return emptyState('Need ≥2 valid studies.');
+  const isLog=studies.some(s=>s._isLog);
+  const display=(v)=>isLog?fmt(Math.exp(v)):fmt(v);
+  const dLabel=isLog?'(back-transformed)':'';
+  return `
+  <div class="grid-3 mb-2">
+    <div class="stat-box"><div class="val">${isLog?fmt(Math.exp(r.theta)):fmt(r.theta)}</div><div class="lbl">Pooled ${et}</div><div class="sub">${ciPct}% CI [${isLog?fmt(Math.exp(r.ci_lo)):fmt(r.ci_lo)}, ${isLog?fmt(Math.exp(r.ci_hi)):fmt(r.ci_hi)}]</div></div>
+    <div class="stat-box"><div class="val">${fmt(r.I2,1)}%</div><div class="lbl">I²</div><div class="sub"><span class="tag ${r.I2<50?'tag-green':'tag-yellow'}">${r.I2<25?'Low':r.I2<50?'Moderate':r.I2<75?'Substantial':'Considerable'}</span></div></div>
+    <div class="stat-box"><div class="val">${r.n}</div><div class="lbl">Studies</div><div class="sub">${r.model==='FE'?'Fixed':'Random'}-Effects</div></div>
+  </div>
+  <div class="result-block success">
+<strong>Pooled ${et} (${r.model==='FE'?'Fixed':'Random'}-Effects, ${ciPct}% CI)</strong>
+${et} = ${isLog?fmt(Math.exp(r.theta)):fmt(r.theta)} ${dLabel}  [${isLog?fmt(Math.exp(r.ci_lo)):fmt(r.ci_lo)}, ${isLog?fmt(Math.exp(r.ci_hi)):fmt(r.ci_hi)}]
+${isLog?`log(${et}) = ${fmt(r.theta)} [${fmt(r.ci_lo)}, ${fmt(r.ci_hi)}]\n`:''}Z = ${fmt(r.z,2)}, p = ${fmtP(r.p)}
+k = ${r.n} studies</div>
+  <div class="result-block ${r.I2>75?'danger':r.I2>50?'warn':''}">
+<strong>Heterogeneity</strong>
+Q(${r.df}) = ${fmt(r.Q,2)}, p = ${fmtP(r.Qp)}
+I² = ${fmt(r.I2,1)}%  |  τ² = ${fmt(r.tau2)}  |  τ = ${fmt(r.tau)}  |  H² = ${fmt(r.H2,2)}</div>
+  <div class="card" style="padding:12px"><div class="card-title">Per-Study Contributions</div>
+  <div class="table-wrap"><table>
+    <thead><tr><th>#</th><th>Author</th><th>Year</th><th>ES</th>${isLog?'<th>Exp(ES)</th>':''}><th>Var</th><th>Weight %</th><th>Z</th></tr></thead>
+    <tbody>${studies.map((s,i)=>`<tr><td>${i+1}</td><td>${s.author||'?'}</td><td>${s.year||'?'}</td>
+      <td class="mono">${fmt(s._es)}</td>${isLog?`<td class="mono">${fmt(Math.exp(s._es))}</td>`:''}
+      <td class="mono">${fmt(s.variance)}</td>
+      <td class="mono">${fmt(r.weights[i],1)}%</td>
+      <td class="mono">${fmt(s._es/Math.sqrt(s.variance),2)}</td></tr>`).join('')}
+    </tbody></table></div></div>`;
+}
+
+function renderForestControls(mode) {
+  return `<div class="card">
+    <div class="card-title">🌲 Forest Plot</div>
+    <div class="form-group">
+      <div><label>${t('lbl_sort')}</label><select id="fp-sort"><option value="year">${t('lbl_year')}</option><option value="effect">${t('lbl_effect')}</option><option value="author">${t('lbl_author')}</option></select></div>
+      <div style="display:flex;align-items:flex-end"><button class="btn btn-primary" onclick="redrawCurrentForest()">${t('btn_generate')}</button>
+      <button class="btn btn-secondary btn-sm" style="margin-left:8px" onclick="downloadCurrentForest()">${t('btn_download_png')}</button></div>
+    </div>
+  </div>
+  <div class="forest-container"><canvas id="fp-canvas"></canvas><div id="fp-empty" class="empty-state"><span class="icon">🌲</span><p>${currentLang==='id'?'Klik Buat Plot':'Click Generate'}</p></div></div>`;
+}
+
+function redrawCurrentForest() {
+  const {type,section} = state.currentAnalysis;
+  if (type==='eff'||type==='assoc') renderStdForest(getEffStudies(type), computePooled(getEffTransformed(getEffStudies(type),type).map(t=>t.es),getEffTransformed(getEffStudies(type),type).map(t=>t.v)), type==='assoc'?'Effect':'Effect Size', Math.round((state.project.ci||0.95)*100), zCrit(state.project.ci||0.95));
+  else if (type==='prev') renderPrevForest();
+  else if (type==='diag') renderDiagForest();
+}
+function downloadCurrentForest() {
+  const canvas=document.getElementById('fp-canvas');
+  if (!canvas||!canvas.width) return alert('Generate the plot first.');
+  const a=document.createElement('a');a.download='forest_plot.png';a.href=canvas.toDataURL('image/png');a.click();
+}
+
+function renderStdForest(studies, pooled, et, ciPct, z_c) {
+  if (!pooled||studies.length<2) { document.getElementById('fp-empty').style.display=''; return; }
+  document.getElementById('fp-empty').style.display='none';
+  const sort = document.getElementById('fp-sort')?.value||'year';
+  const sorted = [...studies];
+  if (sort==='year') sorted.sort((a,b)=>(a.year||0)-(b.year||0));
+  else if (sort==='effect') sorted.sort((a,b)=>a._es-b._es);
+  else sorted.sort((a,b)=>(a.author||'').localeCompare(b.author||''));
+
+  const ys=sorted.map(s=>s._es),vs=sorted.map(s=>parseFloat(s.variance));
+  const r=computePooled(ys,vs);
+  sorted.forEach((s,i)=>{s._lo=ys[i]-z_c*Math.sqrt(vs[i]);s._hi=ys[i]+z_c*Math.sqrt(vs[i]);});
+
+  const {canvas,ctx}=makeCanvas('fp-canvas',840,100);
+  canvas.height=50+sorted.length*28+70;
+  ctx.fillStyle=C.bg;ctx.fillRect(0,0,canvas.width,canvas.height);
+  drawForestCore(ctx,canvas,sorted,r,et,ciPct,z_c);
+  lastPlotCanvas=canvas;
+}
+
+function renderHet(r) {
+  if (!r) return emptyState('Need ≥2 valid studies.');
+  const I2cat=r.I2<25?'Low':r.I2<50?'Moderate':r.I2<75?'Substantial':'Considerable';
+  const I2col=r.I2<25?'tag-green':r.I2<50?'tag-yellow':'tag-red';
+  return `
+  <div class="grid-3 mb-2">
+    <div class="stat-box"><div class="val">${fmt(r.I2,1)}%</div><div class="lbl">I²</div><div class="sub"><span class="tag ${I2col}">${I2cat}</span></div></div>
+    <div class="stat-box"><div class="val">${fmt(r.tau2)}</div><div class="lbl">τ²</div><div class="sub">τ = ${fmt(r.tau)}</div></div>
+    <div class="stat-box"><div class="val">${fmt(r.Q,2)}</div><div class="lbl">Q(${r.df})</div><div class="sub">p = ${fmtP(r.Qp)}</div></div>
+  </div>
+  <div class="result-block ${r.Qp<0.05?'warn':'success'}">
+<strong>Cochran's Q Test</strong>
+Q = ${fmt(r.Q,3)}, df = ${r.df}, p = ${fmtP(r.Qp)}
+${r.Qp<0.05?'⚠️ Significant heterogeneity (p<0.05). Random-effects model recommended.':'✓ No significant heterogeneity (p≥0.05).'}</div>
+  <div class="result-block">
+<strong>Heterogeneity Indices</strong>
+I² = ${fmt(r.I2,1)}% — ${I2cat} (threshold: ${r.I2<25?'<25%':r.I2<50?'25-50%':r.I2<75?'50-75%':'>75%'})
+τ² = ${fmt(r.tau2,4)}  |  τ = ${fmt(r.tau,4)}  |  H² = ${fmt(r.H2,3)}
+Interpretation: ${r.I2<25?'Low heterogeneity — fixed-effect may be appropriate.':r.I2<50?'Moderate heterogeneity — explore moderators.':r.I2<75?'Substantial heterogeneity — random-effects strongly recommended.':'Considerable heterogeneity — question poolability.'}</div>`;
+}
+
+function renderBiasSection(studies, ys, vs, pooled, el) {
+  const ses=vs.map(v=>Math.sqrt(v));
+  const n=ys.length;
+  if (n<3) { el.innerHTML=emptyState(t('notice_need3')); return; }
+  const x_eg=ses.map(s=>1/s),y_eg=ys.map((y,i)=>y/ses[i]);
+  const eg=simpleRegression(x_eg,y_eg);
+  const eg_t=eg.slope/eg.se_slope;
+  const eg_p=2*(1-tCDF(Math.abs(eg_t),n-2));
+  const begg_tau=kendallTau(rankData(ys),rankData(vs));
+  const begg_z=begg_tau*Math.sqrt(n*(n-1)/2)/Math.sqrt(n*(n-1)*(2*n+5)/18);
+  const begg_p=2*(1-normCDF(Math.abs(begg_z)));
+  const z_vals=ys.map((y,i)=>y/ses[i]);
+  const fsn=Math.max(0,(z_vals.reduce((a,b)=>a+b)/1.645)**2-n);
+
+  el.innerHTML=`
+  <div class="grid-2 mb-2">
+    <div class="result-block ${eg_p<0.05?'warn':'success'}">
+<strong>Egger's Test (Funnel Asymmetry)</strong>
+Intercept (bias) = ${fmt(eg.intercept)}
+t = ${fmt(eg_t,2)}, df = ${n-2}, p = ${fmtP(eg_p)}
+${eg_p<0.05?'⚠️ Significant asymmetry — potential publication bias.':'✓ No significant asymmetry detected.'}</div>
+    <div class="result-block ${begg_p<0.05?'warn':'success'}">
+<strong>Begg & Mazumdar Rank Correlation</strong>
+Kendall's τ = ${fmt(begg_tau)}
+Z = ${fmt(begg_z,2)}, p = ${fmtP(begg_p)}
+${begg_p<0.05?'⚠️ Significant rank correlation.':'✓ No significant rank correlation.'}</div>
+  </div>
+  <div class="result-block">
+<strong>Rosenthal's Fail-Safe N = ${Math.round(fsn)}</strong>
+${fsn>5*n+10?`✓ Robust (FSN > 5k+10 = ${5*n+10}).`:`⚠️ May not be robust (FSN < 5k+10 = ${5*n+10}).`}</div>
+  <div class="card" style="padding:12px"><div class="card-title" style="display:flex;align-items:center;gap:8px">🔺 Funnel Plot <button class="btn btn-secondary btn-sm" style="margin-left:auto" onclick="downloadCurrentForest()">⬇️ PNG</button></div>
+  <canvas id="fp-canvas"></canvas></div>`;
+
+  setTimeout(()=>{
+    const canvas=document.getElementById('fp-canvas');
+    const ctx=canvas.getContext('2d');
+    drawFunnelCore(ctx,canvas,ys,ses,pooled.theta);
+    lastPlotCanvas=canvas;
+  },10);
+}
+
+function renderSubgroupSection(studies,pooled,ys,vs,z_c,ciPct,et,type) {
+  const mods=getModVars(studies);
+  const modelMods=state.moderators.map(m=>m.name).filter(Boolean);
+  const allMods=[...new Set([...mods,...modelMods])];
+  if (!allMods.length) return emptyState('No moderator variables found. Add studies with moderator columns, or define moderators in Setup.');
+
+  let html=`<div class="card"><div class="card-title">🗂️ Subgroup Settings</div>
+  <div class="form-group"><div><label>${t('lbl_group_var')}</label>
+  <select id="sg-var">${allMods.map(m=>`<option value="${m}">${m}</option>`).join('')}</select></div>
+  <div><label>Model within groups</label><select id="sg-model"><option value="RE">Random-Effects</option><option value="FE">Fixed-Effect</option></select></div>
+  </div><div class="flex gap-2"><button class="btn btn-primary" onclick="runSubgroupAnalysis('${type}')">▶ Run Subgroup</button>
+  <button class="btn btn-secondary btn-sm" id="sg-forest-btn" style="display:none" onclick="drawSubgroupForest('${type}')">🌲 Subgroup Forest</button></div></div>
+  <div id="sg-results"></div>
+  <div id="sg-forest-card" style="display:none" class="card">
+    <div class="card-title" style="display:flex;align-items:center;gap:8px">🌲 Subgroup Forest Plot <button class="btn btn-secondary btn-sm" style="margin-left:auto" onclick="downloadCurrentForest()">⬇️ PNG</button></div>
+    <canvas id="fp-canvas"></canvas>
+  </div>`;
+  return html;
+}
+
+let lastSubgroupData = null;
+
+function runSubgroupAnalysis(type) {
+  const studies = type==='prev'?null:getEffStudies(type);
+  const pvStudies = type==='prev'?(state.studies.prev||[]).filter(s=>!isNaN(s.cases)&&!isNaN(s.n)&&s.n>0):null;
+  const modVar=document.getElementById('sg-var').value;
+  const sgModel=document.getElementById('sg-model').value;
+  const z_c=zCrit(state.project.ci||0.95);
+  const ciPct=Math.round((state.project.ci||0.95)*100);
+
+  let groups={}, allStudies, allYs, allVs;
+  if (type==='prev') {
+    pvStudies.forEach(s=>{const g=s[modVar]||'Unknown';if(!groups[g])groups[g]=[];groups[g].push(s);});
+    allStudies=pvStudies;
+    const method=state.project.prevTransform||'ft';
+    allYs=pvStudies.map(s=>pvTransform(s.cases,s.n,method).yi);
+    allVs=pvStudies.map(s=>pvTransform(s.cases,s.n,method).vi);
+  } else {
+    const transformed=getEffTransformed(studies,type);
+    allStudies=studies; allYs=transformed.map(t=>t.es); allVs=transformed.map(t=>t.v);
+    studies.forEach((s,i)=>{const g=s[modVar]||'Unknown';if(!groups[g])groups[g]=[];groups[g].push({s,i});});
+  }
+
+  const rAll=computePooled(allYs,allVs);
+  const groupPooled=Object.entries(groups).map(([grp,items])=>{
+    let gs,gys,gvs;
+    if (type==='prev') {
+      const method=state.project.prevTransform||'ft';
+      gs=items; gys=items.map(s=>pvTransform(s.cases,s.n,method).yi); gvs=items.map(s=>pvTransform(s.cases,s.n,method).vi);
+    } else {
+      gs=items.map(x=>x.s); gys=items.map(x=>allYs[x.i]); gvs=items.map(x=>allVs[x.i]);
+    }
+    const r=computePooled(gys,gvs,sgModel);
+    if(r){ gs.forEach((s,i)=>{ s._es=gys[i]; s._lo=gys[i]-z_c*Math.sqrt(gvs[i]); s._hi=gys[i]+z_c*Math.sqrt(gvs[i]); }); }
+    return {grp,gs,r};
+  }).filter(x=>x.r);
+
+  const Q_w=groupPooled.reduce((s,{r})=>s+r.Q,0);
+  const Q_b=rAll.Q-Q_w;
+  const df_b=groupPooled.length-1;
+  const p_b=1-chiSqCDF(Q_b,df_b);
+  lastSubgroupData={groupPooled,modVar,rAll,type};
+
+  const et=type==='prev'?'Prevalence':type==='assoc'?'Effect Size':'Effect Size';
+  let html=`<div class="card"><div class="card-title">Subgroup Results by: ${modVar}</div>
+  <div class="result-block ${p_b<0.05?'warn':'success'}">
+<strong>Test of Subgroup Differences</strong>
+Q_between(${df_b}) = ${fmt(Q_b,2)}, p = ${fmtP(p_b)}
+${p_b<0.05?'⚠️ Significant differences between subgroups.':'✓ No significant subgroup differences.'}
+  </div>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Subgroup</th><th>k</th><th>Pooled ${et}</th><th>${ciPct}% CI</th><th>I²</th><th>Q (p)</th></tr></thead>
+    <tbody>${groupPooled.map(({grp,r})=>{
+      const disp=type==='prev'?v=>fmt(pvBack(v,state.project.prevTransform||'ft')*100,2)+'%':v=>fmt(v);
+      return `<tr><td><strong>${grp}</strong></td><td>${r.n}</td>
+        <td class="mono">${disp(r.theta)}</td>
+        <td class="mono">[${disp(r.ci_lo)}, ${disp(r.ci_hi)}]</td>
+        <td class="mono"><span class="tag ${r.I2<50?'tag-green':'tag-yellow'}">${fmt(r.I2,1)}%</span></td>
+        <td class="mono">${fmt(r.Q,2)} (${fmtP(r.Qp)})</td></tr>`;
+    }).join('')}</tbody>
+  </table></div></div>`;
+
+  document.getElementById('sg-results').innerHTML=html;
+  document.getElementById('sg-forest-btn').style.display='';
+}
+
+function drawSubgroupForest(type) {
+  if (!lastSubgroupData) return;
+  const {groupPooled,modVar,rAll}=lastSubgroupData;
+  const z_c=zCrit(state.project.ci||0.95);
+  const ciPct=Math.round((state.project.ci||0.95)*100);
+  document.getElementById('sg-forest-card').style.display='';
+  const canvas=document.getElementById('fp-canvas');
+  canvas.width=860;
+  const ctx=canvas.getContext('2d');
+  drawSubgroupForestCore(ctx,canvas,groupPooled,rAll,modVar,ciPct);
+  lastPlotCanvas=canvas;
+  canvas.scrollIntoView({behavior:'smooth'});
+}
+
+function renderRegressionSection(studies,ys,vs) {
+  const mods=getModVars(studies);
+  if (!mods.length) return emptyState('No moderator columns found in data.');
+  return `<div class="card"><div class="card-title">📈 Meta-Regression Settings</div>
+  <div class="form-row"><label>${t('lbl_predictors')}</label>
+  <div class="chips" id="reg-chips">${mods.map(m=>`<span class="chip" onclick="this.classList.toggle('selected')" data-mod="${m}">${m}</span>`).join('')}</div></div>
+  <button class="btn btn-primary" onclick="runMetaRegression()">▶ Run Meta-Regression</button>
+  </div><div id="reg-results"></div>`;
+}
+
+function runMetaRegression() {
+  const {type}=state.currentAnalysis;
+  let studies,ys,vs;
+  if (type==='prev') {
+    studies=(state.studies.prev||[]).filter(s=>!isNaN(s.cases)&&!isNaN(s.n)&&s.n>0);
+    const method=state.project.prevTransform||'ft';
+    ys=studies.map(s=>pvTransform(s.cases,s.n,method).yi);
+    vs=studies.map(s=>pvTransform(s.cases,s.n,method).vi);
+  } else if (type==='diag') {
+    const dxS=(state.studies.diag||[]).filter(s=>s.tp!=null);
+    const comp=dxS.map(dxCompute);
+    studies=dxS; ys=comp.map(c=>c.logDOR); vs=comp.map(c=>c.seLogDOR**2);
+  } else {
+    studies=getEffStudies(type);
+    const t=getEffTransformed(studies,type);
+    ys=t.map(x=>x.es); vs=t.map(x=>x.v);
+  }
+
+  if (studies.length<4) { document.getElementById('reg-results').innerHTML=emptyState('Need ≥4 studies.'); return; }
+  const chips=[...document.querySelectorAll('#reg-chips .chip.selected')];
+  const predictors=chips.map(c=>c.dataset.mod);
+  if (!predictors.length) return alert('Select at least one predictor.');
+
+  const tau2=computePooled(ys,vs).tau2;
+  const wi=vs.map(v=>1/(v+tau2));
+  const Xmat=buildDesignMatrix(studies,predictors);
+  if (!Xmat) return alert('Cannot build design matrix.');
+  const res=wls(ys,Xmat.X,wi,Xmat.colNames,studies.length);
+  if (!res) return alert('Matrix inversion failed.');
+
+  const {coef,se_coef,t_vals,p_vals,R2,Q_res,df_res,p_res,colNames}=res;
+  document.getElementById('reg-results').innerHTML=`<div class="card"><div class="card-title">Meta-Regression Results</div>
+  <div class="result-block">
+<strong>Model: ${predictors.join(', ')}</strong>
+Q_residual(${df_res}) = ${fmt(Q_res,2)}, p = ${fmtP(p_res)}
+R² = ${fmt(R2*100,1)}% (variance explained by moderators)</div>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Coefficient</th><th>β</th><th>SE</th><th>t</th><th>p-value</th><th>95% CI</th></tr></thead>
+    <tbody>${colNames.map((name,i)=>`<tr>
+      <td>${name}</td><td class="mono">${fmt(coef[i])}</td><td class="mono">${fmt(se_coef[i])}</td>
+      <td class="mono">${fmt(t_vals[i],2)}</td>
+      <td class="mono"><span class="tag ${p_vals[i]<0.05?'tag-green':'tag-blue'}">${fmtP(p_vals[i])}</span></td>
+      <td class="mono">[${fmt(coef[i]-1.96*se_coef[i])}, ${fmt(coef[i]+1.96*se_coef[i])}]</td>
+    </tr>`).join('')}</tbody>
+  </table></div></div>`;
+}
+
+function getModVars(studies) {
+  const skip=new Set(['id','study_type','author','year','title','effect_size','variance','se','ci_lower','ci_upper','n_total','n_intervention','n_control','effect_type','tp','fp','fn','tn','cases','n','_es','_lo','_hi','_isLog']);
+  const keys=new Set();
+  studies.forEach(s=>Object.keys(s).forEach(k=>{if(!skip.has(k)&&s[k]!=null&&s[k]!=='')keys.add(k);}));
+  state.moderators.forEach(m=>{if(m.name)keys.add(m.name);});
+  return [...keys];
+}
+
+function buildDesignMatrix(studies,predictors) {
+  const colNames=['Intercept'];
+  const X=studies.map(()=>[1]);
+  for (const pred of predictors) {
+    const vals=studies.map(s=>s[pred]);
+    const nums=vals.map(v=>parseFloat(v));
+    if (nums.every(v=>!isNaN(v))) { colNames.push(pred); nums.forEach((v,i)=>X[i].push(v)); }
+    else {
+      const cats=[...new Set(vals.filter(v=>v))];
+      cats.slice(1).forEach(cat=>{ colNames.push(pred+'='+cat); vals.forEach((v,i)=>X[i].push(v===cat?1:0)); });
+    }
+  }
+  return {X,colNames};
+}
+
+function wls(y,X,w,colNames,n) {
+  const k=X[0].length;
+  const XtWX=Array.from({length:k},()=>Array(k).fill(0));
+  const XtWy=Array(k).fill(0);
+  for(let i=0;i<n;i++){for(let j=0;j<k;j++){XtWy[j]+=X[i][j]*w[i]*y[i];for(let l=0;l<k;l++)XtWX[j][l]+=X[i][j]*w[i]*X[i][l];}}
+  const inv=invertMatrix(XtWX);
+  if(!inv)return null;
+  const coef=inv.map(row=>row.reduce((s,v,j)=>s+v*XtWy[j],0));
+  const fitted=X.map(row=>row.reduce((s,v,j)=>s+v*coef[j],0));
+  const resid=y.map((yi,i)=>yi-fitted[i]);
+  const Q_res=resid.reduce((s,r,i)=>s+w[i]*r*r,0);
+  const df_res=n-k;
+  const p_res=1-chiSqCDF(Q_res,df_res);
+  const mse=Q_res/df_res;
+  const se_coef=inv.map((_,j)=>Math.sqrt(Math.max(0,inv[j][j]*mse)));
+  const t_vals=coef.map((c,j)=>c/se_coef[j]);
+  const p_vals=t_vals.map(t=>2*(1-tCDF(Math.abs(t),df_res)));
+  const rNull=computePooled(y,y.map((_,i)=>1/w[i]-(0)));
+  const tau2_null=rNull?rNull.tau2:1;
+  const tau2_res=Math.max(0,(Q_res-df_res)/(w.reduce((s,v)=>s+v)-w.reduce((s,v)=>s+v*v,0)/w.reduce((s,v)=>s+v)));
+  const R2=Math.max(0,1-tau2_res/tau2_null);
+  return {coef,se_coef,t_vals,p_vals,R2,Q_res,df_res,p_res,colNames};
+}
+
+function invertMatrix(A) {
+  const n=A.length;
+  const aug=A.map((row,i)=>[...row,...Array.from({length:n},(_,j)=>i===j?1:0)]);
+  for(let col=0;col<n;col++){
+    let maxRow=col;
+    for(let row=col+1;row<n;row++)if(Math.abs(aug[row][col])>Math.abs(aug[maxRow][col]))maxRow=row;
+    [aug[col],aug[maxRow]]=[aug[maxRow],aug[col]];
+    if(Math.abs(aug[col][col])<1e-12)return null;
+    const div=aug[col][col];
+    for(let j=0;j<2*n;j++)aug[col][j]/=div;
+    for(let row=0;row<n;row++)if(row!==col){const f=aug[row][col];for(let j=0;j<2*n;j++)aug[row][j]-=f*aug[col][j];}
+  }
+  return aug.map(row=>row.slice(n));
+}
+
+// ─────────────────────────────────────────────────────────────────────
+//  DIAGNOSTIC — all sections
+// ─────────────────────────────────────────────────────────────────────
+function dxCompute(s) {
+  const cc=(s.tp===0||s.fp===0||s.fn===0||s.tn===0)?0.5:0;
+  const tp=+s.tp+cc,fp=+s.fp+cc,fn=+s.fn+cc,tn=+s.tn+cc;
+  const sens=tp/(tp+fn),spec=tn/(tn+fp);
+  const plr=sens/(1-spec),nlr=(1-sens)/spec;
+  const dor=(tp*tn)/(fp*fn),logDOR=Math.log(dor);
+  const seLogDOR=Math.sqrt(1/tp+1/fp+1/fn+1/tn);
+  const logitSens=Math.log(sens/(1-sens)),logitSpec=Math.log(spec/(1-spec));
+  return {sens,spec,plr,nlr,dor,logDOR,seLogDOR,logitSens,logitSpec,D:logitSens+logitSpec,S:logitSens-logitSpec,tp,fp,fn,tn};
+}
+
+function poolRE(ys,vs) {
+  const n=ys.length;
+  const wi_fe=vs.map(v=>1/v);
+  const W=wi_fe.reduce((a,b)=>a+b,0);
+  const theta_fe=wi_fe.reduce((s,w,i)=>s+w*ys[i],0)/W;
+  const Q=wi_fe.reduce((s,w,i)=>s+w*(ys[i]-theta_fe)**2,0);
+  const C=W-wi_fe.reduce((s,w)=>s+w*w,0)/W;
+  const tau2=Math.max(0,(Q-(n-1))/C);
+  const wi_re=vs.map(v=>1/(v+tau2));
+  const W_re=wi_re.reduce((a,b)=>a+b,0);
+  const theta=wi_re.reduce((s,w,i)=>s+w*ys[i],0)/W_re;
+  const se=Math.sqrt(1/W_re);
+  const I2=Math.max(0,((Q-(n-1))/Q)*100);
+  const z_c=zCrit(state.project.ci||0.95);
+  return {theta,se,tau2,Q,I2,ci_lo:theta-z_c*se,ci_hi:theta+z_c*se,weights:wi_re.map(w=>w/W_re*100),n};
+}
+
+function runDiagSection(section, el) {
+  const dxStudies=(state.studies.diag||[]).filter(s=>s.tp!=null);
+  const ciPct=Math.round((state.project.ci||0.95)*100);
+  const z_c=zCrit(state.project.ci||0.95);
+
+  if (dxStudies.length<2&&section!=='subgroup'&&section!=='regression') { el.innerHTML=emptyState(currentLang==='id'?'Dibutuhkan ≥2 studi diagnostik dengan TP, FP, FN, TN.':'Need ≥2 diagnostic studies with TP, FP, FN, TN.'); return; }
+
+  const comp=dxStudies.map(dxCompute);
+
+  if (section==='pooled') el.innerHTML=renderDiagPooled(dxStudies,comp,ciPct,z_c);
+  else if (section==='forest') { el.innerHTML=renderForestControls('diag'); setTimeout(()=>renderDiagForest(dxStudies,comp,ciPct,z_c),50); }
+  else if (section==='sroc') el.innerHTML=renderSROCSection(dxStudies,comp,ciPct);
+  else if (section==='bias') renderDiagBias(dxStudies,comp,el);
+  else if (section==='subgroup') el.innerHTML=renderSubgroupSectionDiag(dxStudies);
+  else if (section==='regression') {
+    const ys=comp.map(c=>c.logDOR),vs=comp.map(c=>c.seLogDOR**2);
+    el.innerHTML=renderRegressionSection(dxStudies,ys,vs);
+  }
+}
+
+function renderDiagPooled(dxStudies,comp,ciPct,z_c) {
+  const poolSens=poolRE(comp.map(c=>c.logitSens),comp.map(c=>{const {tp,fn}=c;return 1/tp+1/fn;}));
+  const poolSpec=poolRE(comp.map(c=>c.logitSpec),comp.map(c=>{const {fp,tn}=c;return 1/fp+1/tn;}));
+  const logDORs=comp.map(c=>c.logDOR),varDORs=comp.map(c=>c.seLogDOR**2);
+  const poolDOR=poolRE(logDORs,varDORs);
+  const pSens=logitInv(poolSens.theta),pSpec=logitInv(poolSpec.theta);
+  const pSensLo=logitInv(poolSens.ci_lo),pSensHi=logitInv(poolSens.ci_hi);
+  const pSpecLo=logitInv(poolSpec.ci_lo),pSpecHi=logitInv(poolSpec.ci_hi);
+  const pDOR=Math.exp(poolDOR.theta),pDORlo=Math.exp(poolDOR.ci_lo),pDORhi=Math.exp(poolDOR.ci_hi);
+  const pPLR=pSens/(1-pSpec),pNLR=(1-pSens)/pSpec;
+
+  const Ss=comp.map(c=>c.S),Ds=comp.map(c=>c.D),n=Ss.length;
+  const Smean=Ss.reduce((a,b)=>a+b)/n,Dmean=Ds.reduce((a,b)=>a+b)/n;
+  const SSD=Ss.reduce((a,v)=>a+(v-Smean)**2,0),SCD=Ss.reduce((a,v,i)=>a+(v-Smean)*(Ds[i]-Dmean),0);
+  const b=SSD>0?SCD/SSD:0,a=Dmean-b*Smean;
+  const auc=srocAUC(a,b);
+
+  return `
+  <div class="grid-4 mb-2">
+    <div class="stat-box"><div class="val">${fmt(pSens*100,1)}%</div><div class="lbl">Pooled Sensitivity</div><div class="sub">[${fmt(pSensLo*100,1)}%, ${fmt(pSensHi*100,1)}%]</div></div>
+    <div class="stat-box"><div class="val">${fmt(pSpec*100,1)}%</div><div class="lbl">Pooled Specificity</div><div class="sub">[${fmt(pSpecLo*100,1)}%, ${fmt(pSpecHi*100,1)}%]</div></div>
+    <div class="stat-box"><div class="val">${fmt(pDOR,1)}</div><div class="lbl">Pooled DOR</div><div class="sub">[${fmt(pDORlo,1)}, ${fmt(pDORhi,1)}]</div></div>
+    <div class="stat-box"><div class="val">${fmt(auc,3)}</div><div class="lbl">SROC AUC</div><div class="sub">${auc>0.97?'Outstanding':auc>0.93?'Excellent':auc>0.85?'Good':'Fair'}</div></div>
+  </div>
+  <div class="grid-2 mb-2">
+    <div class="result-block success">
+<strong>Pooled Diagnostic Accuracy (${ciPct}% CI)</strong>
+Sensitivity = ${fmt(pSens*100,1)}% [${fmt(pSensLo*100,1)}%, ${fmt(pSensHi*100,1)}%]
+Specificity = ${fmt(pSpec*100,1)}% [${fmt(pSpecLo*100,1)}%, ${fmt(pSpecHi*100,1)}%]
+Positive LR (+LR) = ${fmt(pPLR,2)}  ${pPLR>10?'(Excellent rule-in)':pPLR>5?'(Good rule-in)':pPLR>2?'(Fair)':'(Poor)'}
+Negative LR (−LR) = ${fmt(pNLR,3)}  ${pNLR<0.1?'(Excellent rule-out)':pNLR<0.2?'(Good rule-out)':pNLR<0.5?'(Fair)':'(Poor)'}
+DOR = ${fmt(pDOR,1)} [${fmt(pDORlo,1)}, ${fmt(pDORhi,1)}]</div>
+    <div class="result-block">
+<strong>SROC Summary</strong>
+AUC ≈ ${fmt(auc,3)} — ${auc>0.97?'Outstanding':auc>0.93?'Excellent':auc>0.85?'Good':auc>0.75?'Fair':'Poor'}
+SROC intercept (a) = ${fmt(a,3)}
+SROC slope    (b) = ${fmt(b,3)}
+Heterogeneity (DOR): I² = ${fmt(poolDOR.I2,1)}%</div>
+  </div>
+  <div class="card" style="padding:12px"><div class="card-title">Per-Study Accuracy</div>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Study</th><th>TP</th><th>FP</th><th>FN</th><th>TN</th><th>Sens %</th><th>Spec %</th><th>+LR</th><th>−LR</th><th>DOR</th></tr></thead>
+    <tbody>${dxStudies.map((s,i)=>{const c=comp[i];return`<tr>
+      <td>${s.author||'?'} ${s.year?'('+s.year+')':''}</td>
+      <td class="mono">${s.tp}</td><td class="mono">${s.fp}</td><td class="mono">${s.fn}</td><td class="mono">${s.tn}</td>
+      <td class="mono">${fmt(c.sens*100,1)}</td><td class="mono">${fmt(c.spec*100,1)}</td>
+      <td class="mono">${fmt(c.plr,2)}</td><td class="mono">${fmt(c.nlr,3)}</td><td class="mono">${fmt(c.dor,1)}</td>
+    </tr>`;}).join('')}</tbody>
+  </table></div></div>`;
+}
+
+function renderDiagForest(dxStudies,comp,ciPct,z_c) {
+  if (!dxStudies) { dxStudies=(state.studies.diag||[]).filter(s=>s.tp!=null); comp=dxStudies.map(dxCompute); ciPct=Math.round((state.project.ci||0.95)*100); z_c=zCrit(state.project.ci||0.95); }
+  if (dxStudies.length<2) return;
+  document.getElementById('fp-empty').style.display='none';
+
+  // Forest of logDOR
+  const ys=comp.map(c=>c.logDOR),vs=comp.map(c=>c.seLogDOR**2);
+  const pooled=computePooled(ys,vs);
+  const sorted=[...dxStudies].map((s,i)=>({...s,_es:ys[i],_lo:ys[i]-z_c*Math.sqrt(vs[i]),_hi:ys[i]+z_c*Math.sqrt(vs[i])}));
+
+  const {canvas,ctx}=makeCanvas('fp-canvas',860,100);
+  canvas.height=50+sorted.length*28+70;
+  ctx.fillStyle=C.bg;ctx.fillRect(0,0,canvas.width,canvas.height);
+  drawForestCore(ctx,canvas,sorted,pooled,'log(DOR)',ciPct,z_c);
+  lastPlotCanvas=canvas;
+}
+
+function renderSROCSection(dxStudies,comp,ciPct) {
+  const poolSens=poolRE(comp.map(c=>c.logitSens),comp.map(c=>{const {tp,fn}=c;return 1/tp+1/fn;}));
+  const poolSpec=poolRE(comp.map(c=>c.logitSpec),comp.map(c=>{const {fp,tn}=c;return 1/fp+1/tn;}));
+  const pSens=logitInv(poolSens.theta),pSpec=logitInv(poolSpec.theta);
+  const Ss=comp.map(c=>c.S),Ds=comp.map(c=>c.D),n=Ss.length;
+  const Smean=Ss.reduce((a,b)=>a+b)/n,Dmean=Ds.reduce((a,b)=>a+b)/n;
+  const SSD=Ss.reduce((a,v)=>a+(v-Smean)**2,0),SCD=Ss.reduce((a,v,i)=>a+(v-Smean)*(Ds[i]-Dmean),0);
+  const b=SSD>0?SCD/SSD:0,a=Dmean-b*Smean;
+  const auc=srocAUC(a,b);
+
+  return `<div class="card"><div class="card-title" style="display:flex;align-items:center;gap:8px">📈 SROC Curve — AUC ≈ ${fmt(auc,3)} <button class="btn btn-secondary btn-sm" style="margin-left:auto" onclick="downloadCurrentForest()">⬇️ PNG</button></div>
+  <canvas id="fp-canvas"></canvas></div>
+  <div class="result-block">
+<strong>SROC Parameters (Moses-Littenberg)</strong>
+a (intercept) = ${fmt(a,4)}
+b (slope) = ${fmt(b,4)}
+AUC ≈ ${fmt(auc,4)} — ${auc>0.97?'Outstanding':auc>0.93?'Excellent':auc>0.85?'Good':auc>0.75?'Fair':'Poor'} discriminatory ability
+Pooled operating point: Sens=${fmt(pSens*100,1)}%, Spec=${fmt(pSpec*100,1)}%</div>
+<div class="text-xs">Dots = individual studies (1−Spec vs Sens). Green diamond = pooled operating point.</div>`;
+}
+
+function renderDiagBias(dxStudies,comp,el) {
+  const ys=comp.map(c=>c.logDOR),ses=comp.map(c=>c.seLogDOR);
+  const poolDOR=poolRE(ys,comp.map(c=>c.seLogDOR**2));
+  const n=ys.length;
+  if(n<3){el.innerHTML=emptyState('Need ≥3 studies.');return;}
+  const x_eg=ses.map(s=>1/s),y_eg=ys.map((y,i)=>y/ses[i]);
+  const eg=simpleRegression(x_eg,y_eg);
+  const eg_t=eg.slope/eg.se_slope;
+  const eg_p=2*(1-tCDF(Math.abs(eg_t),n-2));
+
+  el.innerHTML=`<div class="result-block ${eg_p<0.05?'warn':'success'}">
+<strong>Deeks' Funnel Plot Asymmetry Test (Diagnostic)</strong>
+Intercept (bias) = ${fmt(eg.intercept)}
+t = ${fmt(eg_t,2)}, df = ${n-2}, p = ${fmtP(eg_p)}
+${eg_p<0.05?'⚠️ Potential publication bias.':'✓ No significant asymmetry detected.'}
+Note: For diagnostic studies, Deeks et al. recommend 1/√(ESS) as the precision measure.</div>
+  <div class="card" style="padding:12px"><div class="card-title">🔺 Funnel Plot (logDOR vs SE)<button class="btn btn-secondary btn-sm" style="margin-left:auto" onclick="downloadCurrentForest()">⬇️ PNG</button></div>
+  <canvas id="fp-canvas"></canvas></div>`;
+
+  setTimeout(()=>{
+    const canvas=document.getElementById('fp-canvas');
+    const ctx=canvas.getContext('2d');
+    drawFunnelCore(ctx,canvas,ys,ses,poolDOR.theta);
+    lastPlotCanvas=canvas;
+  },10);
+}
+
+function renderSubgroupSectionDiag(dxStudies) {
+  const mods=getModVars(dxStudies);
+  if (!mods.length) return emptyState(t('notice_no_mod'));
+  return `<div class="card"><div class="card-title">🗂️ Diagnostic Subgroup Settings</div>
+  <div class="form-group"><div><label>${t('lbl_group_var')}</label><select id="sg-var">${mods.map(m=>`<option value="${m}">${m}</option>`).join('')}</select></div>
+  <div><label>Measure to pool</label><select id="dx-sg-measure"><option value="dor">log(DOR)</option><option value="sens">Sensitivity (logit)</option><option value="spec">Specificity (logit)</option></select></div></div>
+  <button class="btn btn-primary" onclick="runDiagSubgroup()">▶ Run Subgroup</button>
+  </div><div id="sg-results"></div>
+  <div id="sg-forest-card" style="display:none" class="card">
+    <div class="card-title" style="display:flex;align-items:center;gap:8px">🌲 Subgroup Forest Plot <button class="btn btn-secondary btn-sm" style="margin-left:auto" onclick="downloadCurrentForest()">⬇️ PNG</button></div>
+    <canvas id="fp-canvas"></canvas></div>`;
+}
+
+function runDiagSubgroup() {
+  const dxStudies=(state.studies.diag||[]).filter(s=>s.tp!=null);
+  const comp=dxStudies.map(dxCompute);
+  const modVar=document.getElementById('sg-var').value;
+  const measure=document.getElementById('dx-sg-measure').value;
+  const z_c=zCrit(state.project.ci||0.95);
+
+  const getY=(c)=>measure==='dor'?c.logDOR:measure==='sens'?c.logitSens:c.logitSpec;
+  const getV=(c)=>measure==='dor'?c.seLogDOR**2:measure==='sens'?1/c.tp+1/c.fn:1/c.fp+1/c.tn;
+  const allYs=comp.map(getY),allVs=comp.map(getV);
+  const rAll=poolRE(allYs,allVs);
+  rAll.ci_lo=rAll.theta-z_c*rAll.se; rAll.ci_hi=rAll.theta+z_c*rAll.se;
+
+  const groups={};
+  dxStudies.forEach((s,i)=>{const g=s[modVar]||'Unknown';if(!groups[g])groups[g]=[];groups[g].push(i);});
+  const groupPooled=Object.entries(groups).map(([grp,idxs])=>{
+    const gys=idxs.map(i=>allYs[i]),gvs=idxs.map(i=>allVs[i]);
+    const r=poolRE(gys,gvs);
+    r.ci_lo=r.theta-z_c*r.se; r.ci_hi=r.theta+z_c*r.se;
+    const gs=idxs.map(i=>({...dxStudies[i],_es:allYs[i],_lo:allYs[i]-z_c*Math.sqrt(allVs[i]),_hi:allYs[i]+z_c*Math.sqrt(allVs[i])}));
+    return {grp,gs,r};
+  }).filter(x=>x.r);
+
+  const Q_b=rAll.Q-groupPooled.reduce((s,{r})=>s+r.Q,0);
+  const df_b=groupPooled.length-1;
+  const p_b=1-chiSqCDF(Q_b,df_b);
+  lastSubgroupData={groupPooled,modVar,rAll,type:'diag'};
+
+  const mLabel=measure==='dor'?'log(DOR)':measure==='sens'?'logit(Sens)':'logit(Spec)';
+  document.getElementById('sg-results').innerHTML=`<div class="card"><div class="card-title">Results by: ${modVar} (${mLabel})</div>
+  <div class="result-block ${p_b<0.05?'warn':'success'}">Q_between(${df_b}) = ${fmt(Q_b,2)}, p = ${fmtP(p_b)}  ${p_b<0.05?'⚠️ Significant subgroup differences.':'✓ No significant differences.'}</div>
+  <div class="table-wrap"><table><thead><tr><th>Subgroup</th><th>k</th><th>Pooled ${mLabel}</th><th>95% CI</th><th>I²</th></tr></thead>
+  <tbody>${groupPooled.map(({grp,r})=>`<tr><td><strong>${grp}</strong></td><td>${r.n}</td>
+    <td class="mono">${fmt(r.theta)}</td><td class="mono">[${fmt(r.ci_lo)}, ${fmt(r.ci_hi)}]</td>
+    <td class="mono"><span class="tag ${r.I2<50?'tag-green':'tag-yellow'}">${fmt(r.I2,1)}%</span></td></tr>`).join('')}
+  </tbody></table></div></div>
+  <button class="btn btn-secondary btn-sm mt-2" onclick="drawSubgroupForest('diag')">🌲 Show Forest Plot</button>`;
+}
+
+function srocAUC(a,b) {
+  let auc=0;const steps=300;
+  for(let i=0;i<steps;i++){const fpr1=i/steps,fpr2=(i+1)/steps;auc+=(srocSens(a,b,fpr1)+srocSens(a,b,fpr2))/2*(fpr2-fpr1);}
+  return auc;
+}
+function srocSens(a,b,fpr) {
+  if(fpr<=0)return 1;if(fpr>=1)return 0;
+  const spec=1-fpr,logitSpec=Math.log(spec/(1-spec));
+  const denom=1-b;
+  if(Math.abs(denom)<1e-10)return 0.5;
+  return logitInv((a-logitSpec*(1+b))/denom);
+}
+
+// ─────────────────────────────────────────────────────────────────────
+//  PREVALENCE — all sections
+// ─────────────────────────────────────────────────────────────────────
+function pvTransform(cases,n,method) {
+  if (method==='ft') {
+    const yi=Math.asin(Math.sqrt(cases/(n+1)))+Math.asin(Math.sqrt((cases+1)/(n+1)));
+    return {yi,vi:1/(n+0.5)};
+  } else if (method==='logit') {
+    const adj=(cases===0||cases===n)?0.5:0;
+    const pa=(cases+adj)/(n+2*adj);
+    return {yi:Math.log(pa/(1-pa)),vi:1/(cases+adj)+1/(n-cases+adj)};
+  } else {
+    const adj=(cases===0||cases===n)?0.5:0;
+    const pa=(cases+adj)/(n+2*adj);
+    return {yi:pa,vi:pa*(1-pa)/n};
+  }
+}
+function pvBack(theta,method) {
+  if (method==='ft') return Math.max(0,Math.min(1,0.5*(1-Math.cos(theta))));
+  if (method==='logit') return logitInv(theta);
+  return Math.max(0,Math.min(1,theta));
+}
+function pvBackCI(thetaLo,thetaHi,method) {
+  return {lo:pvBack(thetaLo,method),hi:pvBack(thetaHi,method)};
+}
+
+function runPrevSection(section,el) {
+  const pvStudies=(state.studies.prev||[]).filter(s=>!isNaN(+s.cases)&&!isNaN(+s.n)&&+s.n>0);
+  const method=state.project.prevTransform||'ft';
+  const ciPct=Math.round((state.project.ci||0.95)*100);
+  const z_c=zCrit(state.project.ci||0.95);
+
+  if (pvStudies.length<2&&section!=='subgroup'&&section!=='regression') { el.innerHTML=emptyState(currentLang==='id'?'Dibutuhkan ≥2 studi prevalensi dengan cases dan n.':'Need ≥2 prevalence studies with cases and n.'); return; }
+
+  const transformed=pvStudies.map(s=>pvTransform(+s.cases,+s.n,method));
+  const ys=transformed.map(t=>t.yi),vs=transformed.map(t=>t.vi);
+  const pooled=pvStudies.length>=2?computePooled(ys,vs):null;
+
+  pvStudies.forEach((s,i)=>{ s._es=ys[i]; s._lo=ys[i]-z_c*Math.sqrt(vs[i]); s._hi=ys[i]+z_c*Math.sqrt(vs[i]); });
+
+  if (section==='pooled') el.innerHTML=renderPrevPooled(pvStudies,transformed,pooled,method,ciPct,z_c);
+  else if (section==='forest') { el.innerHTML=renderForestControls('prev'); setTimeout(()=>renderPrevForest(pvStudies,transformed,pooled,method,ciPct,z_c),50); }
+  else if (section==='het') el.innerHTML=renderHet(pooled);
+  else if (section==='bias') renderPrevBias(pvStudies,ys,vs,pooled,el);
+  else if (section==='subgroup') el.innerHTML=renderSubgroupSection(pvStudies,pooled,ys,vs,z_c,ciPct,'Prevalence %','prev');
+  else if (section==='regression') el.innerHTML=renderRegressionSection(pvStudies,ys,vs);
+}
+
+function renderPrevPooled(pvStudies,transformed,pooled,method,ciPct,z_c) {
+  if (!pooled) return emptyState('Need ≥2 valid studies.');
+  const back=pvBack(pooled.theta,method);
+  const {lo,hi}=pvBackCI(pooled.ci_lo,pooled.ci_hi,method);
+  const mLabel={ft:'Freeman-Tukey double arcsine',logit:'Logit',raw:'Raw proportion'}[method];
+  return `
+  <div class="grid-3 mb-2">
+    <div class="stat-box"><div class="val">${fmt(back*100,2)}%</div><div class="lbl">Pooled Prevalence</div><div class="sub">${ciPct}% CI [${fmt(lo*100,2)}%, ${fmt(hi*100,2)}%]</div></div>
+    <div class="stat-box"><div class="val">${fmt(pooled.I2,1)}%</div><div class="lbl">I²</div><div class="sub"><span class="tag ${pooled.I2<50?'tag-green':'tag-yellow'}">${pooled.I2<25?'Low':pooled.I2<50?'Moderate':pooled.I2<75?'Substantial':'Considerable'}</span></div></div>
+    <div class="stat-box"><div class="val">${pvStudies.length}</div><div class="lbl">Studies</div><div class="sub">${pooled.model}-Effects</div></div>
+  </div>
+  <div class="result-block success">
+<strong>Pooled Prevalence (${mLabel}, ${pooled.model})</strong>
+Prevalence = ${fmt(back*100,2)}%  (${ciPct}% CI: ${fmt(lo*100,2)}% to ${fmt(hi*100,2)}%)
+k = ${pvStudies.length}  |  I² = ${fmt(pooled.I2,1)}%  |  τ² = ${fmt(pooled.tau2,4)}</div>
+  <div class="result-block ${pooled.I2>75?'danger':pooled.I2>50?'warn':''}">
+<strong>Heterogeneity</strong>
+Q(${pooled.df}) = ${fmt(pooled.Q,2)}, p = ${fmtP(pooled.Qp)}
+I² = ${fmt(pooled.I2,1)}%  |  τ² = ${fmt(pooled.tau2)}  |  τ = ${fmt(pooled.tau)}</div>
+  <div class="card" style="padding:12px"><div class="card-title">Per-Study Prevalence</div>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Study</th><th>Cases</th><th>N</th><th>Prevalence %</th><th>95% CI</th><th>Weight %</th></tr></thead>
+    <tbody>${pvStudies.map((s,i)=>{
+      const p=+s.cases/+s.n,se_r=Math.sqrt(p*(1-p)/+s.n);
+      return `<tr><td>${s.author||'?'} ${s.year?'('+s.year+')':''}</td>
+        <td class="mono">${s.cases}</td><td class="mono">${s.n}</td>
+        <td class="mono">${fmt(p*100,2)}%</td>
+        <td class="mono">[${fmt(Math.max(0,p-z_c*se_r)*100,2)}%, ${fmt(Math.min(1,p+z_c*se_r)*100,2)}%]</td>
+        <td class="mono">${fmt(pooled.weights[i],1)}%</td></tr>`;
+    }).join('')}</tbody>
+  </table></div></div>`;
+}
+
+function renderPrevForest(pvStudies,transformed,pooled,method,ciPct,z_c) {
+  if (!pvStudies) { pvStudies=(state.studies.prev||[]).filter(s=>!isNaN(+s.cases)&&+s.n>0); transformed=pvStudies.map(s=>pvTransform(+s.cases,+s.n,method||'ft')); pooled=computePooled(transformed.map(t=>t.yi),transformed.map(t=>t.vi)); ciPct=Math.round((state.project.ci||0.95)*100); z_c=zCrit(state.project.ci||0.95); }
+  if (!pooled||pvStudies.length<2){document.getElementById('fp-empty').style.display='';return;}
+  document.getElementById('fp-empty').style.display='none';
+  const sort=document.getElementById('fp-sort')?.value||'year';
+  const ys=transformed.map(t=>t.yi),vs=transformed.map(t=>t.vi);
+
+  // Build sorted with _es,_lo,_hi in back-transformed % space for display labels
+  let sorted=pvStudies.map((s,i)=>({...s,_es:pvBack(ys[i],method)*100,_lo:pvBack(ys[i]-z_c*Math.sqrt(vs[i]),method)*100,_hi:pvBack(ys[i]+z_c*Math.sqrt(vs[i]),method)*100,_yt:ys[i],_vt:vs[i]}));
+  if(sort==='year')sorted.sort((a,b)=>(a.year||0)-(b.year||0));
+  else if(sort==='effect')sorted.sort((a,b)=>a._es-b._es);
+  else sorted.sort((a,b)=>(a.author||'').localeCompare(b.author||''));
+
+  const ys2=sorted.map(s=>s._yt),vs2=sorted.map(s=>s._vt);
+  const r=computePooled(ys2,vs2);
+  const pPct=pvBack(r.theta,method)*100;
+  const pooledDisp={...r,theta:pPct,ci_lo:pvBack(r.ci_lo,method)*100,ci_hi:pvBack(r.ci_hi,method)*100};
+
+  const {canvas,ctx}=makeCanvas('fp-canvas',860,100);
+  canvas.height=50+sorted.length*28+70;
+  ctx.fillStyle=C.bg;ctx.fillRect(0,0,canvas.width,canvas.height);
+  drawForestCore(ctx,canvas,sorted,pooledDisp,'Prevalence %',ciPct,z_c);
+  lastPlotCanvas=canvas;
+}
+
+function renderPrevBias(pvStudies,ys,vs,pooled,el) {
+  const ses=vs.map(v=>Math.sqrt(v));
+  const n=ys.length;
+  if(n<3){el.innerHTML=emptyState('Need ≥3 studies.');return;}
+  const x_eg=ses.map(s=>1/s),y_eg=ys.map((y,i)=>y/ses[i]);
+  const eg=simpleRegression(x_eg,y_eg);
+  const eg_t=eg.slope/eg.se_slope;
+  const eg_p=2*(1-tCDF(Math.abs(eg_t),n-2));
+
+  el.innerHTML=`<div class="result-block ${eg_p<0.05?'warn':'success'}">
+<strong>Egger's Test for Publication Bias</strong>
+Intercept (bias) = ${fmt(eg.intercept)}
+t = ${fmt(eg_t,2)}, df = ${n-2}, p = ${fmtP(eg_p)}
+${eg_p<0.05?'⚠️ Potential publication bias.':'✓ No significant asymmetry.'}
+Note: Interpretation on the transformed (${state.project.prevTransform||'ft'}) scale.</div>
+  <div class="card" style="padding:12px"><div class="card-title">🔺 Funnel Plot (transformed scale) <button class="btn btn-secondary btn-sm" style="margin-left:auto" onclick="downloadCurrentForest()">⬇️ PNG</button></div>
+  <canvas id="fp-canvas"></canvas></div>`;
+
+  setTimeout(()=>{
+    const canvas=document.getElementById('fp-canvas');
+    const ctx=canvas.getContext('2d');
+    drawFunnelCore(ctx,canvas,ys,ses,pooled.theta);
+    lastPlotCanvas=canvas;
+  },10);
+}
+
+// SROC panel rendering (triggers after HTML is set)
+document.addEventListener('click',function(e){
+  if(e.target.closest('#panel-analysis') && document.getElementById('fp-canvas')) {
+    const {type,section}=state.currentAnalysis;
+    if(type==='diag'&&section==='sroc') {
+      setTimeout(()=>{
+        const dxStudies=(state.studies.diag||[]).filter(s=>s.tp!=null);
+        const comp=dxStudies.map(dxCompute);
+        const poolSens=poolRE(comp.map(c=>c.logitSens),comp.map(c=>1/c.tp+1/c.fn));
+        const poolSpec=poolRE(comp.map(c=>c.logitSpec),comp.map(c=>1/c.fp+1/c.tn));
+        const pSens=logitInv(poolSens.theta),pSpec=logitInv(poolSpec.theta);
+        const Ss=comp.map(c=>c.S),Ds=comp.map(c=>c.D),n=Ss.length;
+        const Smean=Ss.reduce((a,b)=>a+b)/n,Dmean=Ds.reduce((a,b)=>a+b)/n;
+        const SSD=Ss.reduce((a,v)=>a+(v-Smean)**2,0),SCD=Ss.reduce((a,v,i)=>a+(v-Smean)*(Ds[i]-Dmean),0);
+        const b=SSD>0?SCD/SSD:0,a_sroc=Dmean-b*Smean;
+        drawSROCOnCanvas('fp-canvas',comp,pSens,pSpec,a_sroc,b,dxStudies);
+      },50);
+    }
+  }
+});
+
+function drawSROCOnCanvas(canvasId,comp,pooledSens,pooledSpec,a,b,dxStudies) {
+  const canvas=document.getElementById(canvasId);
+  if(!canvas)return;
+  canvas.width=520;canvas.height=480;
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle=C.bg;ctx.fillRect(0,0,canvas.width,canvas.height);
+  const m={t:40,r:40,b:70,l:70};
+  const W=canvas.width-m.l-m.r,H=canvas.height-m.t-m.b;
+  const px=x=>m.l+x*W,py=y=>m.t+(1-y)*H;
+
+  [0,0.2,0.4,0.6,0.8,1].forEach(v=>{
+    ctx.strokeStyle=C.border;ctx.lineWidth=0.5;
+    ctx.beginPath();ctx.moveTo(px(v),py(0));ctx.lineTo(px(v),py(1));ctx.stroke();
+    ctx.beginPath();ctx.moveTo(px(0),py(v));ctx.lineTo(px(1),py(v));ctx.stroke();
+  });
+  ctx.strokeStyle='#333';ctx.setLineDash([5,5]);ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(px(0),py(0));ctx.lineTo(px(1),py(1));ctx.stroke();ctx.setLineDash([]);
+
+  ctx.strokeStyle=C.accent;ctx.lineWidth=2.5;ctx.beginPath();
+  for(let i=0;i<=100;i++){const fpr=i/100,tpr=srocSens(a,b,fpr);i===0?ctx.moveTo(px(fpr),py(tpr)):ctx.lineTo(px(fpr),py(tpr));}
+  ctx.stroke();
+
+  comp.forEach((c,i)=>{
+    ctx.fillStyle=C.warn;ctx.strokeStyle=C.bg;ctx.lineWidth=1;
+    ctx.beginPath();ctx.arc(px(1-c.spec),py(c.sens),5,0,Math.PI*2);ctx.fill();ctx.stroke();
+    ctx.fillStyle=C.text2;ctx.font='9px DM Sans,sans-serif';ctx.textAlign='left';
+    ctx.fillText((dxStudies[i]?.author||'').slice(0,10),px(1-c.spec)+7,py(c.sens)+3);
+  });
+
+  ctx.fillStyle=C.green;ctx.strokeStyle=C.bg;ctx.lineWidth=2;
+  ctx.beginPath();ctx.arc(px(1-pooledSpec),py(pooledSens),9,0,Math.PI*2);ctx.fill();ctx.stroke();
+
+  ctx.strokeStyle=C.text2;ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(px(0),py(0));ctx.lineTo(px(1),py(0));ctx.stroke();
+  ctx.beginPath();ctx.moveTo(px(0),py(0));ctx.lineTo(px(0),py(1));ctx.stroke();
+
+  ctx.fillStyle=C.text2;ctx.font='9px DM Mono,monospace';ctx.textAlign='center';
+  [0,0.2,0.4,0.6,0.8,1].forEach(v=>{ctx.fillText(fmt(v,1),px(v),py(0)+14);ctx.textAlign='right';ctx.fillText(fmt(v,1),px(0)-5,py(v)+3);ctx.textAlign='center';});
+  ctx.fillStyle=C.text;ctx.font='bold 11px DM Sans,sans-serif';ctx.textAlign='center';
+  ctx.fillText('1 − Specificity',px(0.5),py(0)+36);
+  ctx.save();ctx.translate(14,py(0.5));ctx.rotate(-Math.PI/2);ctx.fillText('Sensitivity',0,0);ctx.restore();
+  ctx.fillStyle=C.text;ctx.font='bold 12px DM Sans,sans-serif';ctx.textAlign='left';
+  ctx.fillText(`SROC Curve  |  AUC ≈ ${fmt(srocAUC(a,b),3)}`,m.l,28);
+  lastPlotCanvas=canvas;
+}
+
+// Helper: after SROC HTML renders, draw immediately
+const _origRunAnalysis = runAnalysisSection;
+
+// ─────────────────────────────────────────────────────────────────────
+//  PLOT DOWNLOAD
+// ─────────────────────────────────────────────────────────────────────
+function downloadAnalysisPlot() {
+  const canvas = lastPlotCanvas || document.getElementById('fp-canvas');
+  if (!canvas||!canvas.width) return alert('Generate a plot first.');
+  const a=document.createElement('a');
+  a.download=`${state.currentAnalysis.type}_${state.currentAnalysis.section}_plot.png`;
+  a.href=canvas.toDataURL('image/png');a.click();
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  EFFECT CONVERTER
+// ═══════════════════════════════════════════════════════════════════════
+let lastConverted = null;
+
+function convTab(id,e) {
+  document.querySelectorAll('#conv-tabs .tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  e.target.classList.add('active');
+  document.getElementById('conv-'+id).classList.add('active');
+  document.getElementById('conv-add-row').style.display='none';
+}
+
+function convResult(rows,addData,targetEl) {
+  let html='<div class="card"><div class="card-title">Results</div><div class="table-wrap"><table><thead><tr><th>Measure</th><th>Value</th><th>Notes</th></tr></thead><tbody>';
+  rows.forEach(r=>{html+=`<tr><td>${r.l}</td><td class="mono"><strong>${r.v}</strong></td><td class="text-xs">${r.n||''}</td></tr>`;});
+  html+='</tbody></table></div>';
+  if(addData){html+=`<div class="flex gap-2 mt-2"><button class="btn btn-success btn-sm" onclick='prepareAdd(${JSON.stringify(addData)})'>➕ Add to Dataset</button></div>`;}
+  html+='</div>';
+  document.getElementById(targetEl).innerHTML=html;
+}
+
+function prepareAdd(data) {
+  lastConverted=data;
+  document.getElementById('conv-add-row').style.display='';
+  document.getElementById('conv-add-summary').textContent=`ES = ${fmt(data.effect_size)}  |  Var = ${fmt(data.variance)}  |  Type: ${data.type}`;
+  document.getElementById('conv-add-row').scrollIntoView({behavior:'smooth'});
+}
+
+function addConvertedToDataset() {
+  if(!lastConverted)return;
+  const author=document.getElementById('conv-add-author').value.trim()||'Converted';
+  const year=parseInt(document.getElementById('conv-add-year').value)||new Date().getFullYear();
+  const t=lastConverted.study_type||'eff';
+  const s={id:Date.now(),study_type:t,author,year,effect_size:lastConverted.effect_size,variance:lastConverted.variance,effect_type:lastConverted.type,n_total:lastConverted.n||null};
+  state.studies[t].push(s);save();updateStudyCount();
+  alert(`Added to ${TYPES[t]} dataset!`);
+  document.getElementById('conv-add-row').style.display='none';
+}
+
+function convertMeans() {
+  const m1=+document.getElementById('cv-m1').value,sd1=+document.getElementById('cv-sd1').value,n1=+document.getElementById('cv-n1').value;
+  const m2=+document.getElementById('cv-m2').value,sd2=+document.getElementById('cv-sd2').value,n2=+document.getElementById('cv-n2').value;
+  if([m1,sd1,n1,m2,sd2,n2].some(isNaN)||sd1<=0||sd2<=0||n1<2||n2<2)return alert('Enter valid values.');
+  const md=m1-m2;
+  const sp=Math.sqrt(((n1-1)*sd1**2+(n2-1)*sd2**2)/(n1+n2-2));
+  const method=document.getElementById('cv-smd-method').value;
+  let d,lbl;
+  if(method==='cohen'){d=md/sp;lbl="Cohen's d";}
+  else if(method==='hedges'){const J=1-3/(4*(n1+n2-2)-1);d=(md/sp)*J;lbl="Hedges' g";}
+  else{d=md/sd2;lbl="Glass's Δ";}
+  const vd=(n1+n2)/(n1*n2)+d**2/(2*(n1+n2-2));
+  const vmd=sd1**2/n1+sd2**2/n2;
+  convResult([
+    {l:'Mean Diff (MD)',v:fmt(md),n:`${fmt(m1)}−${fmt(m2)}`},{l:'SE of MD',v:fmt(Math.sqrt(vmd))},{l:'Variance of MD',v:fmt(vmd),n:'Use for MD meta-analysis'},
+    {l:lbl,v:fmt(d)},{l:'SE of '+lbl,v:fmt(Math.sqrt(vd))},{l:'Variance of '+lbl,v:fmt(vd),n:'Use for SMD meta-analysis'},
+    {l:'95% CI',v:`[${fmt(d-1.96*Math.sqrt(vd))}, ${fmt(d+1.96*Math.sqrt(vd))}]`},{l:'N total',v:n1+n2}
+  ],{effect_size:d,variance:vd,type:lbl,n:n1+n2,study_type:'eff'},'cv-means-result');
+}
+
+function convertProp() {
+  let a=+document.getElementById('cv-a').value,b=+document.getElementById('cv-b').value;
+  let c=+document.getElementById('cv-c').value,d=+document.getElementById('cv-d').value;
+  if([a,b,c,d].some(isNaN)||[a,b,c,d].some(v=>v<0))return alert('Enter valid counts.');
+  if(a===0||b===0||c===0||d===0){a+=0.5;b+=0.5;c+=0.5;d+=0.5;}
+  const n1=a+b,n2=c+d,p1=a/n1,p2=c/n2;
+  const or=(a*d)/(b*c),logOR=Math.log(or),seLogOR=Math.sqrt(1/a+1/b+1/c+1/d);
+  const rr=p1/p2,logRR=Math.log(rr),seLogRR=Math.sqrt((1-p1)/a+(1-p2)/c);
+  const rd=p1-p2,seRD=Math.sqrt(p1*(1-p1)/n1+p2*(1-p2)/n2);
+  convResult([
+    {l:'Risk p₁ (intervention)',v:fmt(p1,4)},{l:'Risk p₂ (control)',v:fmt(p2,4)},
+    {l:'Risk Difference (RD)',v:fmt(rd,4)},{l:'SE of RD',v:fmt(seRD,4)},{l:'Variance of RD',v:fmt(seRD**2,5),n:'For meta-analysis'},
+    {l:'Risk Ratio (RR)',v:fmt(rr,4)},{l:'log(RR)',v:fmt(logRR,4)},{l:'SE of log(RR)',v:fmt(seLogRR,4)},{l:'Var of log(RR)',v:fmt(seLogRR**2,5),n:'For meta-analysis'},{l:'95% CI of RR',v:`[${fmt(Math.exp(logRR-1.96*seLogRR),3)}, ${fmt(Math.exp(logRR+1.96*seLogRR),3)}]`},
+    {l:'Odds Ratio (OR)',v:fmt(or,4)},{l:'log(OR)',v:fmt(logOR,4)},{l:'SE of log(OR)',v:fmt(seLogOR,4)},{l:'Var of log(OR)',v:fmt(seLogOR**2,5),n:'For meta-analysis'},{l:'95% CI of OR',v:`[${fmt(Math.exp(logOR-1.96*seLogOR),3)}, ${fmt(Math.exp(logOR+1.96*seLogOR),3)}]`},
+    {l:'NNT',v:fmt(Math.abs(1/rd),1),n:rd<0?'Benefit':'Harm'}
+  ],{effect_size:logOR,variance:seLogOR**2,type:'log(OR)',n:n1+n2,study_type:'eff'},'cv-prop-result');
+}
+
+function convertCorr() {
+  const r=+document.getElementById('cv-r').value,n=+document.getElementById('cv-rn').value;
+  if(isNaN(r)||r<=-1||r>=1)return alert('r must be between -1 and 1.');
+  if(isNaN(n)||n<4)return alert('N ≥ 4 required.');
+  const z=0.5*Math.log((1+r)/(1-r)),se_z=1/Math.sqrt(n-3),vz=se_z**2;
+  const d=2*r/Math.sqrt(1-r**2);
+  convResult([
+    {l:'Pearson r',v:fmt(r,4)},{l:"Fisher's z",v:fmt(z,4),n:'Use as ES in correlation meta-analysis'},{l:"SE of z",v:fmt(se_z,4)},{l:"Variance of z",v:fmt(vz,5),n:'For meta-analysis'},
+    {l:"95% CI of r (via z)",v:`[${fmt(Math.tanh(z-1.96*se_z),4)}, ${fmt(Math.tanh(z+1.96*se_z),4)}]`},
+    {l:"Cohen's d (from r)",v:fmt(d,4),n:'= 2r/√(1−r²)'},{l:"r² (variance explained)",v:fmt(r**2*100,2)+'%'}
+  ],{effect_size:z,variance:vz,type:"Fisher's z",n,study_type:'assoc'},'cv-corr-result');
+}
+
+function convertTstat() {
+  const type=document.getElementById('cv-stat-type').value;
+  const val=+document.getElementById('cv-stat-val').value;
+  const n1=+document.getElementById('cv-stat-n1').value,n2=+document.getElementById('cv-stat-n2').value;
+  if([val,n1,n2].some(isNaN)||n1<2||n2<2)return alert('Enter valid values.');
+  const t=type==='f'?Math.sqrt(val):val;
+  const n=n1+n2,d=t*Math.sqrt(1/n1+1/n2);
+  const J=1-3/(4*(n-2)-1),g=d*J;
+  const vd=n/(n1*n2)+d**2/(2*(n-2));
+  convResult([
+    {l:type==='f'?'F-stat':'t-stat',v:fmt(val,4)},
+    {l:type==='f'?'Equivalent t':'',v:type==='f'?fmt(t,4):'',n:type==='f'?'=√F':''},
+    {l:"Cohen's d",v:fmt(d,4)},{l:"Hedges' g",v:fmt(g,4),n:'Bias-corrected'},
+    {l:'Variance of d',v:fmt(vd,5),n:'For meta-analysis'},{l:'95% CI of d',v:`[${fmt(d-1.96*Math.sqrt(vd),3)}, ${fmt(d+1.96*Math.sqrt(vd),3)}]`}
+  ].filter(r=>r.l),{effect_size:d,variance:vd,type:"Cohen's d",n,study_type:'eff'},'cv-tstat-result');
+}
+
+function convertCross() {
+  const from=document.getElementById('cv-cross-from').value;
+  const val=+document.getElementById('cv-cross-val').value;
+  const N=+document.getElementById('cv-cross-n').value||null;
+  const ratio=+document.getElementById('cv-cross-ratio').value||1;
+  if(isNaN(val))return alert('Enter a valid number.');
+  let d,r,logOR,OR,vd,vz,vlogOR;
+  if(from==='d'){
+    d=val;const a=4/ratio;r=d/Math.sqrt(d**2+a);logOR=d*Math.PI/Math.sqrt(3);OR=Math.exp(logOR);
+    vd=N?(1+d**2/8)*(4/N):null;vz=N?1/(N-3):null;vlogOR=N?Math.PI**2/3*(4/N):null;
+  }else if(from==='r'){
+    r=val;if(r<=-1||r>=1)return alert('r must be between -1 and 1.');
+    d=2*r/Math.sqrt(1-r**2);logOR=Math.log((1+r)/(1-r))*Math.PI/Math.sqrt(3);OR=Math.exp(logOR);
+    vz=N?1/(N-3):null;vd=N?4/(N*(1-r**2)**2):null;vlogOR=N?Math.PI**2/3*(4/(N-3)):null;
+  }else{
+    OR=from==='or'?val:Math.exp(val);logOR=Math.log(OR);
+    d=logOR*Math.sqrt(3)/Math.PI;r=Math.tanh(logOR*Math.sqrt(3)/(2*Math.PI));
+    vlogOR=N?4/N:null;vd=N?3/Math.PI**2*(vlogOR||0):null;vz=N?vlogOR*(3/Math.PI**2):null;
+  }
+  const z_r=r!=null?0.5*Math.log((1+r)/(1-r)):null;
+  convResult([
+    {l:"Cohen's d",v:fmt(d,4),n:vd?`Var=${fmt(vd,5)}`:''},
+    {l:"Hedges' g ≈",v:N?fmt(d*(1-3/(4*(N||100)-9)),4):'—',n:'Approx'},
+    {l:"Pearson r",v:r!=null?fmt(r,4):'—',n:vz?`Var(z)=${fmt(vz,5)}`:''},
+    {l:"Fisher's z",v:z_r!=null?fmt(z_r,4):'—'},
+    {l:"log(OR)",v:fmt(logOR,4),n:vlogOR?`Var=${fmt(vlogOR,5)}`:''},
+    {l:"Odds Ratio (OR)",v:fmt(OR,4)},
+    {l:"Reference",v:'d: 0.2/0.5/0.8 small/med/large',n:'r: 0.1/0.3/0.5'}
+  ],d!=null&&vd?{effect_size:d,variance:vd,type:"Cohen's d",n:N,study_type:'eff'}:null,'cv-cross-result');
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  EXPORT
+// ═══════════════════════════════════════════════════════════════════════
+function buildExportPanel() {
+  const sections=[];
+  ['eff','diag','prev','assoc'].forEach(t=>{
+    const studies=state.studies[t]||[];
+    if(!studies.length)return;
+    sections.push(`<div class="card"><div class="card-title">${TYPE_ICONS[t]} ${TYPES[t]} (${studies.length} studies)</div>`);
+    if(t==='prev'){
+      const pv=studies.filter(s=>!isNaN(+s.cases)&&+s.n>0);
+      if(pv.length>=2){
+        const method=state.project.prevTransform||'ft';
+        const ys=pv.map(s=>pvTransform(+s.cases,+s.n,method).yi),vs=pv.map(s=>pvTransform(+s.cases,+s.n,method).vi);
+        const r=computePooled(ys,vs);
+        const back=pvBack(r.theta,method);
+        const {lo,hi}=pvBackCI(r.ci_lo,r.ci_hi,method);
+        sections.push(`<div class="result-block">Pooled Prevalence = ${fmt(back*100,2)}% [${fmt(lo*100,2)}%, ${fmt(hi*100,2)}%]  I²=${fmt(r.I2,1)}%  k=${pv.length}</div>`);
+      }
+    }else if(t==='diag'){
+      const dx=studies.filter(s=>s.tp!=null);
+      if(dx.length>=2){
+        const comp=dx.map(dxCompute);
+        const pSens=logitInv(poolRE(comp.map(c=>c.logitSens),comp.map(c=>1/c.tp+1/c.fn)).theta);
+        const pSpec=logitInv(poolRE(comp.map(c=>c.logitSpec),comp.map(c=>1/c.fp+1/c.tn)).theta);
+        const pDOR=Math.exp(poolRE(comp.map(c=>c.logDOR),comp.map(c=>c.seLogDOR**2)).theta);
+        const Ss=comp.map(c=>c.S),Ds=comp.map(c=>c.D),n=Ss.length;
+        const Smean=Ss.reduce((a,b)=>a+b)/n,Dmean=Ds.reduce((a,b)=>a+b)/n;
+        const SSD=Ss.reduce((a,v)=>a+(v-Smean)**2,0),SCD=Ss.reduce((a,v,i)=>a+(v-Smean)*(Ds[i]-Dmean),0);
+        const b=SSD>0?SCD/SSD:0,a=Dmean-b*Smean;
+        sections.push(`<div class="result-block">Sens=${fmt(pSens*100,1)}%  Spec=${fmt(pSpec*100,1)}%  DOR=${fmt(pDOR,1)}  AUC≈${fmt(srocAUC(a,b),3)}  k=${dx.length}</div>`);
+      }
+    }else{
+      const valid=studies.filter(s=>!isNaN(parseFloat(s.effect_size))&&!isNaN(parseFloat(s.variance))&&parseFloat(s.variance)>0);
+      if(valid.length>=2){
+        const tr=getEffTransformed(valid,t);
+        const r=computePooled(tr.map(x=>x.es),tr.map(x=>x.v));
+        const isLog=tr.some(x=>x._isLog);
+        const disp=v=>isLog?fmt(Math.exp(v)):fmt(v);
+        sections.push(`<div class="result-block">Pooled ES = ${disp(r.theta)} [${disp(r.ci_lo)}, ${disp(r.ci_hi)}]  Z=${fmt(r.z,2)}  p=${fmtP(r.p)}  I²=${fmt(r.I2,1)}%  k=${r.n}</div>`);
+      }
+    }
+    sections.push('</div>');
+  });
+  document.getElementById('export-content').innerHTML=sections.join('')||'<div class="empty-state"><span class="icon">📭</span><p>No analyses available. Import studies and run analyses first.</p></div>';
+}
+
+function exportFullReport() {
+  const lines=[`METALENS v5 META-ANALYSIS REPORT`,`Generated: ${new Date().toLocaleString()}`,`Project: ${state.project.title||'Untitled'}`,`PICO: ${state.project.pico||'—'}`,``];
+  ['eff','diag','prev','assoc'].forEach(t=>{
+    const studies=state.studies[t]||[];
+    if(!studies.length)return;
+    lines.push(`${'═'.repeat(60)}\n${TYPE_ICONS[t]} ${TYPES[t].toUpperCase()} (${studies.length} studies)\n${'═'.repeat(60)}`);
+    if(t==='prev'){
+      const pv=studies.filter(s=>!isNaN(+s.cases)&&+s.n>0);
+      if(pv.length>=2){
+        const method=state.project.prevTransform||'ft';
+        const ys=pv.map(s=>pvTransform(+s.cases,+s.n,method).yi),vs=pv.map(s=>pvTransform(+s.cases,+s.n,method).vi);
+        const r=computePooled(ys,vs);
+        const back=pvBack(r.theta,method);const{lo,hi}=pvBackCI(r.ci_lo,r.ci_hi,method);
+        lines.push(`Pooled Prevalence = ${fmt(back*100,2)}% [${fmt(lo*100,2)}%, ${fmt(hi*100,2)}%]`);
+        lines.push(`I² = ${fmt(r.I2,1)}%  τ² = ${fmt(r.tau2)}  Q(${r.df})=${fmt(r.Q,2)},p=${fmtP(r.Qp)}`);
+      }
+    }else if(t==='diag'){
+      const dx=studies.filter(s=>s.tp!=null);
+      if(dx.length>=2){
+        const comp=dx.map(dxCompute);
+        const pSensR=poolRE(comp.map(c=>c.logitSens),comp.map(c=>1/c.tp+1/c.fn));
+        const pSpecR=poolRE(comp.map(c=>c.logitSpec),comp.map(c=>1/c.fp+1/c.tn));
+        const pDORR=poolRE(comp.map(c=>c.logDOR),comp.map(c=>c.seLogDOR**2));
+        lines.push(`Pooled Sensitivity = ${fmt(logitInv(pSensR.theta)*100,1)}% [${fmt(logitInv(pSensR.ci_lo)*100,1)}%, ${fmt(logitInv(pSensR.ci_hi)*100,1)}%]`);
+        lines.push(`Pooled Specificity = ${fmt(logitInv(pSpecR.theta)*100,1)}% [${fmt(logitInv(pSpecR.ci_lo)*100,1)}%, ${fmt(logitInv(pSpecR.ci_hi)*100,1)}%]`);
+        lines.push(`Pooled DOR = ${fmt(Math.exp(pDORR.theta),1)} [${fmt(Math.exp(pDORR.ci_lo),1)}, ${fmt(Math.exp(pDORR.ci_hi),1)}]`);
+      }
+    }else{
+      const valid=studies.filter(s=>!isNaN(parseFloat(s.effect_size))&&parseFloat(s.variance)>0);
+      if(valid.length>=2){
+        const tr=getEffTransformed(valid,t);
+        const r=computePooled(tr.map(x=>x.es),tr.map(x=>x.v));
+        const isLog=tr.some(x=>x._isLog);const disp=v=>isLog?fmt(Math.exp(v)):fmt(v);
+        lines.push(`Pooled Effect = ${disp(r.theta)} [${disp(r.ci_lo)}, ${disp(r.ci_hi)}]  Z=${fmt(r.z,2)}  p=${fmtP(r.p)}`);
+        lines.push(`I² = ${fmt(r.I2,1)}%  τ² = ${fmt(r.tau2)}  Q(${r.df})=${fmt(r.Q,2)},p=${fmtP(r.Qp)}`);
+        lines.push(`Study data:`);
+        valid.forEach((s,i)=>lines.push(`  ${i+1}. ${s.author||'?'} (${s.year||'?'}): ES=${disp(tr[i].es)}  Wt=${fmt(r.weights[i],1)}%`));
+      }
+    }
+    lines.push('');
+  });
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([lines.join('\n')],{type:'text/plain'}));
+  a.download='metalens_v5_report.txt';a.click();
+}
+
+function exportAllCSV() {
+  ['eff','diag','prev','assoc'].forEach(t=>{
+    const studies=state.studies[t]||[];
+    if(!studies.length)return;
+    const keys=Object.keys(studies[0]).filter(k=>k!=='id');
+    const csv=[keys.join(','),...studies.map(s=>keys.map(k=>JSON.stringify(s[k]??'')).join(','))].join('\n');
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+    a.download=`metalens_${t}_data.csv`;
+    setTimeout(()=>a.click(),(t==='eff'?0:t==='diag'?300:t==='prev'?600:900));
+  });
+}
+
+function emptyState(msg) { return `<div class="empty-state"><span class="icon">⚠️</span><p>${msg}</p></div>`; }
+
+
+// ═══════════════════════════════════════════════════════════════════════
+//  BILINGUAL TRANSLATION ENGINE
+// ═══════════════════════════════════════════════════════════════════════
+let currentLang = 'en';
+
+const i18n = {
+  en: {
+    // ── Nav ──────────────────────────────────────────────────────────────
+    nav_setup:'Setup', nav_data:'Data', nav_effectiveness:'Effectiveness',
+    nav_diagnostic:'Diagnostic', nav_prevalence:'Prevalence',
+    nav_association:'Association', nav_export:'Export',
+    nav_project_setup:'Project Setup', nav_about:'About & Help',
+    nav_import:'Import / Add Data', nav_table:'Data Table',
+    nav_converter:'Effect Converter', nav_pooled:'Pooled Effect',
+    nav_forest:'Forest Plot', nav_het:'Heterogeneity', nav_bias:'Pub. Bias',
+    nav_subgroup:'Subgroup', nav_regression:'Meta-Regression',
+    nav_diag_pooled:'Pooled Accuracy', nav_sroc:'SROC Curve',
+    nav_prev_pooled:'Pooled Prevalence', nav_export_results:'Export Results',
+    // ── Panel titles (used in PANEL_META & sectionLabel) ─────────────────
+    panel_setup:'Project Setup', panel_setup_badge:'Configure your meta-analysis',
+    panel_import:'Import / Add Data', panel_import_badge:'Load studies by type',
+    panel_table:'Data Table', panel_table_badge:'View and edit all studies',
+    panel_converter:'Effect Size Converter', panel_converter_badge:'Transform raw statistics into effect sizes',
+    panel_analysis:'Analysis',
+    panel_about:'About MetaLens', panel_about_badge:'Developer information and citation',
+    panel_export:'Export Results', panel_export_badge:'Download reports and plots',
+    section_pooled:'Pooled Effect', section_forest:'Forest Plot',
+    section_het:'Heterogeneity', section_bias:'Publication Bias',
+    section_subgroup:'Subgroup Analysis', section_regression:'Meta-Regression',
+    section_sroc:'SROC Curve',
+    // ── Setup panel ───────────────────────────────────────────────────────
+    setup_proj_info:'Project Information', setup_title_label:'Project / Review Title',
+    setup_pico_label:'Research Question (PICO/PICOS)', setup_review_type:'Review Type',
+    setup_date:'Date', setup_analysis_config:'Analysis Configuration',
+    setup_model:'Statistical Model', setup_ci:'Confidence Interval Level',
+    setup_prev_transform:'Prevalence Transform',
+    setup_moderators:'Custom Moderator Variables',
+    setup_moderators_sub:'for subgroup and meta-regression',
+    setup_save:'✓ Save Setup & Continue',
+    // ── Import panel ──────────────────────────────────────────────────────
+    import_notice:'Choose your study type, then import via Excel/CSV or enter studies manually. Each study type has its own dataset.',
+    import_select_type:'Select Study Type & Import',
+    import_type_label:'Study Type to Import',
+    import_drop:'Click or drag & drop Excel / CSV',
+    import_template:'⬇️ Download Template',
+    import_manual:'Add Single Study Manually',
+    import_confirm:'✓ Import All',
+    // ── Data Table ────────────────────────────────────────────────────────
+    tab_eff:'Effectiveness', tab_diag:'Diagnostic',
+    tab_prev:'Prevalence', tab_assoc:'Association',
+    table_clear:'🗑️ Clear This Type', table_export_csv:'⬇️ Export CSV',
+    table_search:'Search...', table_empty:'No studies yet for this type.',
+    // ── Converter ─────────────────────────────────────────────────────────
+    conv_means:'Means & SDs', conv_prop:'2×2 Table',
+    conv_corr:'Correlation r', conv_tstat:'t / F stat',
+    // ── Export ────────────────────────────────────────────────────────────
+    export_downloads:'Downloads', export_report:'📄 Full Report (.txt)',
+    export_csv:'📊 All Data (.csv)', export_refresh:'🔄 Refresh Preview',
+    // ── About ─────────────────────────────────────────────────────────────
+    about_title:'About MetaLens', about_position:'Assistant Professor',
+    about_dept:'Department of Biostatistics, Epidemiology, and Population Health',
+    about_uni:'Faculty of Medicine, Public Health, and Nursing (FK-KMK)<br>Universitas Gadjah Mada, Yogyakarta, Indonesia',
+    about_citation_title:'Citation', about_license_title:'License & Terms',
+    about_citation_note:'Please acknowledge this tool in your publications when using it to conduct or assist your meta-analysis.',
+    about_methods_title:'Statistical Methods',
+    about_analysis:'Analysis', about_method:'Method',
+    about_m1:'Pooling (RE)', about_m2:'Pooling (FE)',
+    about_m3:'Heterogeneity', about_m4:'Publication bias',
+    about_m5:'Subgroup', about_m6:'Meta-regression',
+    about_m7:'Diagnostic', about_m8:'Prevalence',
+    about_privacy_title:'Privacy & Data',
+    about_privacy_body:"All study data you enter is stored only in your browser's localStorage — it never leaves your device. No analytics or tracking are added by this app.",
+    // ── Analysis dynamic labels ───────────────────────────────────────────
+    types_eff:'Effectiveness', types_diag:'Diagnostic',
+    types_prev:'Prevalence', types_assoc:'Association',
+    btn_generate:'▶ Generate', btn_download_png:'⬇️ PNG',
+    btn_run:'▶ Run', btn_run_subgroup:'▶ Run Subgroup',
+    btn_run_regression:'▶ Run Meta-Regression',
+    btn_forest:'🌲 Subgroup Forest', btn_add_study:'+ Add Study',
+    lbl_sort:'Sort by', lbl_year:'Year', lbl_effect:'Effect Size', lbl_author:'Author',
+    lbl_model:'Model', lbl_group_var:'Grouping Variable',
+    lbl_predictors:'Predictor Variables (click to select)',
+    notice_need2:'Need at least 2 valid studies with effect_size and variance.',
+    notice_need3:'Need ≥3 studies for bias tests.',
+    notice_need4:'Need ≥4 studies.',
+    notice_no_mod:'No moderator columns found. Add studies with moderator columns, or define moderators in Setup.',
+  },
+  id: {
+    // ── Nav ──────────────────────────────────────────────────────────────
+    nav_setup:'Pengaturan', nav_data:'Data', nav_effectiveness:'Efektivitas',
+    nav_diagnostic:'Diagnostik', nav_prevalence:'Prevalensi',
+    nav_association:'Asosiasi', nav_export:'Ekspor',
+    nav_project_setup:'Pengaturan Proyek', nav_about:'Tentang & Bantuan',
+    nav_import:'Impor / Tambah Data', nav_table:'Tabel Data',
+    nav_converter:'Konverter Efek', nav_pooled:'Efek Terpooling',
+    nav_forest:'Forest Plot', nav_het:'Heterogenitas', nav_bias:'Bias Publikasi',
+    nav_subgroup:'Subkelompok', nav_regression:'Meta-Regresi',
+    nav_diag_pooled:'Akurasi Terpooling', nav_sroc:'Kurva SROC',
+    nav_prev_pooled:'Prevalensi Terpooling', nav_export_results:'Ekspor Hasil',
+    // ── Panel titles ──────────────────────────────────────────────────────
+    panel_setup:'Pengaturan Proyek', panel_setup_badge:'Konfigurasi meta-analisis Anda',
+    panel_import:'Impor / Tambah Data', panel_import_badge:'Muat studi berdasarkan jenis',
+    panel_table:'Tabel Data', panel_table_badge:'Lihat dan edit semua studi',
+    panel_converter:'Konverter Ukuran Efek', panel_converter_badge:'Transformasi statistik mentah menjadi ukuran efek',
+    panel_analysis:'Analisis',
+    panel_about:'Tentang MetaLens', panel_about_badge:'Informasi pengembang dan sitasi',
+    panel_export:'Ekspor Hasil', panel_export_badge:'Unduh laporan dan semua plot',
+    section_pooled:'Efek Terpooling', section_forest:'Forest Plot',
+    section_het:'Heterogenitas', section_bias:'Bias Publikasi',
+    section_subgroup:'Analisis Subkelompok', section_regression:'Meta-Regresi',
+    section_sroc:'Kurva SROC',
+    // ── Setup panel ───────────────────────────────────────────────────────
+    setup_proj_info:'Informasi Proyek', setup_title_label:'Judul Proyek / Tinjauan',
+    setup_pico_label:'Pertanyaan Penelitian (PICO/PICOS)', setup_review_type:'Jenis Tinjauan',
+    setup_date:'Tanggal', setup_analysis_config:'Konfigurasi Analisis',
+    setup_model:'Model Statistik', setup_ci:'Tingkat Interval Kepercayaan',
+    setup_prev_transform:'Transformasi Prevalensi',
+    setup_moderators:'Variabel Moderator Kustom',
+    setup_moderators_sub:'untuk analisis subkelompok dan meta-regresi',
+    setup_save:'✓ Simpan Pengaturan & Lanjutkan',
+    // ── Import panel ──────────────────────────────────────────────────────
+    import_notice:'Pilih jenis studi, lalu impor via Excel/CSV atau masukkan studi secara manual. Setiap jenis studi memiliki datasetnya sendiri.',
+    import_select_type:'Pilih Jenis Studi & Impor',
+    import_type_label:'Jenis Studi yang Diimpor',
+    import_drop:'Klik atau seret & lepas Excel / CSV',
+    import_template:'⬇️ Unduh Template',
+    import_manual:'Tambah Studi Secara Manual',
+    import_confirm:'✓ Impor Semua',
+    // ── Data Table ────────────────────────────────────────────────────────
+    tab_eff:'Efektivitas', tab_diag:'Diagnostik',
+    tab_prev:'Prevalensi', tab_assoc:'Asosiasi',
+    table_clear:'🗑️ Hapus Jenis Ini', table_export_csv:'⬇️ Ekspor CSV',
+    table_search:'Cari...', table_empty:'Belum ada studi untuk jenis ini.',
+    // ── Converter ─────────────────────────────────────────────────────────
+    conv_means:'Rata-rata & SD', conv_prop:'Tabel 2×2',
+    conv_corr:'Korelasi r', conv_tstat:'Statistik t / F',
+    // ── Export ────────────────────────────────────────────────────────────
+    export_downloads:'Unduhan', export_report:'📄 Laporan Lengkap (.txt)',
+    export_csv:'📊 Semua Data (.csv)', export_refresh:'🔄 Perbarui Pratinjau',
+    // ── About ─────────────────────────────────────────────────────────────
+    about_title:'Tentang MetaLens', about_position:'Dosen / Asisten Profesor',
+    about_dept:'Departemen Biostatistik, Epidemiologi, dan Kesehatan Populasi',
+    about_uni:'Fakultas Kedokteran, Kesehatan Masyarakat, dan Keperawatan (FK-KMK)<br>Universitas Gadjah Mada, Yogyakarta, Indonesia',
+    about_citation_title:'Sitasi', about_license_title:'Lisensi & Ketentuan',
+    about_citation_note:'Harap cantumkan alat ini dalam publikasi Anda saat menggunakannya untuk melakukan atau membantu meta-analisis Anda.',
+    about_methods_title:'Metode Statistik',
+    about_analysis:'Analisis', about_method:'Metode',
+    about_m1:'Pooling (RE)', about_m2:'Pooling (FE)',
+    about_m3:'Heterogenitas', about_m4:'Bias publikasi',
+    about_m5:'Subkelompok', about_m6:'Meta-regresi',
+    about_m7:'Diagnostik', about_m8:'Prevalensi',
+    about_privacy_title:'Privasi & Data',
+    about_privacy_body:'Semua data studi yang Anda masukkan hanya disimpan di localStorage browser Anda — tidak pernah meninggalkan perangkat Anda. Tidak ada analitik atau pelacakan yang ditambahkan oleh aplikasi ini.',
+    // ── Analysis dynamic labels ───────────────────────────────────────────
+    types_eff:'Efektivitas', types_diag:'Diagnostik',
+    types_prev:'Prevalensi', types_assoc:'Asosiasi',
+    btn_generate:'▶ Buat Plot', btn_download_png:'⬇️ PNG',
+    btn_run:'▶ Jalankan', btn_run_subgroup:'▶ Jalankan Subkelompok',
+    btn_run_regression:'▶ Jalankan Meta-Regresi',
+    btn_forest:'🌲 Forest Subkelompok', btn_add_study:'+ Tambah Studi',
+    lbl_sort:'Urutkan berdasarkan', lbl_year:'Tahun', lbl_effect:'Ukuran Efek', lbl_author:'Penulis',
+    lbl_model:'Model', lbl_group_var:'Variabel Pengelompokan',
+    lbl_predictors:'Variabel Prediktor (klik untuk memilih)',
+    notice_need2:'Dibutuhkan minimal 2 studi valid dengan effect_size dan variance.',
+    notice_need3:'Dibutuhkan ≥3 studi untuk uji bias.',
+    notice_need4:'Dibutuhkan ≥4 studi.',
+    notice_no_mod:'Tidak ada kolom moderator. Tambahkan studi dengan kolom moderator, atau tentukan moderator di Pengaturan.',
+  }
+};
+
+function t(key) {
+  return (i18n[currentLang] && i18n[currentLang][key]) || (i18n.en[key]) || key;
+}
+
+function applyTranslations() {
+  const lang = currentLang;
+  // Translate all data-i18n elements (innerHTML)
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    const val = t(key);
+    if (val) el.innerHTML = val;
+  });
+  // Translate data-i18n-placeholder elements
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const key = el.getAttribute('data-i18n-placeholder');
+    const val = t(key);
+    if (val) el.placeholder = val;
+  });
+  // Update TYPES and PANEL_META dynamically
+  TYPES.eff = t('types_eff'); TYPES.diag = t('types_diag');
+  TYPES.prev = t('types_prev'); TYPES.assoc = t('types_assoc');
+  PANEL_META.setup   = [t('panel_setup'),     t('panel_setup_badge')];
+  PANEL_META.import  = [t('panel_import'),    t('panel_import_badge')];
+  PANEL_META.table   = [t('panel_table'),     t('panel_table_badge')];
+  PANEL_META.converter=[t('panel_converter'), t('panel_converter_badge')];
+  PANEL_META.about   = [t('panel_about'),     t('panel_about_badge')];
+  PANEL_META.export  = [t('panel_export'),    t('panel_export_badge')];
+  // Refresh current panel title/badge
+  const curId = document.querySelector('.panel.active')?.id?.replace('panel-','');
+  if (curId && PANEL_META[curId]) {
+    document.getElementById('panel-title').textContent = PANEL_META[curId][0];
+    document.getElementById('panel-badge').textContent = PANEL_META[curId][1];
+  }
+  // Update lang toggle button label
+  const btn = document.getElementById('lang-toggle');
+  if (btn) btn.textContent = lang === 'en' ? '🇮🇩 ID' : '🇬🇧 EN';
+  // Update study badge
+  updateStudyCount();
+}
+
+function toggleLanguage() {
+  currentLang = currentLang === 'en' ? 'id' : 'en';
+  try { localStorage.setItem('metalens5_lang', currentLang); } catch(e) {}
+  applyTranslations();
+  // Re-render analysis if one is active
+  const ap = document.getElementById('panel-analysis');
+  if (ap && ap.classList.contains('active')) {
+    runAnalysisSection(state.currentAnalysis.type, state.currentAnalysis.section);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════════════════════
+function init() {
+  if(state.project.title) document.getElementById('proj-title').value=state.project.title;
+  if(state.project.pico) document.getElementById('proj-pico').value=state.project.pico;
+  if(state.project.model) document.getElementById('model-type').value=state.project.model;
+  if(state.project.ci) document.getElementById('ci-level').value=state.project.ci;
+
+  if(state.project.prevTransform) document.getElementById('prev-transform-global').value=state.project.prevTransform;
+  if(!state.project.date) document.getElementById('proj-date').value=new Date().toISOString().split('T')[0];
+  renderModList();
+  updateStudyCount();
+  ['eff','diag','prev','assoc'].forEach(t=>{ if(!state.studies[t]) state.studies[t]=[]; });
+  setTimeout(()=>{ updateImportInfo(); updateManualForm(); }, 50);
+  // Restore language preference
+  try {
+    const savedLang = localStorage.getItem('metalens5_lang');
+    if (savedLang === 'id') { currentLang = 'id'; }
+  } catch(e) {}
+  applyTranslations();
+}
+
+init();
+</script>
+</body>
+</html>
