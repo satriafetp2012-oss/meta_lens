@@ -8,7 +8,7 @@
 ---
 
 <!-- Language switch -->
-üá¨üáß [English](#english) ¬∑ üáÆüá© [Bahasa Indonesia](#bahasa-indonesia)
+[English](#english) ¬∑ üáÆüá© [Bahasa Indonesia](#bahasa-indonesia)
 
 ---
 
@@ -300,7 +300,7 @@ Setiap jenis studi menyediakan analisis berikut:
 - Tabel kontribusi per studi (ukuran efek, varians, bobot %, Z)
 - Ringkasan heterogenitas lengkap (Q, I¬≤, œÑ¬≤, H¬≤)
 
-#### üå≤ Forest Plot
+#### Forest Plot
 - Dapat diurutkan berdasarkan tahun, ukuran efek, atau penulis
 - Kotak berbobot proporsional terhadap bobot studi
 - Diamond gabungan di bagian bawah
@@ -308,23 +308,23 @@ Setiap jenis studi menyediakan analisis berikut:
 
 #### üìê Heterogenitas
 - Statistik Q Cochran dengan nilai p
-- I¬≤ (%), œÑ¬≤ (tau-kuadrat), œÑ (tau), H¬≤
+- I¬≤ (%), (tau-kuadrat), (tau), H¬≤
 - Interpretasi kategoris (Rendah / Sedang / Substansial / Considerable)
 - Rekomendasi klinis pemilihan model
 
-#### üî≠ Bias Publikasi
-- **Uji Egger** ‚Äî regresi efek terstandarisasi terhadap presisi
-- **Uji korelasi peringkat Begg & Mazumdar** (Kendall's œÑ)
+#### Bias Publikasi
+- **Uji Egger** ‚regresi efek terstandarisasi terhadap presisi
+- **Uji korelasi peringkat Begg & Mazumdar** (Kendall's)
 - **Fail-Safe N Rosenthal** dengan ambang ketahanan (5k+10)
-- **Funnel plot** ‚Äî dapat diunduh sebagai PNG
+- **Funnel plot** ‚dapat diunduh sebagai PNG
 
-#### üóÇÔ∏è Analisis Subkelompok
+#### Analisis Subkelompok
 - Mendeteksi kolom moderator secara otomatis dari data yang diimpor
 - Uji Q antar kelompok (uji perbedaan subkelompok)
 - Efek gabungan per subkelompok, CI, I¬≤, Q
 - **Forest plot subkelompok** dengan kelompok berbeda warna ‚Äî dapat diunduh sebagai PNG
 
-#### üìà Meta-Regresi
+#### Meta-Regresi
 - Weighted Least Squares (WLS) dengan œÑ¬≤ random-effects sebagai prior
 - Pengkodean dummy otomatis untuk prediktor kategoris
 - R¬≤ (proporsi varians yang dijelaskan oleh moderator)
@@ -332,21 +332,21 @@ Setiap jenis studi menyediakan analisis berikut:
 
 ---
 
-### ü©∫ Fitur Khusus Diagnostik
+### Fitur Khusus Diagnostik
 
-- **Pooled Sensitivitas & Spesifisitas** ‚Äî digabungkan pada skala logit melalui random-effects, ditransformasi balik ke %
-- **Likelihood Ratio** ‚Äî LR positif (+LR) dan LR negatif (‚àíLR) dengan interpretasi klinis
-- **Diagnostic Odds Ratio (DOR)** ‚Äî digabungkan pada skala log
-- **Kurva SROC** ‚Äî metode Moses-Littenberg dengan estimasi AUC
+- **Pooled Sensitivitas & Spesifisitas** ‚digabungkan pada skala logit melalui random-effects, ditransformasi balik ke %
+- **Likelihood Ratio** ‚LR positif (+LR) dan LR negatif (‚àíLR) dengan interpretasi klinis
+- **Diagnostic Odds Ratio (DOR)** ‚digabungkan pada skala log
+- **Kurva SROC** ‚metode Moses-Littenberg dengan estimasi AUC
   - Titik studi individual diplotkan dalam ruang ROC
   - Titik operasi gabungan (diamond hijau)
   - Dapat diunduh sebagai PNG
-- **Uji Asimetri Funnel Plot Deeks** ‚Äî disesuaikan untuk studi diagnostik
-- **Analisis subkelompok** ‚Äî dapat menggabungkan berdasarkan DOR, Sensitivitas, atau Spesifisitas secara terpisah
+- **Uji Asimetri Funnel Plot Deeks** ‚disesuaikan untuk studi diagnostik
+- **Analisis subkelompok** ‚dapat menggabungkan berdasarkan DOR, Sensitivitas, atau Spesifisitas secara terpisah
 
 ---
 
-### üìâ Fitur Khusus Prevalensi
+### Fitur Khusus Prevalensi
 
 - **Transformasi double arcsine Freeman-Tukey** (direkomendasikan untuk proporsi ekstrem)
 - **Transformasi Logit** ‚Äî cocok untuk prevalensi moderat
@@ -356,7 +356,7 @@ Setiap jenis studi menyediakan analisis berikut:
 
 ---
 
-### üîÑ Konverter Ukuran Efek (5 tab)
+### Konverter Ukuran Efek (5 tab)
 
 Konversi statistik yang dilaporkan secara mentah menjadi ukuran efek untuk meta-analisis. Hasil dapat langsung ditambahkan ke dataset.
 
@@ -370,7 +370,7 @@ Konversi statistik yang dilaporkan secara mentah menjadi ukuran efek untuk meta-
 
 ---
 
-### üíæ Ekspor
+### Ekspor
 
 - **Laporan teks lengkap (.txt)** ‚Äî laporan terstruktur mencakup semua empat modul dengan hasil gabungan
 - **Data studi (.csv)** ‚Äî ekspor CSV per modul
@@ -380,12 +380,12 @@ Konversi statistik yang dilaporkan secara mentah menjadi ukuran efek untuk meta-
 
 ---
 
-### ‚öôÔ∏è Konfigurasi Proyek
+### Konfigurasi Proyek
 
-- **Model statistik** ‚Äî Random-Effects (DerSimonian-Laird) atau Fixed-Effect
-- **Tingkat interval kepercayaan** ‚Äî 90%, 95%, atau 99%
-- **Transformasi prevalensi** ‚Äî Freeman-Tukey, Logit, atau Mentah
-- **Variabel moderator kustom** ‚Äî tentukan moderator kategoris atau kontinu untuk analisis subkelompok dan regresi
+- **Model statistik** ‚Random-Effects (DerSimonian-Laird) atau Fixed-Effect
+- **Tingkat interval kepercayaan** ‚90%, 95%, atau 99%
+- **Transformasi prevalensi** ‚Freeman-Tukey, Logit, atau Mentah
+- **Variabel moderator kustom** ‚tentukan moderator kategoris atau kontinu untuk analisis subkelompok dan regresi
 
 ---
 
@@ -400,10 +400,10 @@ Konversi statistik yang dilaporkan secara mentah menjadi ukuran efek untuk meta-
 ### Opsi B: Host di GitHub Pages (gratis, URL yang dapat dibagikan)
 
 1. **Buat akun GitHub** di [github.com](https://github.com)
-2. **Buat repositori baru** ‚Äî beri nama `metalens`, atur ke **Public**
+2. **Buat repositori baru** ‚beri nama `metalens`, atur ke **Public**
 3. **Unggah file** ‚Äî buka *Add file ‚Üí Upload files*, unggah `meta-analysis-tool-v5.html`, **ganti namanya menjadi `index.html`**
-4. **Aktifkan GitHub Pages** ‚Äî buka *Settings ‚Üí Pages ‚Üí Source: Deploy from branch ‚Üí main / (root)* ‚Üí Save
-5. **Akses URL live Anda** ‚Äî `https://[username-anda].github.io/metalens/`
+4. **Aktifkan GitHub Pages** ‚buka *Settings ‚Üí Pages ‚Üí Source: Deploy from branch ‚Üí main / (root)* ‚Üí Save
+5. **Akses URL live Anda** ‚https://[username-anda].github.io/metalens/`
 
 > Pembaruan: Untuk menerapkan versi baru, buka `index.html` di repositori Anda ‚Üí edit ‚Üí tempel konten baru ‚Üí commit. GitHub Pages melakukan deploy ulang dalam ~1 menit.
 
@@ -412,12 +412,12 @@ Konversi statistik yang dilaporkan secara mentah menjadi ukuran efek untuk meta-
 ## Panduan Alur Kerja
 
 ```
-1. Pengaturan Proyek  ‚Üí  Atur model analisis, tingkat CI, transformasi prevalensi, moderator
-2. Impor Data         ‚Üí  Pilih jenis studi, unggah Excel/CSV atau tambah studi secara manual
-3. Tabel Data         ‚Üí  Tinjau, cari, dan kelola studi yang diimpor
-4. Analisis           ‚Üí  Navigasi setiap bagian (Pooled ‚Üí Forest ‚Üí Heterogenitas ‚Üí Bias ‚Üí Subkelompok ‚Üí Regresi)
-5. Konverter Efek     ‚Üí  (Opsional) Konversi statistik mentah dan tambahkan ke dataset
-6. Ekspor             ‚Üí  Unduh laporan dan plot
+1. Pengaturan Proyek  ‚Atur model analisis, tingkat CI, transformasi prevalensi, moderator
+2. Impor Data         ‚Pilih jenis studi, unggah Excel/CSV atau tambah studi secara manual
+3. Tabel Data         ‚Tinjau, cari, dan kelola studi yang diimpor
+4. Analisis           ‚Navigasi setiap bagian (Pooled ‚Üí Forest ‚Üí Heterogenitas ‚Üí Bias ‚Üí Subkelompok ‚Üí Regresi)
+5. Konverter Efek     ‚(Opsional) Konversi statistik mentah dan tambahkan ke dataset
+6. Ekspor             ‚Unduh laporan dan plot
 ```
 
 ---
@@ -445,11 +445,11 @@ Konversi statistik yang dilaporkan secara mentah menjadi ukuran efek untuk meta-
 
 | Browser | Dukungan |
 |---|---|
-| Google Chrome 90+ | ‚úÖ Didukung penuh |
-| Mozilla Firefox 88+ | ‚úÖ Didukung penuh |
-| Microsoft Edge 90+ | ‚úÖ Didukung penuh |
-| Safari 14+ | ‚úÖ Didukung penuh |
-| Internet Explorer | ‚ùå Tidak didukung |
+| Google Chrome 90+ |Didukung penuh |
+| Mozilla Firefox 88+ |Didukung penuh |
+| Microsoft Edge 90+ |Didukung penuh |
+| Safari 14+ |Didukung penuh |
+| Internet Explorer |Tidak didukung |
 
 ---
 
