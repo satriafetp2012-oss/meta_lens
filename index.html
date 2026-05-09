@@ -1289,6 +1289,9 @@ function renderStdPooled(studies,r,et,ciPct,z_c,type) {
   const isLog=studies.some(s=>s._isLog);
   const display=(v)=>isLog?fmt(Math.exp(v)):fmt(v);
   const dLabel=isLog?'(back-transformed)':'';
+  const isSig = r.p < 0.05;
+  const interp = `<div class="notice notice-info mt-2"><span>🧠</span><div><strong>${currentLang==='id'?'Interpretasi':'Interpretation'}:</strong> ${currentLang==='id' ? `Efek gabungan (pooled) adalah ${display(r.theta)}. Hasil ini ${isSig ? 'signifikan secara statistik' : 'tidak signifikan secara statistik'} (p = ${fmtP(r.p)}), yang menunjukkan ${isSig ? 'adanya efek atau asosiasi yang bermakna secara keseluruhan' : 'kurangnya bukti yang cukup untuk menyimpulkan adanya efek yang kuat'}.` : `The pooled effect is ${display(r.theta)}. This result is ${isSig ? 'statistically significant' : 'not statistically significant'} (p = ${fmtP(r.p)}), indicating ${isSig ? 'a meaningful overall effect/association' : 'insufficient evidence to conclude a strong overall effect'}.`}</div></div>`;
+
   return `
   <div class="grid-3 mb-2">
     <div class="stat-box"><div class="val">${isLog?fmt(Math.exp(r.theta)):fmt(r.theta)}</div><div class="lbl">Pooled ${et}</div><div class="sub">${ciPct}% CI [${isLog?fmt(Math.exp(r.ci_lo)):fmt(r.ci_lo)}, ${isLog?fmt(Math.exp(r.ci_hi)):fmt(r.ci_hi)}]</div></div>
@@ -1304,6 +1307,7 @@ k = ${r.n} studies</div>
 <strong>Heterogeneity</strong>
 Q(${r.df}) = ${fmt(r.Q,2)}, p = ${fmtP(r.Qp)}
 I² = ${fmt(r.I2,1)}%  |  τ² = ${fmt(r.tau2)}  |  τ = ${fmt(r.tau)}  |  H² = ${fmt(r.H2,2)}</div>
+  ${interp}
   <div class="card" style="padding:12px"><div class="card-title">Per-Study Contributions</div>
   <div class="table-wrap"><table>
     <thead><tr><th>#</th><th>Author</th><th>Year</th><th>ES</th>${isLog?'<th>Exp(ES)</th>':''}><th>Var</th><th>Weight %</th><th>Z</th></tr></thead>
@@ -1316,6 +1320,7 @@ I² = ${fmt(r.I2,1)}%  |  τ² = ${fmt(r.tau2)}  |  τ = ${fmt(r.tau)}  |  H² =
 }
 
 function renderForestControls(mode) {
+  const interpText = currentLang === 'id' ? 'Kotak (square) mewakili ukuran efek dari setiap studi tunggal, dan garis horizontal menunjukkan rentang interval kepercayaan (CI). Ukuran kotak sebanding dengan bobot studi dalam analisis. Simbol belah ketupat (diamond) di bagian bawah menunjukkan hasil efek gabungan secara keseluruhan beserta interval kepercayaannya.' : 'Each square represents a single study\'s effect size, and the horizontal line indicates its Confidence Interval (CI). The size of the square is proportional to the study\'s weight in the analysis. The diamond at the bottom shows the overall pooled effect result and its confidence interval.';
   return `<div class="card">
     <div class="card-title">🌲 Forest Plot</div>
     <div class="form-group">
@@ -1324,7 +1329,14 @@ function renderForestControls(mode) {
       <button class="btn btn-secondary btn-sm" style="margin-left:8px" onclick="downloadCurrentForest()">${t('btn_download_png')}</button></div>
     </div>
   </div>
-  <div class="forest-container"><canvas id="fp-canvas"></canvas><div id="fp-empty" class="empty-state"><span class="icon">🌲</span><p>${currentLang==='id'?'Klik Buat Plot':'Click Generate'}</p></div></div>`;
+  <div class="forest-container">
+    <canvas id="fp-canvas"></canvas>
+    <div id="fp-empty" class="empty-state"><span class="icon">🌲</span><p>${currentLang==='id'?'Klik Buat Plot':'Click Generate'}</p></div>
+    <div class="notice notice-info mt-2" id="fp-interp" style="display:none; align-items:flex-start; margin-top: 14px;">
+      <span>🧠</span>
+      <div><strong>${currentLang==='id'?'Interpretasi':'Interpretation'}:</strong> <span id="fp-interp-text">${interpText}</span></div>
+    </div>
+  </div>`;
 }
 
 function redrawCurrentForest() {
@@ -1340,7 +1352,7 @@ function downloadCurrentForest() {
 }
 
 function renderStdForest(studies, pooled, et, ciPct, z_c) {
-  if (!pooled||studies.length<2) { document.getElementById('fp-empty').style.display=''; return; }
+  if (!pooled||studies.length<2) { document.getElementById('fp-empty').style.display=''; const ie=document.getElementById('fp-interp'); if(ie)ie.style.display='none'; return; }
   document.getElementById('fp-empty').style.display='none';
   const sort = document.getElementById('fp-sort')?.value||'year';
   const sorted = [...studies];
@@ -1357,12 +1369,16 @@ function renderStdForest(studies, pooled, et, ciPct, z_c) {
   ctx.fillStyle=C.bg;ctx.fillRect(0,0,canvas.width,canvas.height);
   drawForestCore(ctx,canvas,sorted,r,et,ciPct,z_c);
   lastPlotCanvas=canvas;
+  const interpEl = document.getElementById('fp-interp');
+  if (interpEl) interpEl.style.display = 'flex';
 }
 
 function renderHet(r) {
   if (!r) return emptyState('Need ≥2 valid studies.');
   const I2cat=r.I2<25?'Low':r.I2<50?'Moderate':r.I2<75?'Substantial':'Considerable';
   const I2col=r.I2<25?'tag-green':r.I2<50?'tag-yellow':'tag-red';
+  const interp = `<div class="notice notice-info mt-2"><span>🧠</span><div><strong>${currentLang==='id'?'Interpretasi':'Interpretation'}:</strong> ${currentLang==='id' ? `Nilai I² sebesar ${fmt(r.I2,1)}% menunjukkan tingkat heterogenitas yang ${I2cat.toLowerCase()}. ${r.I2 > 50 ? 'Karena heterogenitas cukup besar, variasi antar studi signifikan. Pertimbangkan analisis subkelompok atau meta-regresi untuk mencari penyebab variasi ini.' : 'Studi-studi yang diikutsertakan memiliki hasil yang relatif konsisten satu sama lain.'}` : `An I² of ${fmt(r.I2,1)}% indicates ${I2cat.toLowerCase()} heterogeneity. ${r.I2 > 50 ? 'Because heterogeneity is substantial, the variation between studies is significant. Consider subgroup analysis or meta-regression to explore the causes.' : 'The included studies are relatively consistent with each other.'}`}</div></div>`;
+
   return `
   <div class="grid-3 mb-2">
     <div class="stat-box"><div class="val">${fmt(r.I2,1)}%</div><div class="lbl">I²</div><div class="sub"><span class="tag ${I2col}">${I2cat}</span></div></div>
@@ -1377,7 +1393,8 @@ ${r.Qp<0.05?'⚠️ Significant heterogeneity (p<0.05). Random-effects model rec
 <strong>Heterogeneity Indices</strong>
 I² = ${fmt(r.I2,1)}% — ${I2cat} (threshold: ${r.I2<25?'<25%':r.I2<50?'25-50%':r.I2<75?'50-75%':'>75%'})
 τ² = ${fmt(r.tau2,4)}  |  τ = ${fmt(r.tau,4)}  |  H² = ${fmt(r.H2,3)}
-Interpretation: ${r.I2<25?'Low heterogeneity — fixed-effect may be appropriate.':r.I2<50?'Moderate heterogeneity — explore moderators.':r.I2<75?'Substantial heterogeneity — random-effects strongly recommended.':'Considerable heterogeneity — question poolability.'}</div>`;
+Interpretation: ${r.I2<25?'Low heterogeneity — fixed-effect may be appropriate.':r.I2<50?'Moderate heterogeneity — explore moderators.':r.I2<75?'Substantial heterogeneity — random-effects strongly recommended.':'Considerable heterogeneity — question poolability.'}</div>
+  ${interp}`;
 }
 
 function renderBiasSection(studies, ys, vs, pooled, el) {
@@ -1393,6 +1410,8 @@ function renderBiasSection(studies, ys, vs, pooled, el) {
   const begg_p=2*(1-normCDF(Math.abs(begg_z)));
   const z_vals=ys.map((y,i)=>y/ses[i]);
   const fsn=Math.max(0,(z_vals.reduce((a,b)=>a+b)/1.645)**2-n);
+
+  const interp = `<div class="notice notice-info mt-2"><span>🧠</span><div><strong>${currentLang==='id'?'Interpretasi':'Interpretation'}:</strong> ${currentLang==='id' ? `Uji Egger (p = ${fmtP(eg_p)}) ${eg_p < 0.05 ? 'menunjukkan adanya asimetri yang signifikan, yang mengindikasikan potensi bias publikasi atau efek studi kecil (small-study effects).' : 'tidak menunjukkan asimetri yang signifikan, sehingga tidak ada indikasi bias publikasi yang jelas.'} ${fsn > 5*n+10 ? 'Nilai Fail-Safe N cukup besar, sehingga kesimpulan utama bersifat kuat (robust) terhadap kemungkinan adanya studi-studi tanpa efek yang tidak dipublikasikan.' : 'Nilai Fail-Safe N relatif kecil, yang berarti kesimpulan dapat berubah jika ada beberapa studi tambahan yang tidak terpublikasi.'}` : `Egger's test (p = ${fmtP(eg_p)}) ${eg_p < 0.05 ? 'shows significant asymmetry, indicating potential publication bias or small-study effects.' : 'shows no significant asymmetry, suggesting no obvious publication bias.'} ${fsn > 5*n+10 ? 'The large Fail-Safe N indicates the main conclusion is robust to potentially unpublished null studies.' : 'The small Fail-Safe N suggests the conclusion might be fragile if unpublished null studies exist.'}`}</div></div>`;
 
   el.innerHTML=`
   <div class="grid-2 mb-2">
@@ -1410,6 +1429,7 @@ ${begg_p<0.05?'⚠️ Significant rank correlation.':'✓ No significant rank co
   <div class="result-block">
 <strong>Rosenthal's Fail-Safe N = ${Math.round(fsn)}</strong>
 ${fsn>5*n+10?`✓ Robust (FSN > 5k+10 = ${5*n+10}).`:`⚠️ May not be robust (FSN < 5k+10 = ${5*n+10}).`}</div>
+  ${interp}
   <div class="card" style="padding:12px"><div class="card-title" style="display:flex;align-items:center;gap:8px">🔺 Funnel Plot <button class="btn btn-secondary btn-sm" style="margin-left:auto" onclick="downloadCurrentForest()">⬇️ PNG</button></div>
   <canvas id="fp-canvas"></canvas></div>`;
 
@@ -1485,6 +1505,8 @@ function runSubgroupAnalysis(type) {
   lastSubgroupData={groupPooled,modVar,rAll,type};
 
   const et=type==='prev'?'Prevalence':type==='assoc'?'Effect Size':'Effect Size';
+  const interp = `<div class="notice notice-info mt-2"><span>🧠</span><div><strong>${currentLang==='id'?'Interpretasi':'Interpretation'}:</strong> ${currentLang==='id' ? `Berdasarkan pengelompokan '${modVar}', uji perbedaan subkelompok ${p_b < 0.05 ? 'menunjukkan adanya perbedaan yang signifikan antar kelompok (p = '+fmtP(p_b)+'). Hal ini berarti variabel pengelompokan tersebut mempengaruhi ukuran efek.' : 'tidak menunjukkan perbedaan yang signifikan secara statistik antar kelompok (p = '+fmtP(p_b)+').'}` : `Based on the grouping by '${modVar}', the test for subgroup differences ${p_b < 0.05 ? 'shows significant differences between the groups (p = '+fmtP(p_b)+'). This means the grouping variable moderates the effect size.' : 'shows no statistically significant differences between the groups (p = '+fmtP(p_b)+').'}`}</div></div>`;
+
   let html=`<div class="card"><div class="card-title">Subgroup Results by: ${modVar}</div>
   <div class="result-block ${p_b<0.05?'warn':'success'}">
 <strong>Test of Subgroup Differences</strong>
@@ -1501,7 +1523,7 @@ ${p_b<0.05?'⚠️ Significant differences between subgroups.':'✓ No significa
         <td class="mono"><span class="tag ${r.I2<50?'tag-green':'tag-yellow'}">${fmt(r.I2,1)}%</span></td>
         <td class="mono">${fmt(r.Q,2)} (${fmtP(r.Qp)})</td></tr>`;
     }).join('')}</tbody>
-  </table></div></div>`;
+  </table></div>${interp}</div>`;
 
   document.getElementById('sg-results').innerHTML=html;
   document.getElementById('sg-forest-btn').style.display='';
@@ -1562,6 +1584,8 @@ function runMetaRegression() {
   if (!res) return alert('Matrix inversion failed.');
 
   const {coef,se_coef,t_vals,p_vals,R2,Q_res,df_res,p_res,colNames}=res;
+  const interp = `<div class="notice notice-info mt-2"><span>🧠</span><div><strong>${currentLang==='id'?'Interpretasi':'Interpretation'}:</strong> ${currentLang==='id' ? `Model meta-regresi ini mampu menjelaskan ${fmt(R2*100,1)}% (R²) variasi efek yang terjadi antar studi. Nilai p-value < 0.05 pada kolom tabel di bawah menunjukkan bahwa prediktor/variabel tersebut terbukti secara signifikan mempengaruhi ukuran efek.` : `This meta-regression model explains ${fmt(R2*100,1)}% (R²) of the effect variance between studies. A p-value < 0.05 in the table below indicates that the specific predictor significantly influences the effect size.`}</div></div>`;
+
   document.getElementById('reg-results').innerHTML=`<div class="card"><div class="card-title">Meta-Regression Results</div>
   <div class="result-block">
 <strong>Model: ${predictors.join(', ')}</strong>
@@ -1575,7 +1599,7 @@ R² = ${fmt(R2*100,1)}% (variance explained by moderators)</div>
       <td class="mono"><span class="tag ${p_vals[i]<0.05?'tag-green':'tag-blue'}">${fmtP(p_vals[i])}</span></td>
       <td class="mono">[${fmt(coef[i]-1.96*se_coef[i])}, ${fmt(coef[i]+1.96*se_coef[i])}]</td>
     </tr>`).join('')}</tbody>
-  </table></div></div>`;
+  </table></div>${interp}</div>`;
 }
 
 function getModVars(studies) {
@@ -1708,6 +1732,8 @@ function renderDiagPooled(dxStudies,comp,ciPct,z_c) {
   const b=SSD>0?SCD/SSD:0,a=Dmean-b*Smean;
   const auc=srocAUC(a,b);
 
+  const interp = `<div class="notice notice-info mt-2"><span>🧠</span><div><strong>${currentLang==='id'?'Interpretasi':'Interpretation'}:</strong> ${currentLang==='id'?`Secara keseluruhan, tes ini memiliki Sensitivitas ${fmt(pSens*100,1)}% dan Spesifisitas ${fmt(pSpec*100,1)}%. Nilai Area Under Curve (AUC) sebesar ${fmt(auc,3)} menunjukkan tingkat akurasi diskriminasi yang ${auc>0.9?'sangat baik':auc>0.8?'baik':auc>0.7?'cukup':'kurang'}.`:`Overall, the diagnostic test yields a Sensitivity of ${fmt(pSens*100,1)}% and Specificity of ${fmt(pSpec*100,1)}%. The Area Under Curve (AUC) of ${fmt(auc,3)} demonstrates ${auc>0.9?'excellent':auc>0.8?'good':auc>0.7?'fair':'poor'} discriminatory accuracy.`}</div></div>`;
+
   return `
   <div class="grid-4 mb-2">
     <div class="stat-box"><div class="val">${fmt(pSens*100,1)}%</div><div class="lbl">Pooled Sensitivity</div><div class="sub">[${fmt(pSensLo*100,1)}%, ${fmt(pSensHi*100,1)}%]</div></div>
@@ -1730,6 +1756,7 @@ SROC intercept (a) = ${fmt(a,3)}
 SROC slope    (b) = ${fmt(b,3)}
 Heterogeneity (DOR): I² = ${fmt(poolDOR.I2,1)}%</div>
   </div>
+  ${interp}
   <div class="card" style="padding:12px"><div class="card-title">Per-Study Accuracy</div>
   <div class="table-wrap"><table>
     <thead><tr><th>Study</th><th>TP</th><th>FP</th><th>FN</th><th>TN</th><th>Sens %</th><th>Spec %</th><th>+LR</th><th>−LR</th><th>DOR</th></tr></thead>
@@ -1744,7 +1771,7 @@ Heterogeneity (DOR): I² = ${fmt(poolDOR.I2,1)}%</div>
 
 function renderDiagForest(dxStudies,comp,ciPct,z_c) {
   if (!dxStudies) { dxStudies=(state.studies.diag||[]).filter(s=>s.tp!=null); comp=dxStudies.map(dxCompute); ciPct=Math.round((state.project.ci||0.95)*100); z_c=zCrit(state.project.ci||0.95); }
-  if (dxStudies.length<2) return;
+  if (dxStudies.length<2) { const ie=document.getElementById('fp-interp'); if(ie)ie.style.display='none'; return; }
   document.getElementById('fp-empty').style.display='none';
 
   // Forest of logDOR
@@ -1757,6 +1784,8 @@ function renderDiagForest(dxStudies,comp,ciPct,z_c) {
   ctx.fillStyle=C.bg;ctx.fillRect(0,0,canvas.width,canvas.height);
   drawForestCore(ctx,canvas,sorted,pooled,'log(DOR)',ciPct,z_c);
   lastPlotCanvas=canvas;
+  const interpEl = document.getElementById('fp-interp');
+  if (interpEl) interpEl.style.display = 'flex';
 }
 
 function renderSROCSection(dxStudies,comp,ciPct) {
@@ -1769,6 +1798,8 @@ function renderSROCSection(dxStudies,comp,ciPct) {
   const b=SSD>0?SCD/SSD:0,a=Dmean-b*Smean;
   const auc=srocAUC(a,b);
 
+  const interp = `<div class="notice notice-info mt-2"><span>🧠</span><div><strong>${currentLang==='id'?'Interpretasi':'Interpretation'}:</strong> ${currentLang==='id'?`Kurva SROC menggambarkan trade-off antara sensitivitas dan spesifisitas di berbagai studi. AUC ≈ ${fmt(auc,3)} merangkum akurasi tes diagnostik secara keseluruhan.`:`The SROC curve visualizes the trade-off between sensitivity and specificity across studies. An AUC ≈ ${fmt(auc,3)} represents the overall accuracy of the diagnostic test.`}</div></div>`;
+
   return `<div class="card"><div class="card-title" style="display:flex;align-items:center;gap:8px">📈 SROC Curve — AUC ≈ ${fmt(auc,3)} <button class="btn btn-secondary btn-sm" style="margin-left:auto" onclick="downloadCurrentForest()">⬇️ PNG</button></div>
   <canvas id="fp-canvas"></canvas></div>
   <div class="result-block">
@@ -1777,7 +1808,7 @@ a (intercept) = ${fmt(a,4)}
 b (slope) = ${fmt(b,4)}
 AUC ≈ ${fmt(auc,4)} — ${auc>0.97?'Outstanding':auc>0.93?'Excellent':auc>0.85?'Good':auc>0.75?'Fair':'Poor'} discriminatory ability
 Pooled operating point: Sens=${fmt(pSens*100,1)}%, Spec=${fmt(pSpec*100,1)}%</div>
-<div class="text-xs">Dots = individual studies (1−Spec vs Sens). Green diamond = pooled operating point.</div>`;
+<div class="text-xs">Dots = individual studies (1−Spec vs Sens). Green diamond = pooled operating point.</div>${interp}`;
 }
 
 function renderDiagBias(dxStudies,comp,el) {
@@ -1790,12 +1821,15 @@ function renderDiagBias(dxStudies,comp,el) {
   const eg_t=eg.slope/eg.se_slope;
   const eg_p=2*(1-tCDF(Math.abs(eg_t),n-2));
 
+  const interp = `<div class="notice notice-info mt-2"><span>🧠</span><div><strong>${currentLang==='id'?'Interpretasi':'Interpretation'}:</strong> ${currentLang==='id' ? `Uji Asimetri Plot (p = ${fmtP(eg_p)}) ${eg_p < 0.05 ? 'menunjukkan asimetri yang signifikan, yang mengindikasikan kemungkinan adanya bias publikasi.' : 'tidak menunjukkan asimetri yang signifikan, sehingga tidak ada indikasi kuat terkait bias publikasi.'}` : `The asymmetry test (p = ${fmtP(eg_p)}) ${eg_p < 0.05 ? 'shows significant plot asymmetry, indicating potential publication bias.' : 'shows no significant asymmetry, providing no strong evidence of publication bias.'}`}</div></div>`;
+
   el.innerHTML=`<div class="result-block ${eg_p<0.05?'warn':'success'}">
 <strong>Deeks' Funnel Plot Asymmetry Test (Diagnostic)</strong>
 Intercept (bias) = ${fmt(eg.intercept)}
 t = ${fmt(eg_t,2)}, df = ${n-2}, p = ${fmtP(eg_p)}
 ${eg_p<0.05?'⚠️ Potential publication bias.':'✓ No significant asymmetry detected.'}
 Note: For diagnostic studies, Deeks et al. recommend 1/√(ESS) as the precision measure.</div>
+  ${interp}
   <div class="card" style="padding:12px"><div class="card-title">🔺 Funnel Plot (logDOR vs SE)<button class="btn btn-secondary btn-sm" style="margin-left:auto" onclick="downloadCurrentForest()">⬇️ PNG</button></div>
   <canvas id="fp-canvas"></canvas></div>`;
 
@@ -1849,13 +1883,15 @@ function runDiagSubgroup() {
   lastSubgroupData={groupPooled,modVar,rAll,type:'diag'};
 
   const mLabel=measure==='dor'?'log(DOR)':measure==='sens'?'logit(Sens)':'logit(Spec)';
+  const interp = `<div class="notice notice-info mt-2"><span>🧠</span><div><strong>${currentLang==='id'?'Interpretasi':'Interpretation'}:</strong> ${currentLang==='id' ? `Berdasarkan pengelompokan '${modVar}', perbedaan subkelompok ${p_b < 0.05 ? 'bersifat signifikan secara statistik (p = '+fmtP(p_b)+').' : 'tidak signifikan secara statistik (p = '+fmtP(p_b)+').'}` : `Based on grouping by '${modVar}', the subgroup differences are ${p_b < 0.05 ? 'statistically significant (p = '+fmtP(p_b)+').' : 'not statistically significant (p = '+fmtP(p_b)+').'}`}</div></div>`;
+
   document.getElementById('sg-results').innerHTML=`<div class="card"><div class="card-title">Results by: ${modVar} (${mLabel})</div>
   <div class="result-block ${p_b<0.05?'warn':'success'}">Q_between(${df_b}) = ${fmt(Q_b,2)}, p = ${fmtP(p_b)}  ${p_b<0.05?'⚠️ Significant subgroup differences.':'✓ No significant differences.'}</div>
   <div class="table-wrap"><table><thead><tr><th>Subgroup</th><th>k</th><th>Pooled ${mLabel}</th><th>95% CI</th><th>I²</th></tr></thead>
   <tbody>${groupPooled.map(({grp,r})=>`<tr><td><strong>${grp}</strong></td><td>${r.n}</td>
     <td class="mono">${fmt(r.theta)}</td><td class="mono">[${fmt(r.ci_lo)}, ${fmt(r.ci_hi)}]</td>
     <td class="mono"><span class="tag ${r.I2<50?'tag-green':'tag-yellow'}">${fmt(r.I2,1)}%</span></td></tr>`).join('')}
-  </tbody></table></div></div>
+  </tbody></table></div>${interp}</div>
   <button class="btn btn-secondary btn-sm mt-2" onclick="drawSubgroupForest('diag')">🌲 Show Forest Plot</button>`;
 }
 
@@ -1925,6 +1961,8 @@ function renderPrevPooled(pvStudies,transformed,pooled,method,ciPct,z_c) {
   const back=pvBack(pooled.theta,method);
   const {lo,hi}=pvBackCI(pooled.ci_lo,pooled.ci_hi,method);
   const mLabel={ft:'Freeman-Tukey double arcsine',logit:'Logit',raw:'Raw proportion'}[method];
+  const interp = `<div class="notice notice-info mt-2"><span>🧠</span><div><strong>${currentLang==='id'?'Interpretasi':'Interpretation'}:</strong> ${currentLang==='id'?`Prevalensi gabungan diperkirakan sebesar ${fmt(back*100,2)}%.`:`The overall pooled prevalence is estimated at ${fmt(back*100,2)}%.`}</div></div>`;
+
   return `
   <div class="grid-3 mb-2">
     <div class="stat-box"><div class="val">${fmt(back*100,2)}%</div><div class="lbl">Pooled Prevalence</div><div class="sub">${ciPct}% CI [${fmt(lo*100,2)}%, ${fmt(hi*100,2)}%]</div></div>
@@ -1939,6 +1977,7 @@ k = ${pvStudies.length}  |  I² = ${fmt(pooled.I2,1)}%  |  τ² = ${fmt(pooled.t
 <strong>Heterogeneity</strong>
 Q(${pooled.df}) = ${fmt(pooled.Q,2)}, p = ${fmtP(pooled.Qp)}
 I² = ${fmt(pooled.I2,1)}%  |  τ² = ${fmt(pooled.tau2)}  |  τ = ${fmt(pooled.tau)}</div>
+  ${interp}
   <div class="card" style="padding:12px"><div class="card-title">Per-Study Prevalence</div>
   <div class="table-wrap"><table>
     <thead><tr><th>Study</th><th>Cases</th><th>N</th><th>Prevalence %</th><th>95% CI</th><th>Weight %</th></tr></thead>
@@ -1955,7 +1994,7 @@ I² = ${fmt(pooled.I2,1)}%  |  τ² = ${fmt(pooled.tau2)}  |  τ = ${fmt(pooled.
 
 function renderPrevForest(pvStudies,transformed,pooled,method,ciPct,z_c) {
   if (!pvStudies) { pvStudies=(state.studies.prev||[]).filter(s=>!isNaN(+s.cases)&&+s.n>0); transformed=pvStudies.map(s=>pvTransform(+s.cases,+s.n,method||'ft')); pooled=computePooled(transformed.map(t=>t.yi),transformed.map(t=>t.vi)); ciPct=Math.round((state.project.ci||0.95)*100); z_c=zCrit(state.project.ci||0.95); }
-  if (!pooled||pvStudies.length<2){document.getElementById('fp-empty').style.display='';return;}
+  if (!pooled||pvStudies.length<2){document.getElementById('fp-empty').style.display=''; const ie=document.getElementById('fp-interp'); if(ie)ie.style.display='none'; return;}
   document.getElementById('fp-empty').style.display='none';
   const sort=document.getElementById('fp-sort')?.value||'year';
   const ys=transformed.map(t=>t.yi),vs=transformed.map(t=>t.vi);
@@ -1976,6 +2015,8 @@ function renderPrevForest(pvStudies,transformed,pooled,method,ciPct,z_c) {
   ctx.fillStyle=C.bg;ctx.fillRect(0,0,canvas.width,canvas.height);
   drawForestCore(ctx,canvas,sorted,pooledDisp,'Prevalence %',ciPct,z_c);
   lastPlotCanvas=canvas;
+  const interpEl = document.getElementById('fp-interp');
+  if (interpEl) interpEl.style.display = 'flex';
 }
 
 function renderPrevBias(pvStudies,ys,vs,pooled,el) {
@@ -1987,12 +2028,15 @@ function renderPrevBias(pvStudies,ys,vs,pooled,el) {
   const eg_t=eg.slope/eg.se_slope;
   const eg_p=2*(1-tCDF(Math.abs(eg_t),n-2));
 
+  const interp = `<div class="notice notice-info mt-2"><span>🧠</span><div><strong>${currentLang==='id'?'Interpretasi':'Interpretation'}:</strong> ${currentLang==='id' ? `Uji Egger/Deeks (p = ${fmtP(eg_p)}) ${eg_p < 0.05 ? 'menunjukkan asimetri yang signifikan pada plot, yang mengindikasikan kemungkinan bias publikasi.' : 'tidak menunjukkan asimetri yang signifikan, sehingga tidak ada indikasi kuat terkait bias publikasi.'}` : `The asymmetry test (p = ${fmtP(eg_p)}) ${eg_p < 0.05 ? 'shows significant plot asymmetry, indicating potential publication bias.' : 'shows no significant asymmetry, providing no strong evidence of publication bias.'}`}</div></div>`;
+
   el.innerHTML=`<div class="result-block ${eg_p<0.05?'warn':'success'}">
 <strong>Egger's Test for Publication Bias</strong>
 Intercept (bias) = ${fmt(eg.intercept)}
 t = ${fmt(eg_t,2)}, df = ${n-2}, p = ${fmtP(eg_p)}
 ${eg_p<0.05?'⚠️ Potential publication bias.':'✓ No significant asymmetry.'}
 Note: Interpretation on the transformed (${state.project.prevTransform||'ft'}) scale.</div>
+  ${interp}
   <div class="card" style="padding:12px"><div class="card-title">🔺 Funnel Plot (transformed scale) <button class="btn btn-secondary btn-sm" style="margin-left:auto" onclick="downloadCurrentForest()">⬇️ PNG</button></div>
   <canvas id="fp-canvas"></canvas></div>`;
 
