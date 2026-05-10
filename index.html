@@ -1546,10 +1546,33 @@ function drawSubgroupForest(type) {
 function renderRegressionSection(studies,ys,vs) {
   const mods=getModVars(studies);
   if (!mods.length) return emptyState('No moderator columns found in data.');
+
+  let refHtml = '';
+  mods.forEach(m => {
+    const safeId = m.replace(/[^a-zA-Z0-9]/g,'_');
+    const vals = studies.map(s=>s[m]).filter(v=>v!=null&&v!=='');
+    const isNumeric = vals.length > 0 && vals.every(v=>!isNaN(parseFloat(v)));
+    if (!isNumeric && vals.length > 0) {
+      const cats = [...new Set(vals)];
+      if (cats.length > 1) {
+        refHtml += `<div id="ref-container-${safeId}" style="display:none" class="form-row">
+          <label>${currentLang==='id'?'Kelompok Referensi untuk':'Reference Group for'} <b>${m}</b></label>
+          <select id="ref-sel-${safeId}">
+            ${cats.map(c=>`<option value="${c}">${c}</option>`).join('')}
+          </select>
+        </div>`;
+      }
+    }
+  });
+
   return `<div class="card"><div class="card-title">📈 Meta-Regression Settings</div>
   <div class="form-row"><label>${t('lbl_predictors')}</label>
-  <div class="chips" id="reg-chips">${mods.map(m=>`<span class="chip" onclick="this.classList.toggle('selected')" data-mod="${m}">${m}</span>`).join('')}</div></div>
-  <button class="btn btn-primary" onclick="runMetaRegression()">▶ Run Meta-Regression</button>
+  <div class="chips" id="reg-chips">${mods.map(m=>{
+    const safeId = m.replace(/[^a-zA-Z0-9]/g,'_');
+    return `<span class="chip" onclick="this.classList.toggle('selected'); const el=document.getElementById('ref-container-${safeId}'); if(el) el.style.display=this.classList.contains('selected')?'block':'none';" data-mod="${m}">${m}</span>`;
+  }).join('')}</div></div>
+  <div class="grid-2 mt-2">${refHtml}</div>
+  <button class="btn btn-primary mt-2" onclick="runMetaRegression()">▶ Run Meta-Regression</button>
   </div><div id="reg-results"></div>`;
 }
 
@@ -1576,15 +1599,22 @@ function runMetaRegression() {
   const predictors=chips.map(c=>c.dataset.mod);
   if (!predictors.length) return alert('Select at least one predictor.');
 
+  const refValues = {};
+  predictors.forEach(p => {
+    const safeId = p.replace(/[^a-zA-Z0-9]/g,'_');
+    const sel = document.getElementById(`ref-sel-${safeId}`);
+    if (sel) refValues[p] = sel.value;
+  });
+
   const tau2=computePooled(ys,vs).tau2;
   const wi=vs.map(v=>1/(v+tau2));
-  const Xmat=buildDesignMatrix(studies,predictors);
+  const Xmat=buildDesignMatrix(studies,predictors,refValues);
   if (!Xmat) return alert('Cannot build design matrix.');
   const res=wls(ys,Xmat.X,wi,Xmat.colNames,studies.length);
   if (!res) return alert('Matrix inversion failed.');
 
   const {coef,se_coef,t_vals,p_vals,R2,Q_res,df_res,p_res,colNames}=res;
-  const interp = `<div class="notice notice-info mt-2"><span>🧠</span><div><strong>${currentLang==='id'?'Interpretasi':'Interpretation'}:</strong> ${currentLang==='id' ? `Model meta-regresi ini mampu menjelaskan ${fmt(R2*100,1)}% (R²) variasi efek yang terjadi antar studi. Nilai p-value < 0.05 pada kolom tabel di bawah menunjukkan bahwa prediktor/variabel tersebut terbukti secara signifikan mempengaruhi ukuran efek.` : `This meta-regression model explains ${fmt(R2*100,1)}% (R²) of the effect variance between studies. A p-value < 0.05 in the table below indicates that the specific predictor significantly influences the effect size.`}</div></div>`;
+  const interp = `<div class="notice notice-info mt-2"><span>🧠</span><div><strong>${currentLang==='id'?'Interpretasi':'Interpretation'}:</strong> ${currentLang==='id' ? `Model meta-regresi ini mampu menjelaskan ${fmt(R2*100,1)}% (R²) variasi efek yang terjadi antar studi. Nilai p-value < 0.05 pada kolom tabel di bawah menunjukkan bahwa prediktor/variabel tersebut terbukti secara signifikan mempengaruhi ukuran efek dibandingkan dengan grup referensi atau baseline.` : `This meta-regression model explains ${fmt(R2*100,1)}% (R²) of the effect variance between studies. A p-value < 0.05 in the table below indicates that the specific predictor significantly influences the effect size compared to the reference group.`}</div></div>`;
 
   document.getElementById('reg-results').innerHTML=`<div class="card"><div class="card-title">Meta-Regression Results</div>
   <div class="result-block">
@@ -1610,16 +1640,27 @@ function getModVars(studies) {
   return [...keys];
 }
 
-function buildDesignMatrix(studies,predictors) {
+function buildDesignMatrix(studies,predictors,refValues={}) {
   const colNames=['Intercept'];
   const X=studies.map(()=>[1]);
   for (const pred of predictors) {
     const vals=studies.map(s=>s[pred]);
-    const nums=vals.map(v=>parseFloat(v));
-    if (nums.every(v=>!isNaN(v))) { colNames.push(pred); nums.forEach((v,i)=>X[i].push(v)); }
-    else {
-      const cats=[...new Set(vals.filter(v=>v))];
-      cats.slice(1).forEach(cat=>{ colNames.push(pred+'='+cat); vals.forEach((v,i)=>X[i].push(v===cat?1:0)); });
+    const validVals=vals.filter(v=>v!=null&&v!=='');
+    const isNumeric=validVals.length > 0 && validVals.every(v=>!isNaN(parseFloat(v)));
+
+    if (isNumeric) {
+      colNames.push(pred); 
+      vals.forEach((v,i)=>X[i].push(parseFloat(v)||0));
+    } else {
+      let cats=[...new Set(validVals)];
+      const ref = refValues[pred] || cats[0];
+      cats = cats.filter(c => c !== ref);
+      cats.unshift(ref); // Make sure reference is at index 0
+
+      cats.slice(1).forEach(cat=>{ 
+        colNames.push(pred+'='+cat); 
+        vals.forEach((v,i)=>X[i].push(v===cat?1:0)); 
+      });
     }
   }
   return {X,colNames};
