@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MetaLens v12 — Meta-Analysis Studio by Bayu Satria Wiratama</title>
+<title>MetaLens v13.1 — Meta-Analysis Studio by Bayu Satria Wiratama</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap');
@@ -1019,7 +1019,8 @@ function normalizeStudy(s) {
        variance of every OR, RR, HR, IRR and ratio of means that was entered
        with a CI instead of a variance. */
     const T = typeof esNormType === 'function' ? esNormType(s.effect_type) : null;
-    const isRatio = T && ES_TYPES[T] && ES_TYPES[T].scale === 'log';
+    const isRatio = T && ES_TYPES[T] && ES_TYPES[T].scale === 'log'
+                      && !ES_TYPES[T].logged;   /* a log-scale CI is already logged */
     const z = 1.959963985;   /* published CIs are 95% unless stated otherwise */
     if (isRatio && lo > 0 && hi > 0) s.variance = ((Math.log(hi)-Math.log(lo))/(2*z))**2;
     else s.variance = ((hi-lo)/(2*z))**2;
@@ -1821,8 +1822,38 @@ function ellipsize(ctx, str, maxW) {
   return s+'…';
 }
 
+/* Round ratio values -- ...0.1, 0.2, 0.5, 1, 2, 5, 10... -- whose logs fall
+   inside [lo,hi].  Even spacing on the log scale exponentiates into ticks
+   like 0.12 / 7.31 / 459.73, which are unreadable and never include the null
+   value of 1.  Returns null when no set gives a sensible 3-8 ticks, so the
+   caller can fall back to even spacing.                                    */
+function niceRatioTicks(lo, hi) {
+  if (!isFinite(lo) || !isFinite(hi) || !(hi > lo)) return null;
+  const rl = Math.exp(lo), rh = Math.exp(hi);
+  /* finest first; the later entries thin the decades themselves, which is
+     what a very wide axis needs. e is always a multiple of the stride, so
+     the null value 1 is a candidate in every set. */
+  const sets = [[[1,1.5,2,3,5,7],1],[[1,2,5],1],[[1,3],1],[[1],1],
+                [[1],2],[[1],3],[[1],4],[[1],6]];
+  for (let si=0; si<sets.length; si++) {
+    const ms = sets[si][0], step = sets[si][1], out = [];
+    for (let e=-12; e<=12; e+=step) ms.forEach(m=>{
+      const v = m*Math.pow(10,e); if (v>=rl && v<=rh) out.push(v);
+    });
+    out.sort((a,b)=>a-b);
+    if (out.length>=3 && out.length<=8) return out.map(v=>Math.log(v));
+  }
+  return null;
+}
+
 function drawForestCore(ctx,canvas,sorted,pooled,label,ciPct,z_c,opts={}) {
   const rowH=34, hH=58, totalRows=sorted.length+1;
+  /* Marker POSITIONS stay on the pooling scale -- log for a ratio measure --
+     because that is what keeps a confidence interval symmetric about its
+     point estimate. Only the printed numbers and the axis ticks are
+     back-transformed, via valFmt and axisFmt. Without valFmt the Estimate
+     and CI columns of an odds-ratio forest read as log ORs. */
+  const vf = opts.valFmt || (v => fmt(v));
   const showPI = opts.pi && isFinite(opts.pi.lo) && isFinite(opts.pi.hi);
   const showFE = opts.fe && isFinite(opts.fe.ci_lo);
   const extraRows = (showFE?1:0);
@@ -1834,11 +1865,20 @@ function drawForestCore(ctx,canvas,sorted,pooled,label,ciPct,z_c,opts={}) {
   const plotX=lW+esW+ciW+12, plotW=canvas.width-plotX-108, wX=canvas.width-98;
 
   const cand=[...sorted.map(s=>s._lo),...sorted.map(s=>s._hi),pooled.ci_lo,pooled.ci_hi];
-  if (showPI) cand.push(opts.pi.lo, opts.pi.hi);
   const valid=cand.filter(v=>!isNaN(v)&&isFinite(v));
   const ref = opts.refLine!==undefined ? opts.refLine : 0;
-  const mn=valid.length?Math.min(...valid,ref-0.1):-0.1;
-  const mx=valid.length?Math.max(...valid,ref+0.1):0.1;
+  let mn=valid.length?Math.min(...valid,ref-0.1):-0.1;
+  let mx=valid.length?Math.max(...valid,ref+0.1):0.1;
+  /* A prediction interval refers to t on k-2 df -- t = 12.7 at k = 3 -- so on
+     a small meta-analysis it is routinely far wider than any study. Letting
+     it set the x-range crushed every marker into a few central pixels. Give
+     it at most half the data span at each end; past that toX clamps the bar
+     and it is drawn with an arrowhead. */
+  if (showPI) {
+    const slack = Math.max((mx-mn)*0.5, 0.1);
+    if (isFinite(opts.pi.lo)) mn = Math.min(mn, Math.max(opts.pi.lo, mn-slack));
+    if (isFinite(opts.pi.hi)) mx = Math.max(mx, Math.min(opts.pi.hi, mx+slack));
+  }
   const rng=mx-mn;
   const pMin=rng===0?mn-1:mn-rng*0.06, pMax=rng===0?mx+1:mx+rng*0.06;
   const toX=v=>plotX+((Math.max(pMin,Math.min(pMax,v))-pMin)/(pMax-pMin))*plotW;
@@ -1866,8 +1906,8 @@ function drawForestCore(ctx,canvas,sorted,pooled,label,ciPct,z_c,opts={}) {
     ctx.fillStyle=C.text; ctx.font=FONT.lbl; ctx.textAlign='left';
     ctx.fillText(ellipsize(ctx,(s.author||'?')+' ('+(s.year||'?')+')',lW-16),10,y+5);
     ctx.fillStyle=C.text2; ctx.font=FONT.num;
-    ctx.fillText(fmt(es),lW+10,y+5);
-    ctx.fillText('['+fmt(lo)+', '+fmt(hi)+']',lW+esW+10,y+5);
+    ctx.fillText(vf(es),lW+10,y+5);
+    ctx.fillText('['+vf(lo)+', '+vf(hi)+']',lW+esW+10,y+5);
     const x1=toX(lo),x2=toX(hi),xm=toX(es);
     ctx.strokeStyle=col; ctx.lineWidth=2;
     ctx.beginPath();ctx.moveTo(x1,y);ctx.lineTo(x2,y);ctx.stroke();
@@ -1886,8 +1926,8 @@ function drawForestCore(ctx,canvas,sorted,pooled,label,ciPct,z_c,opts={}) {
     ctx.fillStyle=col; ctx.font=FONT.ttl; ctx.textAlign='left';
     ctx.fillText(name,10,yy+5);
     ctx.fillStyle=C.text; ctx.font="600 13px 'DM Mono',monospace";
-    ctx.fillText(fmt(th),lW+10,yy+5);
-    ctx.fillText('['+fmt(lo)+', '+fmt(hi)+']',lW+esW+10,yy+5);
+    ctx.fillText(vf(th),lW+10,yy+5);
+    ctx.fillText('['+vf(lo)+', '+vf(hi)+']',lW+esW+10,yy+5);
     const dl=toX(lo),dr=toX(hi),dc=toX(th);
     ctx.fillStyle=col;
     ctx.beginPath();ctx.moveTo(dl,yy);ctx.lineTo(dc,yy-10);ctx.lineTo(dr,yy);ctx.lineTo(dc,yy+10);ctx.closePath();ctx.fill();
@@ -1906,13 +1946,19 @@ function drawForestCore(ctx,canvas,sorted,pooled,label,ciPct,z_c,opts={}) {
   if (showPI) {
     const piY = py + rowH*0.78;
     ctx.fillStyle=C.purple; ctx.font=FONT.lblB; ctx.textAlign='left';
-    ctx.fillText('95% Prediction interval',10,piY+5);
+    const piPct = Math.round((state.project.ci || 0.95) * 100);
+    ctx.fillText(piPct + '% ' + t('lbl_pi'), 10, piY+5);
     ctx.fillStyle=C.text2; ctx.font=FONT.num;
-    ctx.fillText('['+fmt(opts.pi.lo)+', '+fmt(opts.pi.hi)+']',lW+esW+10,piY+5);
+    ctx.fillText('['+vf(opts.pi.lo)+', '+vf(opts.pi.hi)+']',lW+esW+10,piY+5);
     const pl=toX(opts.pi.lo), pr=toX(opts.pi.hi);
     ctx.strokeStyle=C.purple; ctx.lineWidth=2.5; ctx.setLineDash([]);
     ctx.beginPath();ctx.moveTo(pl,piY);ctx.lineTo(pr,piY);ctx.stroke();
-    [pl,pr].forEach(x=>{ctx.beginPath();ctx.moveTo(x,piY-7);ctx.lineTo(x,piY+7);ctx.stroke();});
+    /* a flat cap means the limit is where it is drawn; an arrowhead means the
+       interval runs off the plot and has been clipped */
+    if (opts.pi.lo < pMin) { ctx.beginPath();ctx.moveTo(pl+9,piY-7);ctx.lineTo(pl,piY);ctx.lineTo(pl+9,piY+7);ctx.stroke(); }
+    else { ctx.beginPath();ctx.moveTo(pl,piY-7);ctx.lineTo(pl,piY+7);ctx.stroke(); }
+    if (opts.pi.hi > pMax) { ctx.beginPath();ctx.moveTo(pr-9,piY-7);ctx.lineTo(pr,piY);ctx.lineTo(pr-9,piY+7);ctx.stroke(); }
+    else { ctx.beginPath();ctx.moveTo(pr,piY-7);ctx.lineTo(pr,piY+7);ctx.stroke(); }
     axY = piY + 30;
   }
 
@@ -1920,11 +1966,13 @@ function drawForestCore(ctx,canvas,sorted,pooled,label,ciPct,z_c,opts={}) {
   ctx.strokeStyle=C.text2; ctx.lineWidth=1.5;
   ctx.beginPath();ctx.moveTo(plotX,axY);ctx.lineTo(plotX+plotW,axY);ctx.stroke();
   ctx.fillStyle=C.text2; ctx.font=FONT.ax; ctx.textAlign='center';
-  for(let i=0;i<=5;i++){
-    const v=pMin+i/5*(pMax-pMin),tx=toX(v);
+  let tickVals = (opts.tickMode==='ratio') ? niceRatioTicks(pMin,pMax) : null;
+  if (!tickVals) { tickVals=[]; for(let i=0;i<=5;i++) tickVals.push(pMin+i/5*(pMax-pMin)); }
+  tickVals.forEach(v=>{
+    const tx=toX(v);
     ctx.beginPath();ctx.moveTo(tx,axY);ctx.lineTo(tx,axY+5);ctx.stroke();
     ctx.fillText(opts.axisFmt?opts.axisFmt(v):fmt(v,2),tx,axY+18);
-  }
+  });
   if (opts.leftLabel||opts.rightLabel) {
     ctx.font=FONT.lbl; ctx.fillStyle=C.text3;
     ctx.textAlign='right'; if(opts.leftLabel) ctx.fillText('◀ '+opts.leftLabel,zeroX-8,axY+36);
@@ -2169,6 +2217,22 @@ const ES_TYPES = {
   RR:    { fam:'ratio', scale:'log',    hub:'LOGRR', ratio:true,  label:'Risk ratio', label_id:'Risk ratio' },
   HR:    { fam:'ratio', scale:'log',    hub:'LOGOR', ratio:true,  label:'Hazard ratio', label_id:'Hazard ratio' },
   IRR:   { fam:'rate',  scale:'log',    hub:'LOGOR', ratio:true,  label:'Incidence rate ratio', label_id:'Rasio laju insidens' },
+  /* ---- ratios ALREADY REPORTED on the log scale ----
+     A protective effect is a NEGATIVE log ratio, so these values must never
+     be passed through Math.log() a second time -- doing so both corrupts the
+     effect and makes the positivity guard reject the whole protective half of
+     the number line. `logged:true` means "already on the hub/pooling scale";
+     `back_of` names the metric it exponentiates back to for display.      */
+  LOGOR: { fam:'ratio', scale:'log',    hub:'LOGOR', ratio:false, logged:true, back_of:'OR',
+           label:'log odds ratio', label_id:'log odds ratio' },
+  LOGRR: { fam:'ratio', scale:'log',    hub:'LOGRR', ratio:false, logged:true, back_of:'RR',
+           label:'log risk ratio', label_id:'log risk ratio' },
+  LOGHR: { fam:'ratio', scale:'log',    hub:'LOGOR', ratio:false, logged:true, back_of:'HR',
+           label:'log hazard ratio', label_id:'log hazard ratio' },
+  LOGIRR:{ fam:'rate',  scale:'log',    hub:'LOGOR', ratio:false, logged:true, back_of:'IRR',
+           label:'log incidence rate ratio', label_id:'log rasio laju insidens' },
+  LROM:  { fam:'ratio', scale:'log',    hub:'ROM',   ratio:false, logged:true, back_of:'ROM',
+           label:'log response ratio', label_id:'log rasio respons' },
   /* ---- absolute risk ---- */
   RD:    { fam:'diff',  scale:'raw',    hub:'RD',    ratio:false, label:'Risk difference', label_id:'Selisih risiko' },
   NNT:   { fam:'diff',  scale:'raw',    hub:'RD',    ratio:false, label:'Number needed to treat', label_id:'NNT' },
@@ -2190,11 +2254,20 @@ const ES_ALIAS = {
   'HEDGES G':'G', "HEDGES' G":'G', 'HEDGESG':'G', 'G HEDGES':'G',
   'GLASS DELTA':'GLASS', "GLASS'S DELTA":'GLASS', 'DELTA':'GLASS',
   'MEAN DIFFERENCE':'MD', 'RAW MEAN DIFFERENCE':'MD', 'DIFF':'MD',
-  'ODDS RATIO':'OR', 'LOGOR':'OR', 'LOG OR':'OR', 'LNOR':'OR',
-  'PETO OR':'PETO', 'PETO ODDS RATIO':'PETO',
-  'RISK RATIO':'RR', 'RELATIVE RISK':'RR', 'LOGRR':'RR',
-  'HAZARD RATIO':'HR', 'LOGHR':'HR',
+  'ODDS RATIO':'OR',
+  'LOGOR':'LOGOR', 'LOG OR':'LOGOR', 'LNOR':'LOGOR', 'LN OR':'LOGOR',
+  'LOGODDS':'LOGOR', 'LOG ODDS':'LOGOR', 'LOG ODDS RATIO':'LOGOR',
+  'LOG ODDS-RATIO':'LOGOR', 'LOGIT':'LOGOR',
+  'PETO OR':'PETO', 'PETO ODDS RATIO':'PETO', 'LOG PETO OR':'LOGOR',
+  'RISK RATIO':'RR', 'RELATIVE RISK':'RR',
+  'LOGRR':'LOGRR', 'LOG RR':'LOGRR', 'LNRR':'LOGRR', 'LN RR':'LOGRR',
+  'LOG RISK RATIO':'LOGRR', 'LOG RELATIVE RISK':'LOGRR',
+  'HAZARD RATIO':'HR',
+  'LOGHR':'LOGHR', 'LOG HR':'LOGHR', 'LNHR':'LOGHR', 'LN HR':'LOGHR',
+  'LOG HAZARD RATIO':'LOGHR',
   'INCIDENCE RATE RATIO':'IRR', 'RATE RATIO':'IRR',
+  'LOGIRR':'LOGIRR', 'LOG IRR':'LOGIRR', 'LNIRR':'LOGIRR',
+  'LOG RATE RATIO':'LOGIRR', 'LOG INCIDENCE RATE RATIO':'LOGIRR',
   'RISK DIFFERENCE':'RD', 'ARD':'RD', 'ARR':'RD',
   'CORRELATION':'R', 'PEARSON R':'R', 'RHO':'R',
   'FISHER Z':'ZR', "FISHER'S Z":'ZR', 'ZR':'ZR', 'Z':'ZR',
@@ -2203,7 +2276,9 @@ const ES_ALIAS = {
   'COHEN F':'COHENF', "COHEN'S F":'COHENF', 'F':'COHENF',
   'F SQUARED':'F2', 'F2':'F2',
   'C-STATISTIC':'AUC', 'C STATISTIC':'AUC', 'AUROC':'AUC', 'ROC AUC':'AUC',
-  'RESPONSE RATIO':'ROM', 'LRR':'ROM', 'LOG RESPONSE RATIO':'ROM',
+  'RESPONSE RATIO':'ROM', 'RATIO OF MEANS':'ROM',
+  'LRR':'LROM', 'LOG RESPONSE RATIO':'LROM', 'LOG ROM':'LROM',
+  'LNROM':'LROM', 'LOG RATIO OF MEANS':'LROM',
   'NNT':'NNT', 'NNH':'NNT'
 };
 
@@ -2373,6 +2448,16 @@ function esToHub(type, value, variance, ctx) {
       if (!(value > 0)) return { ok:false, reason:'nonpositive' };
       y = Math.log(value); path.push('log');
       break;
+
+    /* --- ratios already reported on the log scale ---
+       Nothing to do: the reported value IS the hub value. No positivity
+       guard, because a negative log ratio is the ordinary way to report a
+       protective effect. */
+    case 'LOGOR':  hub = 'LOGOR'; break;
+    case 'LOGRR':  hub = 'LOGRR'; break;
+    case 'LOGHR':  hub = 'LOGOR'; notes.push('hr_as_or');  break;
+    case 'LOGIRR': hub = 'LOGOR'; notes.push('irr_as_or'); break;
+    case 'LROM':   hub = 'ROM';   break;
 
     /* --- absolute risk --- */
     case 'RD':
@@ -2581,7 +2666,11 @@ function esConvertStudy(s, target, opts) {
   /* "as reported" — no cross-metric conversion, just the pooling transform */
   if (target === 'AS_REPORTED' || !ES_TARGETS[target]) {
     const T = ES_TYPES[declared];
-    if (T.scale === 'log') {
+    if (T.logged) {
+      /* already on the pooling scale; a negative value is a protective
+         effect, not an error, and must not be logged a second time */
+      out.y = raw; out.v = varr;
+    } else if (T.scale === 'log') {
       if (!(raw > 0)) { out.reason = 'nonpositive'; return out; }
       out.y = Math.log(raw); out.v = varr; out.path.push('log');
     } else if (T.scale === 'fisher') {
@@ -2640,7 +2729,12 @@ function esHarmonise(studies, target, opts) {
 function esScaleView(scale, outType) {
   const T = ES_TYPES[outType] || {};
   if (scale === 'log')    return { back: v => Math.exp(v), refLine: 0, ratio:true,
-                                   scaleName: 'log scale', unit: T.label || outType };
+                                   scaleName: 'log scale',
+                                   /* exponentiating a log OR gives an OR, so name
+                                      the ratio rather than the log metric */
+                                   unit: (T.back_of && ES_TYPES[T.back_of])
+                                           ? ES_TYPES[T.back_of].label
+                                           : (T.label || outType) };
   if (scale === 'fisher') return { back: v => Math.tanh(v), refLine: 0, ratio:false,
                                    scaleName: "Fisher's z scale", unit: T.label || outType };
   return { back: v => v, refLine: 0, ratio:false, scaleName: 'raw scale', unit: T.label || outType };
@@ -2816,7 +2910,7 @@ function runStandardSection(type, section, el) {
   });
 
   if (section==='pooled') el.innerHTML = renderEsBanner(type) + renderStdPooled(studies,pooled,et,ciPct,z_c,type);
-  else if (section==='forest') { el.innerHTML = renderForestControls('std'); renderStdForest(studies,pooled,et,ciPct,z_c); }
+  else if (section==='forest') { el.innerHTML = renderForestControls('std'); renderStdForest(studies,pooled,et,ciPct,z_c,type); }
   else if (section==='het') el.innerHTML = renderHet(pooled);
   else if (section==='bias') renderBiasSection(studies,ys,vs,pooled,el);
   else if (section==='subgroup') el.innerHTML = renderSubgroupSection(studies,pooled,ys,vs,z_c,ciPct,et,type);
@@ -2871,7 +2965,21 @@ function renderForestControls(mode) {
 
 function redrawCurrentForest() {
   const {type,section} = state.currentAnalysis;
-  if (type==='eff'||type==='assoc') renderStdForest(getEffStudies(type), computePooled(getEffTransformed(getEffStudies(type),type).map(t=>t.es),getEffTransformed(getEffStudies(type),type).map(t=>t.v)), type==='assoc'?'Effect':'Effect Size', Math.round((state.project.ci||0.95)*100), zCrit(state.project.ci||0.95));
+  if (type==='eff'||type==='assoc') {
+    /* re-annotate before redrawing: a change of harmonisation target moves
+       every _es, and the old code transformed twice while still handing the
+       stale annotations to the plot */
+    const studies = getEffStudies(type);
+    const tr = getEffTransformed(studies, type);
+    const z_c = zCrit(state.project.ci||0.95);
+    studies.forEach((s,i)=>{
+      s._es=tr[i].es; s._isLog=tr[i]._isLog; s._isZ=tr[i]._isZ;
+      s._lo=tr[i].es-z_c*Math.sqrt(tr[i].v); s._hi=tr[i].es+z_c*Math.sqrt(tr[i].v);
+    });
+    renderStdForest(studies, computePooled(tr.map(t=>t.es), tr.map(t=>t.v)),
+                    type==='assoc'?'Effect':'Effect Size',
+                    Math.round((state.project.ci||0.95)*100), z_c, type);
+  }
   else if (type==='prev') renderPrevForest();
   else if (type==='diag') renderDiagForest();
 }
@@ -2881,24 +2989,51 @@ function downloadCurrentForest() {
   const a=document.createElement('a');a.download='forest_plot.png';a.href=canvas.toDataURL('image/png');a.click();
 }
 
-function renderStdForest(studies, pooled, et, ciPct, z_c) {
+function renderStdForest(studies, pooled, et, ciPct, z_c, type) {
   if (!pooled||studies.length<2) { document.getElementById('fp-empty').style.display=''; return; }
   document.getElementById('fp-empty').style.display='none';
+
+  /* getAnalysisData carries the display layer -- back-transform, axis format
+     and the name of the metric actually being pooled. The pooled panel, the
+     fixed-vs-random panel and both sensitivity plots already use it; this
+     function used to bypass it and print the raw pooling-scale numbers, so
+     an odds-ratio dataset drew a forest labelled in log OR with its null
+     line at 0. */
+  const ty = type || (state.currentAnalysis && state.currentAnalysis.type) || 'eff';
+  const D = getAnalysisData(ty);
+
   const sort = document.getElementById('fp-sort')?.value||'year';
   const sorted = [...studies];
   if (sort==='year') sorted.sort((a,b)=>(a.year||0)-(b.year||0));
   else if (sort==='effect') sorted.sort((a,b)=>a._es-b._es);
   else sorted.sort((a,b)=>(a.author||'').localeCompare(b.author||''));
 
-  const ys=sorted.map(s=>s._es),vs=sorted.map(s=>parseFloat(s.variance));
+  /* Variances must come from the CONVERTED rows. Reading the stored
+     `variance` column instead was wrong whenever a harmonisation target was
+     active, because that column still describes the metric as reported. */
+  const vOf = new Map();
+  if (D) D.studies.forEach((s,i)=>vOf.set(s, D.vs[i]));
+  const ys=sorted.map(s=>s._es);
+  const vs=sorted.map(s=>{ const v=vOf.get(s); return isFinite(v)&&v>0 ? v : parseFloat(s.variance); });
   const r=computePooled(ys,vs);
   sorted.forEach((s,i)=>{s._lo=ys[i]-z_c*Math.sqrt(vs[i]);s._hi=ys[i]+z_c*Math.sqrt(vs[i]);});
 
   const {canvas,ctx}=makeCanvas('fp-canvas',1060,100);
   canvas.height=58+sorted.length*34+88;
   ctx.fillStyle=C.bg;ctx.fillRect(0,0,canvas.width,canvas.height);
-  drawForestCore(ctx,canvas,sorted,r,et,ciPct,z_c,{pi:r.pi,fe:r.fe,refLine:0,
-    esHeader:'Estimate', pooledLabel:'Pooled ('+(r.model==='FE'?'Fixed':'Random')+')'});
+  /* say so in the footer whenever the printed numbers and the plotted
+     positions are on different scales */
+  const note = (D && (D.isLog || D.isZ))
+             ? (currentLang==='id' ? '— nilai ditampilkan sebagai ' + D.measure + ', penggabungan pada ' + D.scaleName
+                                   : '— values shown as ' + D.measure + ', pooled on the ' + D.scaleName)
+             : (et||'');
+  drawForestCore(ctx,canvas,sorted,r,note,ciPct,z_c,{pi:r.pi,fe:r.fe,
+    refLine: (D && D.refLine!=null) ? D.refLine : 0,
+    esHeader: D ? D.measure : 'Estimate',
+    valFmt:  D ? D.fmtDisp : undefined,
+    axisFmt: D ? D.axisFmt : undefined,
+    tickMode: (D && D.isLog) ? 'ratio' : undefined,
+    pooledLabel:'Pooled ('+(r.model==='FE'?'Fixed':'Random')+')'});
   lastPlotCanvas=canvas;
 }
 
@@ -3308,7 +3443,13 @@ function renderDiagForest(dxStudies,comp,ciPct,z_c) {
   const {canvas,ctx}=makeCanvas('fp-canvas',1060,100);
   canvas.height=58+sorted.length*34+88;
   ctx.fillStyle=C.bg;ctx.fillRect(0,0,canvas.width,canvas.height);
-  drawForestCore(ctx,canvas,sorted,pooled,'log(DOR)',ciPct,z_c);
+  drawForestCore(ctx,canvas,sorted,pooled,
+    currentLang==='id' ? '— DOR, penggabungan pada skala log'
+                       : '— diagnostic odds ratio, pooled on the log scale',
+    ciPct,z_c,
+    { refLine:0, esHeader:'DOR', tickMode:'ratio',
+      valFmt:  v => fmt(Math.exp(v),2),
+      axisFmt: v => fmt(Math.exp(v),2) });
   lastPlotCanvas=canvas;
 }
 
@@ -4359,8 +4500,14 @@ function getAnalysisData(type, target) {
        target is active that is the target metric, otherwise it is whatever
        the studies reported. */
     const outType = esTarget !== 'AS_REPORTED' ? ES_TARGETS[esTarget].out : null;
-    const ets = [...new Set(studies.map(s=>esNormType(esApplyOverride(s).effect_type)||esNormType(state.project.effectType)).filter(Boolean))];
-    const lblOf = k => { const T = ES_TYPES[k]; return T ? (currentLang==='id' && T.label_id ? T.label_id : T.label) : k; };
+    /* A logged input type (LOGOR, LOGRR, ...) is displayed exponentiated,
+       so the metric on screen is its `back_of` -- an odds ratio, not a log
+       odds ratio. Collapsing here also means a file mixing OR and logOR rows
+       reports one metric instead of falling through to the generic label. */
+    const esDisp = k => (k && ES_TYPES[k] && ES_TYPES[k].back_of && ES_TYPES[ES_TYPES[k].back_of])
+                          ? ES_TYPES[k].back_of : k;
+    const ets = [...new Set(studies.map(s=>esDisp(esNormType(esApplyOverride(s).effect_type)||esNormType(state.project.effectType))).filter(Boolean))];
+    const lblOf = k => { const T = ES_TYPES[esDisp(k)]; return T ? (currentLang==='id' && T.label_id ? T.label_id : T.label) : k; };
     const measure = outType ? lblOf(outType)
                   : (ets.length===1 ? lblOf(ets[0]) : (isLog?'Ratio':(isZ?'Correlation':'Effect size')));
     const back = v => isLog ? Math.exp(v) : (isZ ? Math.tanh(v) : v);
@@ -4717,8 +4864,8 @@ function drawLooPlot(D, loo, ciPct) {
   const pseudo = { ...loo.full, weights: rows.map(()=>100/rows.length) };
   drawForestCore(o.ctx, o.canvas, rows, pseudo, t('sa_loo'), ciPct, 1.96, {
     pooledLabel: t('sa_full')+' (k='+loo.full.n+')',
-    esHeader: t('sa_est'), refLine: D.refLine===null?undefined:D.refLine,
-    axisFmt: D.axisFmt
+    esHeader: D.measure || t('sa_est'), tickMode: D.isLog ? 'ratio' : undefined, refLine: D.refLine===null?undefined:D.refLine,
+    axisFmt: D.axisFmt, valFmt: D.fmtDisp
   });
   lastPlotCanvas = o.canvas;
 }
@@ -4729,8 +4876,8 @@ function drawCumulativePlot(D, cum, ciPct, full) {
   const pseudo = { ...full, weights: rows.map(()=>100/rows.length) };
   drawForestCore(o.ctx, o.canvas, rows, pseudo, t('sa_cum'), ciPct, 1.96, {
     pooledLabel: t('sa_full')+' (k='+full.n+')',
-    esHeader: t('sa_est'), refLine: D.refLine===null?undefined:D.refLine,
-    axisFmt: D.axisFmt
+    esHeader: D.measure || t('sa_est'), tickMode: D.isLog ? 'ratio' : undefined, refLine: D.refLine===null?undefined:D.refLine,
+    axisFmt: D.axisFmt, valFmt: D.fmtDisp
   });
 }
 
@@ -5542,7 +5689,7 @@ function downloadAllTemplates() {
 //  CITATION
 // ═══════════════════════════════════════════════════════════════════════
 const APP_META = {
-  name: 'MetaLens', version: '12.0', year: 2026,
+  name: 'MetaLens', version: '13.1', year: 2026,
   /* family = surname used in journal bylines; given = full given names.
      Order is the authorship order and is the single source of truth for
      every citation style below. */
@@ -5919,7 +6066,8 @@ function convertAny() {
   let varNote = '';
   if (varr == null && se != null) { varr = se*se; varNote = 'SE² '; }
   if (varr == null && lo != null && hi != null && hi > lo) {
-    const ratio = ES_TYPES[from] && ES_TYPES[from].scale === 'log';
+    const ratio = ES_TYPES[from] && ES_TYPES[from].scale === 'log'
+                    && !ES_TYPES[from].logged;
     if (ratio && lo > 0) { const s = (Math.log(hi)-Math.log(lo))/(2*1.959963985); varr = s*s; varNote = 'log CI '; }
     else { const s = (hi-lo)/(2*1.959963985); varr = s*s; varNote = 'CI '; }
   }
