@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MetaLens v13.1 — Meta-Analysis Studio by Bayu Satria Wiratama</title>
+<title>MetaLens v13.3 — Meta-Analysis Studio by Bayu Satria Wiratama</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap');
@@ -1981,6 +1981,12 @@ function drawForestCore(ctx,canvas,sorted,pooled,label,ciPct,z_c,opts={}) {
   ctx.textAlign='left';
   ctx.fillStyle=C.text3; ctx.font=FONT.ax;
   ctx.fillText(`I² = ${fmt(pooled.I2,1)}%   τ² = ${fmt(pooled.tau2,4)}   Q(${pooled.df}) = ${fmt(pooled.Q,2)}, p = ${fmtP(pooled.Qp)}   ${label||''}`,10,axY+(opts.leftLabel?54:36));
+  /* a plot showing a different measure from the results tables has to carry
+     that warning into the downloaded PNG, not just the surrounding page */
+  if (opts.viewNote) {
+    ctx.fillStyle=C.purple; ctx.font=FONT.lblB;
+    ctx.fillText(opts.viewNote,10,axY+(opts.leftLabel?72:54));
+  }
 }
 
 function drawFunnelCore(ctx,canvas,ys,ses,pooledTheta,opts={}) {
@@ -2065,14 +2071,18 @@ function drawFunnelCore(ctx,canvas,ys,ses,pooledTheta,opts={}) {
 
 
 
-function drawSubgroupForestCore(ctx,canvas,groupPooled,rAll,label,ciPct) {
+function drawSubgroupForestCore(ctx,canvas,groupPooled,rAll,label,ciPct,opts) {
+  opts = opts || {};
+  /* the caller passes the very formatters its results table used, so the plot
+     cannot print a different scale from the numbers beside it */
+  const V = opts.valFmt || (v=>fmt(v));
   const rowH=26,hH=50,fH=60,gap=12;
   let total=0;
   groupPooled.forEach(({gs})=>{ total+=gs.length+1; }); // +1 pooled per group
   total+=groupPooled.length-1+2; // separators + overall
   canvas.height=hH+total*rowH+gap*groupPooled.length+fH;
   ctx.fillStyle=C.bg;ctx.fillRect(0,0,canvas.width,canvas.height);
-  const lW=200,esW=72,ciW=128,plotX=lW+esW+ciW+10,plotW=canvas.width-plotX-88,wX=canvas.width-82;
+  const lW=200,esW=88,ciW=128,plotX=lW+esW+ciW+10,plotW=canvas.width-plotX-88,wX=canvas.width-82;
 
   const allVals=[];
   groupPooled.forEach(({gs,r})=>{gs.forEach(s=>{allVals.push(s._lo,s._hi);});allVals.push(r.ci_lo,r.ci_hi);});
@@ -2086,12 +2096,21 @@ function drawSubgroupForestCore(ctx,canvas,groupPooled,rAll,label,ciPct) {
   const toX=v=>plotX+((v-pMin)/(pMax-pMin))*plotW;
 
   ctx.fillStyle=C.text2;ctx.font='600 13px DM Sans,sans-serif';
-  ctx.fillText('Study',8,30);ctx.fillText('ES',lW+8,30);ctx.fillText(ciPct+'% CI',lW+esW+8,30);ctx.fillText('Wt %',wX,30);
+  const hdr=String(opts.esHeader||'ES');
+  ctx.fillText('Study',8,30);
+  ctx.fillText(hdr.length>12?hdr.slice(0,11)+'…':hdr,lW+8,30);
+  ctx.fillText(ciPct+'% CI',lW+esW+8,30);ctx.fillText('Wt %',wX,30);
   ctx.strokeStyle=C.border;ctx.lineWidth=1;
   ctx.beginPath();ctx.moveTo(0,hH-6);ctx.lineTo(canvas.width,hH-6);ctx.stroke();
-  ctx.strokeStyle='#3a4048';ctx.setLineDash([4,4]);
-  ctx.beginPath();ctx.moveTo(toX(0),hH-6);ctx.lineTo(toX(0),canvas.height-fH);ctx.stroke();
-  ctx.setLineDash([]);
+  /* A null value only exists for some measures. Drawing one at 0 regardless
+     put a "no effect" line in the middle of a Freeman-Tukey prevalence axis,
+     where it means nothing at all. */
+  const nullAt = opts.refLine===undefined ? 0 : opts.refLine;
+  if (nullAt!=null && isFinite(nullAt)) {
+    ctx.strokeStyle='#3a4048';ctx.setLineDash([4,4]);
+    ctx.beginPath();ctx.moveTo(toX(nullAt),hH-6);ctx.lineTo(toX(nullAt),canvas.height-fH);ctx.stroke();
+    ctx.setLineDash([]);
+  }
 
   let curY=hH;
   groupPooled.forEach(({grp,gs,r},gi)=>{
@@ -2105,8 +2124,8 @@ function drawSubgroupForestCore(ctx,canvas,groupPooled,rAll,label,ciPct) {
       ctx.fillStyle=C.text;ctx.font='14px DM Sans,sans-serif';
       ctx.fillText('  '+(s.author||'?')+' ('+(s.year||'?')+')',8,y+4);
       ctx.fillStyle=C.text2;ctx.font='13px DM Mono,monospace';
-      ctx.fillText(fmt(s._es),lW+8,y+4);
-      ctx.fillText('['+fmt(s._lo)+', '+fmt(s._hi)+']',lW+esW+8,y+4);
+      ctx.fillText(V(s._es),lW+8,y+4);
+      ctx.fillText('['+V(s._lo)+', '+V(s._hi)+']',lW+esW+8,y+4);
       const x1=toX(s._lo),x2=toX(s._hi),xm=toX(s._es);
       ctx.strokeStyle=col;ctx.lineWidth=1.5;
       ctx.beginPath();ctx.moveTo(x1,y);ctx.lineTo(x2,y);ctx.stroke();
@@ -2120,8 +2139,8 @@ function drawSubgroupForestCore(ctx,canvas,groupPooled,rAll,label,ciPct) {
     ctx.beginPath();ctx.moveTo(8,py-rowH/2+2);ctx.lineTo(canvas.width-8,py-rowH/2+2);ctx.stroke();
     ctx.fillStyle=col;ctx.font='bold 14px DM Sans,sans-serif';ctx.fillText('  Subtotal — '+grp,8,py+4);
     ctx.fillStyle=C.text2;ctx.font='13px DM Mono,monospace';
-    ctx.fillText(fmt(r.theta),lW+8,py+4);
-    ctx.fillText('['+fmt(r.ci_lo)+', '+fmt(r.ci_hi)+']',lW+esW+8,py+4);
+    ctx.fillText(V(r.theta),lW+8,py+4);
+    ctx.fillText('['+V(r.ci_lo)+', '+V(r.ci_hi)+']',lW+esW+8,py+4);
     ctx.fillStyle=r.I2<50?C.green:C.warn;ctx.font='12px DM Mono,monospace';
     ctx.fillText('I²='+fmt(r.I2,1)+'%',wX,py+4);
     const dl=toX(r.ci_lo),dr=toX(r.ci_hi),dc=toX(r.theta);
@@ -2135,18 +2154,26 @@ function drawSubgroupForestCore(ctx,canvas,groupPooled,rAll,label,ciPct) {
   const opy=curY+rowH/2;
   ctx.fillStyle=C.green;ctx.font='bold 14px DM Sans,sans-serif';ctx.fillText('Overall Pooled',8,opy+4);
   ctx.fillStyle=C.text2;ctx.font='13px DM Mono,monospace';
-  ctx.fillText(fmt(rAll.theta),lW+8,opy+4);
-  ctx.fillText('['+fmt(rAll.ci_lo)+', '+fmt(rAll.ci_hi)+']',lW+esW+8,opy+4);
+  ctx.fillText(V(rAll.theta),lW+8,opy+4);
+  ctx.fillText('['+V(rAll.ci_lo)+', '+V(rAll.ci_hi)+']',lW+esW+8,opy+4);
   const odl=toX(rAll.ci_lo),odr=toX(rAll.ci_hi),odc=toX(rAll.theta);
   ctx.fillStyle=C.green;ctx.beginPath();ctx.moveTo(odl,opy);ctx.lineTo(odc,opy-9);ctx.lineTo(odr,opy);ctx.lineTo(odc,opy+9);ctx.closePath();ctx.fill();
   curY+=rowH+6;
   ctx.strokeStyle=C.border;ctx.lineWidth=1;
   ctx.beginPath();ctx.moveTo(plotX,curY);ctx.lineTo(plotX+plotW,curY);ctx.stroke();
   ctx.fillStyle=C.text2;ctx.font='12px DM Mono,monospace';ctx.textAlign='center';
-  for(let t=0;t<=5;t++){const v=pMin+t/5*(pMax-pMin),tx=toX(v);ctx.beginPath();ctx.moveTo(tx,curY);ctx.lineTo(tx,curY+4);ctx.stroke();ctx.fillText(fmt(v,2),tx,curY+13);}
+  /* round ratio ticks on a ratio axis, for the same reason the main forest
+     has them: evenly spaced log positions exponentiate to unreadable labels
+     and never land on the null value */
+  const aF = opts.axisFmt || (v=>fmt(v,2));
+  const tickVals = (opts.tickMode==='ratio' && typeof niceRatioTicks==='function')
+                 ? niceRatioTicks(pMin,pMax) : null;
+  const ticks = tickVals || Array.from({length:6},(_,i)=>pMin+i/5*(pMax-pMin));
+  ticks.forEach(v=>{const tx=toX(v);ctx.beginPath();ctx.moveTo(tx,curY);ctx.lineTo(tx,curY+4);ctx.stroke();ctx.fillText(aF(v),tx,curY+13);});
   ctx.textAlign='left';
   ctx.fillStyle=C.text3;ctx.font='12px DM Mono,monospace';
-  ctx.fillText(`Overall: I²=${fmt(rAll.I2,1)}%  Q=${fmt(rAll.Q,2)},p=${fmtP(rAll.Qp)}  ${label}`,plotX,curY+30);
+  ctx.fillText(`Overall: I²=${fmt(rAll.I2,1)}%  Q=${fmt(rAll.Q,2)},p=${fmtP(rAll.Qp)}  ${label}${
+    opts.measure ? '  ·  '+opts.measure : ''}`,plotX,curY+30);
   let lgx=plotX;
   groupPooled.forEach(({grp},gi)=>{
     const col=GRP_COLORS[gi%GRP_COLORS.length];
@@ -2813,9 +2840,11 @@ function esTargetAvailability(studies, opts) {
   return res;
 }
 
-function getEffStudies(type) {
+function getEffStudies(type, targetOverride) {
   const base = (state.studies[type]||[]).filter(s=>!isNaN(parseFloat(s.effect_size))&&!isNaN(parseFloat(s.variance))&&parseFloat(s.variance)>0);
-  const target = esActiveTarget(type);
+  /* targetOverride serves the forest's plot-only view: the analysable set has
+     to follow the measure being displayed, not the project's. */
+  const target = (targetOverride && ES_TARGETS[targetOverride]) ? targetOverride : esActiveTarget(type);
   if (target === 'AS_REPORTED') return base;
   /* With a harmonisation target selected, the analysable set is exactly the
      set that can reach that target. Anything else is listed in the banner
@@ -2827,8 +2856,8 @@ function getEffStudies(type) {
 /* Registry-driven replacement for the old hardcoded OR/RR/HR log rule.
    Always returns one row per input study so every index-aligned caller keeps
    working; a row that cannot be converted falls back to its own scale. */
-function getEffTransformed(studies, type) {
-  const target = esActiveTarget(type);
+function getEffTransformed(studies, type, targetOverride) {
+  const target = (targetOverride && ES_TARGETS[targetOverride]) ? targetOverride : esActiveTarget(type);
   const opts = esOpts();
   return studies.map(s => {
     let r = esConvertStudy(esApplyOverride(s), target, opts);
@@ -2951,14 +2980,69 @@ I² = ${fmt(r.I2,1)}%  |  τ² = ${fmt(r.tau2)}  |  τ = ${fmt(r.tau)}  |  H² =
     </tbody></table></div></div>`;
 }
 
+/* ── forest plot: plot-only effect-measure view ──────────────────────────
+   The selection lives in state.project.fpView, keyed by analysis type, so it
+   survives a save and a reload but never touches how the results tables are
+   computed. '' = the project's own measure; '__LOG' = show the pooling scale
+   untransformed; anything else is an ES_TARGETS key.                      */
+function fpGetView(type) { return (state.project.fpView||{})[type] || ''; }
+
+function fpSetView(type, val) {
+  state.project.fpView = Object.assign({}, state.project.fpView||{}, { [type]: val });
+  save();
+  const el = document.getElementById('fp-view-hint');
+  if (el) el.style.display = val ? '' : 'none';
+  redrawCurrentForest();
+}
+
+/* Label a target by the metric it produces, in the current language. */
+function fpTargetLabel(k) {
+  const out = ES_TARGETS[k] && ES_TARGETS[k].out;
+  const T = out && ES_TYPES[out];
+  return T ? ((currentLang==='id' && T.label_id) ? T.label_id : T.label) : k;
+}
+
+function fpViewOptions(type) {
+  if (type === 'diag') return [['', t('fp_dor')], ['sens', t('fp_sens')], ['spec', t('fp_spec')]];
+  if (type === 'prev') return [['', t('fp_pct')], ['prop', t('fp_prop')]];
+  const out = [['', t('fp_asrep')]];
+  const base = (state.studies[type]||[]).filter(s=>
+    !isNaN(parseFloat(s.effect_size))&&!isNaN(parseFloat(s.variance))&&parseFloat(s.variance)>0)
+    .map(esApplyOverride);
+  if (base.length) {
+    /* Only offer a measure at least one study can actually reach, and say how
+       many can -- an SMD view of eleven of thirteen studies is a different
+       analysis, and the reader should see that before choosing it. */
+    const avail = esTargetAvailability(base, esOpts());
+    Object.keys(ES_TARGETS).forEach(k => {
+      if (k === 'AS_REPORTED') return;
+      const a = avail[k];
+      if (!a || !a.ok) return;
+      out.push([k, fpTargetLabel(k) + (a.ok < a.total ? '  ('+a.ok+'/'+a.total+')' : '')]);
+    });
+  }
+  const D = getAnalysisData(type, null);
+  if (D && (D.isLog || D.isZ)) out.push(['__LOG', t('fp_logscale')]);
+  return out;
+}
+
 function renderForestControls(mode) {
+  const ty = mode==='diag' ? 'diag' : mode==='prev' ? 'prev'
+           : ((state.currentAnalysis && state.currentAnalysis.type) || 'eff');
+  const sel = fpGetView(ty);
+  const viewOpts = fpViewOptions(ty).map(o =>
+    `<option value="${o[0]}"${o[0]===sel?' selected':''}>${o[1]}</option>`).join('');
+  /* the caveat only applies where the tables could disagree */
+  const hintable = (ty==='eff' || ty==='assoc');
   return `<div class="card">
     <div class="card-title">🌲 Forest Plot</div>
-    <div class="form-group">
+    <div class="form-group-3">
       <div><label>${t('lbl_sort')}</label><select id="fp-sort"><option value="year">${t('lbl_year')}</option><option value="effect">${t('lbl_effect')}</option><option value="author">${t('lbl_author')}</option></select></div>
+      <div><label>${t('fp_view')}</label><select id="fp-view" onchange="fpSetView('${ty}',this.value)">${viewOpts}</select></div>
       <div style="display:flex;align-items:flex-end"><button class="btn btn-primary" onclick="redrawCurrentForest()">${t('btn_generate')}</button>
       <button class="btn btn-secondary btn-sm" style="margin-left:8px" onclick="downloadCurrentForest()">${t('btn_download_png')}</button></div>
     </div>
+    ${hintable ? `<div id="fp-view-hint" class="text-sm mt-2" style="color:var(--accent4)${sel?'':';display:none'}">⚠️ ${t('fp_view_hint')}</div>` : ''}
   </div>
   <div class="forest-container"><canvas id="fp-canvas"></canvas><div id="fp-empty" class="empty-state"><span class="icon">🌲</span><p>${currentLang==='id'?'Klik Buat Plot':'Click Generate'}</p></div></div>`;
 }
@@ -3000,39 +3084,72 @@ function renderStdForest(studies, pooled, et, ciPct, z_c, type) {
      an odds-ratio dataset drew a forest labelled in log OR with its null
      line at 0. */
   const ty = type || (state.currentAnalysis && state.currentAnalysis.type) || 'eff';
-  const D = getAnalysisData(ty);
+  const view = fpGetView(ty);
+  const tgt  = ES_TARGETS[view] ? view : null;   /* a plot-only measure override */
+  const logView = (view === '__LOG');
+  const D = getAnalysisData(ty, tgt);
+
+  /* With a measure override the analysable set is the set that can reach it,
+     which is not necessarily the set the caller was given. */
+  const rows0 = tgt ? (D ? D.studies : studies) : studies;
+  if (rows0.length < 2) { document.getElementById('fp-empty').style.display=''; return; }
+
+  const yOf = new Map(), vOf = new Map();
+  if (D) D.studies.forEach((s,i)=>{ yOf.set(s, D.ys[i]); vOf.set(s, D.vs[i]); });
+
+  /* Copy each row rather than annotating it: _es on the shared study object
+     belongs to the project's measure, and a plot-only view must not leak
+     into the panels that read it. Variances come from the converted rows --
+     the stored `variance` column still describes the metric as reported. */
+  const sorted = rows0.map(s => {
+    const y = yOf.has(s) ? yOf.get(s) : s._es;
+    const v = (isFinite(vOf.get(s)) && vOf.get(s) > 0) ? vOf.get(s) : parseFloat(s.variance);
+    return Object.assign({}, s, { _es:y, _v:v });
+  }).filter(s => isFinite(s._es) && isFinite(s._v) && s._v > 0);
 
   const sort = document.getElementById('fp-sort')?.value||'year';
-  const sorted = [...studies];
   if (sort==='year') sorted.sort((a,b)=>(a.year||0)-(b.year||0));
   else if (sort==='effect') sorted.sort((a,b)=>a._es-b._es);
   else sorted.sort((a,b)=>(a.author||'').localeCompare(b.author||''));
 
-  /* Variances must come from the CONVERTED rows. Reading the stored
-     `variance` column instead was wrong whenever a harmonisation target was
-     active, because that column still describes the metric as reported. */
-  const vOf = new Map();
-  if (D) D.studies.forEach((s,i)=>vOf.set(s, D.vs[i]));
-  const ys=sorted.map(s=>s._es);
-  const vs=sorted.map(s=>{ const v=vOf.get(s); return isFinite(v)&&v>0 ? v : parseFloat(s.variance); });
+  const ys=sorted.map(s=>s._es), vs=sorted.map(s=>s._v);
   const r=computePooled(ys,vs);
   sorted.forEach((s,i)=>{s._lo=ys[i]-z_c*Math.sqrt(vs[i]);s._hi=ys[i]+z_c*Math.sqrt(vs[i]);});
 
-  const {canvas,ctx}=makeCanvas('fp-canvas',1060,100);
-  canvas.height=58+sorted.length*34+88;
-  ctx.fillStyle=C.bg;ctx.fillRect(0,0,canvas.width,canvas.height);
-  /* say so in the footer whenever the printed numbers and the plotted
-     positions are on different scales */
-  const note = (D && (D.isLog || D.isZ))
+  /* On __LOG nothing is back-transformed: the reader asked for the pooling
+     scale, so the values, the ticks and the header all stay on it. */
+  const header = !D ? 'Estimate'
+               : logView ? (D.isZ ? "Fisher's z" : (D.isLog ? 'log ' + D.measure : D.measure))
+               : D.measure;
+  const note = (D && (D.isLog || D.isZ) && !logView)
              ? (currentLang==='id' ? '— nilai ditampilkan sebagai ' + D.measure + ', penggabungan pada ' + D.scaleName
                                    : '— values shown as ' + D.measure + ', pooled on the ' + D.scaleName)
-             : (et||'');
+             : (logView ? (currentLang==='id' ? '— ditampilkan pada ' + D.scaleName + ' tanpa transformasi balik'
+                                              : '— shown on the ' + D.scaleName + ', not back-transformed')
+                        : (et||''));
+
+  /* A plot-only view can disagree with the tables beside it. Say so on the
+     plot, so a downloaded PNG carries the caveat too. */
+  let viewNote = '';
+  if (tgt || logView) {
+    const P = getAnalysisData(ty, null);
+    viewNote = t('fp_viewonly').replace('{m}', header).replace('{p}', P ? P.measure : '—');
+    const nBase = (state.studies[ty]||[]).filter(s=>
+      !isNaN(parseFloat(s.effect_size))&&!isNaN(parseFloat(s.variance))&&parseFloat(s.variance)>0).length;
+    if (sorted.length < nBase)
+      viewNote += '   ·   ' + t('fp_omitted').replace('{n}', nBase-sorted.length).replace('{m}', header);
+  }
+
+  const {canvas,ctx}=makeCanvas('fp-canvas',1060,100);
+  canvas.height=58+sorted.length*34+88+(viewNote?20:0);
+  ctx.fillStyle=C.bg;ctx.fillRect(0,0,canvas.width,canvas.height);
   drawForestCore(ctx,canvas,sorted,r,note,ciPct,z_c,{pi:r.pi,fe:r.fe,
     refLine: (D && D.refLine!=null) ? D.refLine : 0,
-    esHeader: D ? D.measure : 'Estimate',
-    valFmt:  D ? D.fmtDisp : undefined,
-    axisFmt: D ? D.axisFmt : undefined,
-    tickMode: (D && D.isLog) ? 'ratio' : undefined,
+    esHeader: header,
+    valFmt:  (!D || logView) ? undefined : D.fmtDisp,
+    axisFmt: (!D || logView) ? undefined : D.axisFmt,
+    tickMode: (D && D.isLog && !logView) ? 'ratio' : undefined,
+    viewNote,
     pooledLabel:'Pooled ('+(r.model==='FE'?'Fixed':'Random')+')'});
   lastPlotCanvas=canvas;
 }
@@ -3105,6 +3222,26 @@ ${fsn>5*n+10?`✓ Robust (FSN > 5k+10 = ${5*n+10}).`:`⚠️ May not be robust (
   },10);
 }
 
+/* ── subgroup: effect-measure selection ─────────────────────────────────
+   Unlike the forest's view, which satria asked to be plot-only, this drives
+   the results TABLE and the plot together -- both are built from one
+   getAnalysisData call and share its formatters. Stored separately from
+   fpView so choosing an SMD forest does not silently redefine the subgroup
+   analysis, or the reverse.                                              */
+function sgGetView(type) { return (state.project.sgView||{})[type] || ''; }
+
+function sgSetView(type, val) {
+  state.project.sgView = Object.assign({}, state.project.sgView||{}, { [type]: val });
+  save();
+  /* re-run rather than redraw: the pooling itself depends on the measure */
+  if (document.getElementById('sg-results') &&
+      document.getElementById('sg-results').innerHTML.trim()) runSubgroupAnalysis(type);
+}
+
+/* The forest already knows which measures the data can reach; reuse it so the
+   two selectors can never offer different sets. */
+function sgViewOptions(type) { return fpViewOptions(type); }
+
 function renderSubgroupSection(studies,pooled,ys,vs,z_c,ciPct,et,type) {
   const mods=getModVars(studies);
   const modelMods=state.moderators.map(m=>m.name).filter(Boolean);
@@ -3112,9 +3249,12 @@ function renderSubgroupSection(studies,pooled,ys,vs,z_c,ciPct,et,type) {
   if (!allMods.length) return emptyState('No moderator variables found. Add studies with moderator columns, or define moderators in Setup.');
 
   let html=`<div class="card"><div class="card-title">🗂️ Subgroup Settings</div>
-  <div class="form-group"><div><label>${t('lbl_group_var')}</label>
+  <div class="form-group-3"><div><label>${t('lbl_group_var')}</label>
   <select id="sg-var">${allMods.map(m=>`<option value="${m}">${m}</option>`).join('')}</select></div>
   <div><label>Model within groups</label><select id="sg-model"><option value="RE">Random-Effects</option><option value="FE">Fixed-Effect</option></select></div>
+  <div><label>${t('sg_view')}</label><select id="sg-view" onchange="sgSetView('${type}',this.value)">${
+    sgViewOptions(type).map(o=>`<option value="${o[0]}"${o[0]===sgGetView(type)?' selected':''}>${o[1]}</option>`).join('')
+  }</select></div>
   </div><div class="flex gap-2"><button class="btn btn-primary" onclick="runSubgroupAnalysis('${type}')">▶ Run Subgroup</button>
   <button class="btn btn-secondary btn-sm" id="sg-forest-btn" style="display:none" onclick="drawSubgroupForest('${type}')">🌲 Subgroup Forest</button></div></div>
   <div id="sg-results"></div>
@@ -3128,37 +3268,47 @@ function renderSubgroupSection(studies,pooled,ys,vs,z_c,ciPct,et,type) {
 let lastSubgroupData = null;
 
 function runSubgroupAnalysis(type) {
-  const studies = type==='prev'?null:getEffStudies(type);
-  const pvStudies = type==='prev'?(state.studies.prev||[]).filter(s=>!isNaN(s.cases)&&!isNaN(s.n)&&s.n>0):null;
   const modVar=document.getElementById('sg-var').value;
-  const sgModel=document.getElementById('sg-model').value;
+  const sgModel=(document.getElementById('sg-model')||{}).value||'RE';
   const z_c=zCrit(state.project.ci||0.95);
   const ciPct=Math.round((state.project.ci||0.95)*100);
 
-  let groups={}, allStudies, allYs, allVs;
-  if (type==='prev') {
-    pvStudies.forEach(s=>{const g=s[modVar]||'Unknown';if(!groups[g])groups[g]=[];groups[g].push(s);});
-    allStudies=pvStudies;
-    const method=state.project.prevTransform||'ft';
-    allYs=pvStudies.map(s=>pvTransform(s.cases,s.n,method).yi);
-    allVs=pvStudies.map(s=>pvTransform(s.cases,s.n,method).vi);
-  } else {
-    const transformed=getEffTransformed(studies,type);
-    allStudies=studies; allYs=transformed.map(t=>t.es); allVs=transformed.map(t=>t.v);
-    studies.forEach((s,i)=>{const g=s[modVar]||'Unknown';if(!groups[g])groups[g]=[];groups[g].push({s,i});});
+  /* ONE source of truth for both the table and the plot. Everything below
+     reads D's values and D's formatters, so the two cannot disagree -- which
+     they previously did: the prevalence table back-transformed and its forest
+     did not, showing 20.3% beside 93.5% for the same study. */
+  const view = sgGetView(type);
+  const tgt  = ES_TARGETS[view] ? view : null;
+  const logView = (view === '__LOG');
+  const D = getAnalysisData(type, tgt);
+  if (!D || D.studies.length < 2) {
+    document.getElementById('sg-results').innerHTML=emptyState(t('sg_need2'));
+    return;
   }
 
+  /* how this measure is written out */
+  let measure = logView ? (D.isZ ? "Fisher's z" : (D.isLog ? 'log ' + D.measure : D.measure)) : D.measure;
+  let fmtD = logView ? (v=>fmt(v)) : D.fmtDisp;
+  let axD  = logView ? undefined   : D.axisFmt;
+  if (type==='prev' && view==='prop') {
+    measure = t('fp_prop'); fmtD = v=>fmt(D.disp(v)/100,3); axD = v=>fmt(D.disp(v)/100,2);
+  }
+
+  const allStudies=D.studies, allYs=D.ys, allVs=D.vs;
+  const groups={};
+  allStudies.forEach((s,i)=>{
+    const g=(s[modVar]==null||s[modVar]==='')?'Unknown':s[modVar];
+    if(!groups[g])groups[g]=[]; groups[g].push(i);
+  });
+
   const rAll=computePooled(allYs,allVs);
-  const groupPooled=Object.entries(groups).map(([grp,items])=>{
-    let gs,gys,gvs;
-    if (type==='prev') {
-      const method=state.project.prevTransform||'ft';
-      gs=items; gys=items.map(s=>pvTransform(s.cases,s.n,method).yi); gvs=items.map(s=>pvTransform(s.cases,s.n,method).vi);
-    } else {
-      gs=items.map(x=>x.s); gys=items.map(x=>allYs[x.i]); gvs=items.map(x=>allVs[x.i]);
-    }
+  const groupPooled=Object.entries(groups).map(([grp,idxs])=>{
+    const gys=idxs.map(i=>allYs[i]), gvs=idxs.map(i=>allVs[i]);
     const r=computePooled(gys,gvs,sgModel);
-    if(r){ gs.forEach((s,i)=>{ s._es=gys[i]; s._lo=gys[i]-z_c*Math.sqrt(gvs[i]); s._hi=gys[i]+z_c*Math.sqrt(gvs[i]); }); }
+    /* copy, never annotate: _es on a shared study row belongs to the project's
+       own measure, and a subgroup run must not leak into other panels */
+    const gs=idxs.map((i,j)=>Object.assign({}, allStudies[i],
+      {_es:gys[j], _lo:gys[j]-z_c*Math.sqrt(gvs[j]), _hi:gys[j]+z_c*Math.sqrt(gvs[j])}));
     return {grp,gs,r};
   }).filter(x=>x.r);
 
@@ -3166,41 +3316,62 @@ function runSubgroupAnalysis(type) {
   const Q_b=rAll.Q-Q_w;
   const df_b=groupPooled.length-1;
   const p_b=chiSqTail(Q_b,df_b);
-  lastSubgroupData={groupPooled,modVar,rAll,type};
 
-  const et=type==='prev'?'Prevalence':type==='assoc'?'Effect Size':'Effect Size';
+  /* the plot is handed the same formatters the table just used */
+  const disp={ esHeader:measure, valFmt:fmtD, axisFmt:axD,
+               refLine: logView ? 0 : D.refLine,
+               tickMode: (D.isLog && !logView) ? 'ratio' : undefined,
+               measure };
+  lastSubgroupData={groupPooled,modVar,rAll,type,disp};
+
+  /* Say which measure this is, and -- when it is not the project's own --
+     that the main Results panel still reports something else. */
+  let banner = `<div class="text-sm" style="color:var(--text2)">${t('sg_measure')}: <strong>${measure}</strong></div>`;
+  if (tgt || logView || (type==='prev' && view==='prop')) {
+    const P = getAnalysisData(type, null);
+    banner += `<div class="text-sm mt-1" style="color:var(--accent4)">⚠️ ${
+      t('sg_viewonly').replace('{m}', measure).replace('{p}', P ? P.measure : '—')}</div>`;
+  }
+  const nBase = type==='prev' ? (state.studies.prev||[]).filter(s=>!isNaN(+s.cases)&&+s.n>0).length
+              : (state.studies[type]||[]).filter(s=>
+                  !isNaN(parseFloat(s.effect_size))&&!isNaN(parseFloat(s.variance))&&parseFloat(s.variance)>0).length;
+  if (allStudies.length < nBase)
+    banner += `<div class="text-sm mt-1" style="color:var(--accent4)">${
+      t('sg_omitted').replace('{n}', nBase-allStudies.length).replace('{m}', measure)}</div>`;
+
   let html=`<div class="card"><div class="card-title">Subgroup Results by: ${modVar}</div>
-  <div class="result-block ${p_b<0.05?'warn':'success'}">
+  ${banner}
+  <div class="result-block ${p_b<0.05?'warn':'success'} mt-2">
 <strong>Test of Subgroup Differences</strong>
 Q_between(${df_b}) = ${fmt(Q_b,2)}, p = ${fmtP(p_b)}
 ${p_b<0.05?'⚠️ Significant differences between subgroups.':'✓ No significant subgroup differences.'}
   </div>
   <div class="table-wrap"><table>
-    <thead><tr><th>Subgroup</th><th>k</th><th>Pooled ${et}</th><th>${ciPct}% CI</th><th>I²</th><th>Q (p)</th></tr></thead>
-    <tbody>${groupPooled.map(({grp,r})=>{
-      const disp=type==='prev'?v=>fmt(pvBack(v,state.project.prevTransform||'ft')*100,2)+'%':v=>fmt(v);
-      return `<tr><td><strong>${grp}</strong></td><td>${r.n}</td>
-        <td class="mono">${disp(r.theta)}</td>
-        <td class="mono">[${disp(r.ci_lo)}, ${disp(r.ci_hi)}]</td>
+    <thead><tr><th>Subgroup</th><th>k</th><th>Pooled ${measure}</th><th>${ciPct}% CI</th><th>I²</th><th>Q (p)</th></tr></thead>
+    <tbody>${groupPooled.map(({grp,r})=>`<tr><td><strong>${grp}</strong></td><td>${r.n}</td>
+        <td class="mono">${fmtD(r.theta)}</td>
+        <td class="mono">[${fmtD(r.ci_lo)}, ${fmtD(r.ci_hi)}]</td>
         <td class="mono"><span class="tag ${r.I2<50?'tag-green':'tag-yellow'}">${fmt(r.I2,1)}%</span></td>
-        <td class="mono">${fmt(r.Q,2)} (${fmtP(r.Qp)})</td></tr>`;
-    }).join('')}</tbody>
+        <td class="mono">${fmt(r.Q,2)} (${fmtP(r.Qp)})</td></tr>`).join('')}</tbody>
   </table></div></div>`;
 
   document.getElementById('sg-results').innerHTML=html;
-  document.getElementById('sg-forest-btn').style.display='';
+  const btn=document.getElementById('sg-forest-btn'); if (btn) btn.style.display='';
+  /* if the plot is already on screen it must follow the new measure at once */
+  const card=document.getElementById('sg-forest-card');
+  if (card && card.style.display!=='none') drawSubgroupForest(type);
 }
 
 function drawSubgroupForest(type) {
   if (!lastSubgroupData) return;
-  const {groupPooled,modVar,rAll}=lastSubgroupData;
+  const {groupPooled,modVar,rAll,disp}=lastSubgroupData;
   const z_c=zCrit(state.project.ci||0.95);
   const ciPct=Math.round((state.project.ci||0.95)*100);
   document.getElementById('sg-forest-card').style.display='';
   const canvas=document.getElementById('fp-canvas');
   canvas.width=860;
   const ctx=canvas.getContext('2d');
-  drawSubgroupForestCore(ctx,canvas,groupPooled,rAll,modVar,ciPct);
+  drawSubgroupForestCore(ctx,canvas,groupPooled,rAll,modVar,ciPct,disp);
   lastPlotCanvas=canvas;
   canvas.scrollIntoView({behavior:'smooth'});
 }
@@ -3246,20 +3417,45 @@ function runMetaRegression() {
   if (!res) return alert('Matrix inversion failed.');
 
   const {coef,se_coef,t_vals,p_vals,R2,Q_res,df_res,p_res,colNames}=res;
+
+  /* WHICH EFFECT SIZE IS BEING REGRESSED. A slope of -0.03 per degree of
+     latitude is a change in LOG odds ratio; read as an odds ratio it is
+     wrong by a factor of e. The panel now names the outcome, names the
+     scale the betas live on, and for a ratio or correlation outcome prints
+     exp(beta) -- the multiplicative change per unit -- beside it. */
+  const D = getAnalysisData(type, null);
+  const oMeasure = D ? D.measure : 'Effect size';
+  const oScale   = D ? D.scaleName : 'raw scale';
+  const betaOn   = !D ? oMeasure
+                 : D.isLog ? 'log ' + oMeasure
+                 : D.isZ   ? "Fisher's z of " + oMeasure
+                 : (type==='prev' || type==='diag') ? oScale + ' ' + oMeasure
+                 : oMeasure;
+  /* exp(beta) is interpretable exactly when the outcome was log-transformed */
+  const expB = !!(D && D.isLog);
+  const outcomeNote = (D && (D.isLog || D.isZ))
+    ? t('reg_logscale').replace('{s}', oScale).replace('{l}', betaOn).replace('{m}', oMeasure)
+    : t('reg_outcome_note').replace('{m}', betaOn);
+
   document.getElementById('reg-results').innerHTML=`<div class="card"><div class="card-title">Meta-Regression Results</div>
   <div class="result-block">
 <strong>Model: ${predictors.join(', ')}</strong>
+${t('reg_outcome')}: ${betaOn}   (k = ${studies.length})
 Q_residual(${df_res}) = ${fmt(Q_res,2)}, p = ${fmtP(p_res)}
 R² = ${fmt(R2*100,1)}% (variance explained by moderators)</div>
-  <div class="table-wrap"><table>
-    <thead><tr><th>Coefficient</th><th>β</th><th>SE</th><th>t</th><th>p-value</th><th>95% CI</th></tr></thead>
+  <div class="text-sm mt-1" style="color:var(--text2)">ℹ️ ${outcomeNote}</div>
+  <div class="table-wrap mt-2"><table>
+    <thead><tr><th>Coefficient</th><th>β (${betaOn})</th>${
+      expB?`<th>${t('reg_expb')}</th>`:''}<th>SE</th><th>t</th><th>p-value</th><th>95% CI</th></tr></thead>
     <tbody>${colNames.map((name,i)=>`<tr>
-      <td>${name}</td><td class="mono">${fmt(coef[i])}</td><td class="mono">${fmt(se_coef[i])}</td>
+      <td>${name}</td><td class="mono">${fmt(coef[i])}</td>${
+        expB?`<td class="mono">${fmt(Math.exp(coef[i]))}</td>`:''}<td class="mono">${fmt(se_coef[i])}</td>
       <td class="mono">${fmt(t_vals[i],2)}</td>
       <td class="mono"><span class="tag ${p_vals[i]<0.05?'tag-green':'tag-blue'}">${fmtP(p_vals[i])}</span></td>
       <td class="mono">[${fmt(coef[i]-1.96*se_coef[i])}, ${fmt(coef[i]+1.96*se_coef[i])}]</td>
     </tr>`).join('')}</tbody>
-  </table></div></div>`;
+  </table></div>${expB?`<div class="text-sm mt-1" style="color:var(--text3)">${
+    t('reg_expb_hint').replace('{m}', oMeasure)}</div>`:''}</div>`;
 }
 
 function getModVars(studies) {
@@ -3435,6 +3631,28 @@ function renderDiagForest(dxStudies,comp,ciPct,z_c) {
   if (dxStudies.length<2) return;
   document.getElementById('fp-empty').style.display='none';
 
+  /* Sensitivity and specificity pool on the logit scale and are read back as
+     percentages; the DOR pools on the log scale and is read back as a ratio.
+     getAnalysisData already carries both, so the view just picks one. */
+  const dview = fpGetView('diag');
+  if (dview === 'sens' || dview === 'spec') {
+    const D = getAnalysisData('diag', dview);
+    const dys = D.ys, dvs = D.vs;
+    const dp = computePooled(dys, dvs);
+    const drows = D.studies.map((s,i)=>Object.assign({}, s,
+      { _es:dys[i], _lo:dys[i]-z_c*Math.sqrt(dvs[i]), _hi:dys[i]+z_c*Math.sqrt(dvs[i]) }));
+    const dc = makeCanvas('fp-canvas',1060,100);
+    dc.canvas.height = 58+drows.length*34+88;
+    dc.ctx.fillStyle=C.bg; dc.ctx.fillRect(0,0,dc.canvas.width,dc.canvas.height);
+    drawForestCore(dc.ctx,dc.canvas,drows,dp,
+      (currentLang==='id' ? '— ' + D.measure + ', penggabungan pada skala logit'
+                          : '— ' + D.measure + ', pooled on the logit scale'),
+      ciPct,z_c,
+      { refLine:0, esHeader:D.measure, valFmt:D.fmtDisp, axisFmt:D.axisFmt });
+    lastPlotCanvas = dc.canvas;
+    return;
+  }
+
   // Forest of logDOR
   const ys=comp.map(c=>c.logDOR),vs=comp.map(c=>c.seLogDOR**2);
   const pooled=computePooled(ys,vs);
@@ -3542,12 +3760,20 @@ function runDiagSubgroup() {
   const p_b=chiSqTail(Q_b,df_b);
   lastSubgroupData={groupPooled,modVar,rAll,type:'diag'};
 
-  const mLabel=measure==='dor'?'log(DOR)':measure==='sens'?'logit(Sens)':'logit(Spec)';
+  /* Report the measure itself, not the scale it was pooled on: a DOR, and a
+     sensitivity as a percentage. The pooling is unchanged. */
+  const isDor = measure==='dor';
+  const mLabel = isDor ? t('fp_dor') : measure==='sens' ? t('fp_sens') : t('fp_spec');
+  const dV = isDor ? (v=>fmt(Math.exp(v))) : (v=>fmt(logitInv(v)*100,1)+'%');
+  lastSubgroupData.disp = { esHeader:mLabel, valFmt:dV, measure:mLabel,
+                            refLine: isDor ? 0 : null,
+                            axisFmt: isDor ? (v=>fmt(Math.exp(v),2)) : (v=>fmt(logitInv(v)*100,0)),
+                            tickMode: isDor ? 'ratio' : undefined };
   document.getElementById('sg-results').innerHTML=`<div class="card"><div class="card-title">Results by: ${modVar} (${mLabel})</div>
   <div class="result-block ${p_b<0.05?'warn':'success'}">Q_between(${df_b}) = ${fmt(Q_b,2)}, p = ${fmtP(p_b)}  ${p_b<0.05?'⚠️ Significant subgroup differences.':'✓ No significant differences.'}</div>
   <div class="table-wrap"><table><thead><tr><th>Subgroup</th><th>k</th><th>Pooled ${mLabel}</th><th>95% CI</th><th>I²</th></tr></thead>
   <tbody>${groupPooled.map(({grp,r})=>`<tr><td><strong>${grp}</strong></td><td>${r.n}</td>
-    <td class="mono">${fmt(r.theta)}</td><td class="mono">[${fmt(r.ci_lo)}, ${fmt(r.ci_hi)}]</td>
+    <td class="mono">${dV(r.theta)}</td><td class="mono">[${dV(r.ci_lo)}, ${dV(r.ci_hi)}]</td>
     <td class="mono"><span class="tag ${r.I2<50?'tag-green':'tag-yellow'}">${fmt(r.I2,1)}%</span></td></tr>`).join('')}
   </tbody></table></div></div>
   <button class="btn btn-secondary btn-sm mt-2" onclick="drawSubgroupForest('diag')">🌲 Show Forest Plot</button>`;
@@ -3650,7 +3876,12 @@ I² = ${fmt(pooled.I2,1)}%  |  τ² = ${fmt(pooled.tau2)}  |  τ = ${fmt(pooled.
 }
 
 function renderPrevForest(pvStudies,transformed,pooled,method,ciPct,z_c) {
-  if (!pvStudies) { pvStudies=(state.studies.prev||[]).filter(s=>!isNaN(+s.cases)&&+s.n>0); transformed=pvStudies.map(s=>pvTransform(+s.cases,+s.n,method||'ft')); pooled=computePooled(transformed.map(t=>t.yi),transformed.map(t=>t.vi)); ciPct=Math.round((state.project.ci||0.95)*100); z_c=zCrit(state.project.ci||0.95); }
+  /* Resolve the transform BEFORE anything uses it. When called bare -- which
+     is what the Generate button does -- this was left undefined, so pvBack()
+     took its identity branch and the double-arcsine values were printed as
+     percentages (20/100 drawn as 93.5%). */
+  method = method || state.project.prevTransform || 'ft';
+  if (!pvStudies) { pvStudies=(state.studies.prev||[]).filter(s=>!isNaN(+s.cases)&&+s.n>0); transformed=pvStudies.map(s=>pvTransform(+s.cases,+s.n,method)); pooled=computePooled(transformed.map(t=>t.yi),transformed.map(t=>t.vi)); ciPct=Math.round((state.project.ci||0.95)*100); z_c=zCrit(state.project.ci||0.95); }
   if (!pooled||pvStudies.length<2){document.getElementById('fp-empty').style.display='';return;}
   document.getElementById('fp-empty').style.display='none';
   const sort=document.getElementById('fp-sort')?.value||'year';
@@ -3670,7 +3901,15 @@ function renderPrevForest(pvStudies,transformed,pooled,method,ciPct,z_c) {
   const {canvas,ctx}=makeCanvas('fp-canvas',1060,100);
   canvas.height=58+sorted.length*34+88;
   ctx.fillStyle=C.bg;ctx.fillRect(0,0,canvas.width,canvas.height);
-  drawForestCore(ctx,canvas,sorted,pooledDisp,'Prevalence %',ciPct,z_c);
+  /* _es is already a percentage here, so the proportion view divides rather
+     than back-transforms. Both now print their unit, which the bare fmt()
+     default did not. */
+  const pview = fpGetView('prev');
+  drawForestCore(ctx,canvas,sorted,pooledDisp,
+    pview==='prop' ? t('fp_prop') : t('fp_pct'), ciPct, z_c,
+    pview==='prop'
+      ? { esHeader:t('fp_prop'), valFmt:v=>fmt(v/100,3), axisFmt:v=>fmt(v/100,2) }
+      : { esHeader:t('fp_pct'),  valFmt:v=>fmt(v,1)+'%',  axisFmt:v=>fmt(v,0) });
   lastPlotCanvas=canvas;
 }
 
@@ -4115,6 +4354,19 @@ const i18n = {
     btn_run_regression:'▶ Run Meta-Regression',
     btn_forest:'🌲 Subgroup Forest', btn_add_study:'+ Add Study',
     lbl_sort:'Sort by', lbl_year:'Year', lbl_effect:'Effect Size', lbl_author:'Author',
+    fp_view:'Show as', fp_asrep:'As reported', fp_logscale:'Pooling scale (untransformed)',
+    fp_view_hint:'View only — this plot is re-pooled on the measure you chose. The results tables still report the project measure.',
+    fp_viewonly:'VIEW ONLY — plot pooled as {m}; results tables report {p}',
+    fp_omitted:'{n} study(ies) omitted: cannot be expressed as {m}',
+    fp_pct:'Prevalence (%)', fp_prop:'Proportion (0–1)',
+    sg_view:'Effect size shown', sg_measure:'Measure',
+    sg_viewonly:'Subgroup analysis re-pooled as {m}; the main Results panel reports {p}',
+    sg_omitted:'{n} study(ies) omitted: cannot be expressed as {m}',
+    sg_need2:'Need ≥2 studies that can be expressed in the chosen measure.',
+    reg_outcome:'Outcome', reg_outcome_note:'Coefficients are the change in {m} per one-unit increase in the moderator.',
+    reg_logscale:'β is on the {s}, so it is a change in {l} — exponentiate it to read a multiplicative change in {m}.',
+    reg_expb:'exp(β)', reg_expb_hint:'multiplicative change in {m} per unit',
+    fp_dor:'Diagnostic odds ratio', fp_sens:'Sensitivity', fp_spec:'Specificity',
     lbl_model:'Model', lbl_group_var:'Grouping Variable',
     lbl_predictors:'Predictor Variables (click to select)',
     notice_need2:'Need at least 2 valid studies with effect_size and variance.',
@@ -4196,6 +4448,19 @@ const i18n = {
     btn_run_regression:'▶ Jalankan Meta-Regresi',
     btn_forest:'🌲 Forest Subkelompok', btn_add_study:'+ Tambah Studi',
     lbl_sort:'Urutkan berdasarkan', lbl_year:'Tahun', lbl_effect:'Ukuran Efek', lbl_author:'Penulis',
+    fp_view:'Tampilkan sebagai', fp_asrep:'Sesuai laporan', fp_logscale:'Skala penggabungan (tanpa transformasi balik)',
+    fp_view_hint:'Hanya tampilan — plot ini digabungkan ulang pada ukuran yang Anda pilih. Tabel hasil tetap memakai ukuran proyek.',
+    fp_viewonly:'HANYA TAMPILAN — plot digabungkan sebagai {m}; tabel hasil melaporkan {p}',
+    fp_omitted:'{n} studi tidak ditampilkan: tidak dapat dinyatakan sebagai {m}',
+    fp_pct:'Prevalensi (%)', fp_prop:'Proporsi (0–1)',
+    sg_view:'Ukuran efek ditampilkan', sg_measure:'Ukuran',
+    sg_viewonly:'Analisis subkelompok digabungkan ulang sebagai {m}; panel Hasil utama melaporkan {p}',
+    sg_omitted:'{n} studi tidak disertakan: tidak dapat dinyatakan sebagai {m}',
+    sg_need2:'Dibutuhkan ≥2 studi yang dapat dinyatakan dalam ukuran yang dipilih.',
+    reg_outcome:'Luaran', reg_outcome_note:'Koefisien adalah perubahan {m} per kenaikan satu unit moderator.',
+    reg_logscale:'β berada pada {s}, jadi merupakan perubahan {l} — eksponensialkan untuk membaca perubahan multiplikatif pada {m}.',
+    reg_expb:'exp(β)', reg_expb_hint:'perubahan multiplikatif {m} per unit',
+    fp_dor:'Rasio odds diagnostik', fp_sens:'Sensitivitas', fp_spec:'Spesifisitas',
     lbl_model:'Model', lbl_group_var:'Variabel Pengelompokan',
     lbl_predictors:'Variabel Prediktor (klik untuk memilih)',
     notice_need2:'Dibutuhkan minimal 2 studi valid dengan effect_size dan variance.',
@@ -4486,14 +4751,16 @@ function toggleLanguage() {
 // ═══════════════════════════════════════════════════════════════════════
 function getAnalysisData(type, target) {
   if (type === 'eff' || type === 'assoc') {
-    const studies = getEffStudies(type);
-    const tr = getEffTransformed(studies, type);
+    /* `target` doubles as a harmonisation-target override so a plot can show
+       one measure while the project reports another. */
+    const esTarget = (target && ES_TARGETS[target]) ? target : esActiveTarget(type);
+    const studies = getEffStudies(type, esTarget);
+    const tr = getEffTransformed(studies, type, esTarget);
     /* the audit has to run over every numerically valid study, not just the
        ones that survived getEffStudies, or nothing would ever be reported as
        excluded */
     const H = esResolve((state.studies[type]||[]).filter(s=>
       !isNaN(parseFloat(s.effect_size))&&!isNaN(parseFloat(s.variance))&&parseFloat(s.variance)>0), type);
-    const esTarget = esActiveTarget(type);
     const isLog = tr.some(t => t._isLog);
     const isZ = !isLog && tr.some(t => t._isZ);
     /* What the pooled estimate is now expressed in. When a harmonisation
@@ -5689,7 +5956,7 @@ function downloadAllTemplates() {
 //  CITATION
 // ═══════════════════════════════════════════════════════════════════════
 const APP_META = {
-  name: 'MetaLens', version: '13.1', year: 2026,
+  name: 'MetaLens', version: '13.3', year: 2026,
   /* family = surname used in journal bylines; given = full given names.
      Order is the authorship order and is the single source of truth for
      every citation style below. */
