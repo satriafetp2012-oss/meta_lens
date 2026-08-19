@@ -1,4 +1,4 @@
-# MetaLens ‚Äî Meta-Analysis Studio
+# MetaLens ‚Meta-Analysis Studio
 
 > **Developed by Bayu Satria Wiratama, Ph.D**
 > Assistant Professor, Department of Biostatistics, Epidemiology, and Population Health
@@ -8,12 +8,12 @@
 ---
 
 <!-- Language switch -->
-[English](#english) ¬∑ üáÆüá© [Bahasa Indonesia](#bahasa-indonesia)
+[English](#english) --> [Bahasa Indonesia](#bahasa-indonesia)
 
 ---
 
 <a name="english"></a>
-# üá¨üáß English
+English
 
 ## Overview
 
@@ -31,14 +31,14 @@ MetaLens handles four distinct study types, each with its own dataset and comple
 
 | Module | Study Type | Effect Measures |
 |---|---|---|
-| üéØ **Effectiveness** | RCTs, interventions, clinical trials | SMD, MD, OR, RR, HR, RD |
-| ü©∫ **Diagnostic** | Test accuracy, sensitivity/specificity | Sensitivity, Specificity, +LR, ‚àíLR, DOR, SROC AUC |
-| üìâ **Prevalence** | Disease/condition burden studies | Pooled proportion (%) |
-| üîó **Association** | Observational, correlational studies | r, OR, RR, HR |
+| **Effectiveness** | RCTs, interventions, clinical trials | SMD, MD, OR, RR, HR, RD |
+| **Diagnostic** | Test accuracy, sensitivity/specificity | Sensitivity, Specificity, +LR, ‚àíLR, DOR, SROC AUC |
+| **Prevalence** | Disease/condition burden studies | Pooled proportion (%) |
+| **Association** | Observational, correlational studies | r, OR, RR, HR |
 
 ---
 
-### üì• Data Input
+### Data Input
 
 - **Import from Excel / CSV** ‚Äî drag-and-drop file upload with preview before confirming
 - **Manual entry** ‚Äî add one study at a time using an adaptive form that matches the selected study type
@@ -56,42 +56,42 @@ MetaLens handles four distinct study types, each with its own dataset and comple
 
 ---
 
-### üìä Analysis Sections (all four modules)
+### Analysis Sections (all four modules)
 
 Each study type provides the following analyses:
 
-#### üéØ Pooled Effect
+#### Pooled Effect
 - Random-Effects model (DerSimonian-Laird) or Fixed-Effect (Inverse Variance)
 - Pooled effect size with confidence interval, Z-statistic, and p-value
 - Automatic back-transformation for ratio measures (OR, RR, HR shown on original scale)
 - Per-study contribution table (effect size, variance, weight %, Z)
 - Full heterogeneity summary (Q, I¬≤, œÑ¬≤, H¬≤)
 
-#### üå≤ Forest Plot
+####  Forest Plot
 - Sortable by year, effect size, or author
 - Weighted squares proportional to study weight
 - Pooled diamond at the bottom
 - Downloadable as PNG
 
-#### üìê Heterogeneity
+#### Heterogeneity
 - Cochran's Q statistic with p-value
 - I¬≤ (%), œÑ¬≤ (tau-squared), œÑ (tau), H¬≤
 - Categorical interpretation (Low / Moderate / Substantial / Considerable)
 - Clinical recommendation on model choice
 
-#### üî≠ Publication Bias
+#### Publication Bias
 - **Egger's test** ‚Äî regression of standardised effect on precision
 - **Begg & Mazumdar rank correlation test** (Kendall's œÑ)
 - **Rosenthal's Fail-Safe N** with robustness threshold (5k+10)
 - **Funnel plot** ‚Äî downloadable as PNG
 
-#### üóÇÔ∏è Subgroup Analysis
+#### Subgroup Analysis
 - Auto-detects moderator columns from imported data
 - Between-group Q test (test of subgroup differences)
 - Per-subgroup pooled effect, CI, I¬≤, Q
 - **Subgroup forest plot** with colour-coded groups ‚Äî downloadable as PNG
 
-#### üìà Meta-Regression
+#### Meta-Regression
 - Weighted Least Squares (WLS) with random-effects œÑ¬≤ as prior
 - Automatic dummy coding for categorical predictors
 - R¬≤ (proportion of variance explained by moderators)
@@ -99,7 +99,7 @@ Each study type provides the following analyses:
 
 ---
 
-### ü©∫ Diagnostic-Specific Features
+### Diagnostic-Specific Features
 
 - **Pooled Sensitivity & Specificity** ‚Äî pooled on logit scale via random-effects, back-transformed to %
 - **Likelihood Ratios** ‚Äî positive LR (+LR) and negative LR (‚àíLR) with clinical interpretation
@@ -113,7 +113,7 @@ Each study type provides the following analyses:
 
 ---
 
-### üìâ Prevalence-Specific Features
+### Prevalence-Specific Features
 
 - **Freeman-Tukey double arcsine transformation** (recommended for extreme proportions)
 - **Logit transformation** ‚Äî suitable for moderate prevalences
@@ -123,36 +123,36 @@ Each study type provides the following analyses:
 
 ---
 
-### üîÑ Effect Size Converter (5 tabs)
+### Effect Size Converter (5 tabs)
 
 Convert raw reported statistics into effect sizes for meta-analysis. Results can be added directly to the dataset.
 
 | Tab | Converts |
 |---|---|
 | **Means & SDs** | M‚ÇÅ, SD‚ÇÅ, N‚ÇÅ, M‚ÇÇ, SD‚ÇÇ, N‚ÇÇ ‚Üí Cohen's d, Hedges' g, Glass's Œî, MD |
-| **2√ó2 Table** | a, b, c, d ‚Üí OR, log(OR), RR, log(RR), RD, NNT (with SEs and CIs) |
+| **Table** | a, b, c, d ‚OR, log(OR), RR, log(RR), RD, NNT (with SEs and CIs) |
 | **Correlation r** | r, N ‚Üí Fisher's z, variance, 95% CI (for correlation meta-analysis) |
 | **t / F statistic** | t or F + N‚ÇÅ/N‚ÇÇ ‚Üí Cohen's d, Hedges' g, variance |
-| **d ‚Üî r ‚Üî OR** | Cross-measure conversion with variance propagation |
+| **d ‚r ‚ OR** | Cross-measure conversion with variance propagation |
 
 ---
 
-### üíæ Export
+### Export
 
-- **Full text report (.txt)** ‚Äî structured report covering all four modules with pooled results
-- **Study data (.csv)** ‚Äî per-module CSV export
-- **Forest plot PNG** ‚Äî main and subgroup forest plots
+- **Full text report (.txt)** ‚ structured report covering all four modules with pooled results
+- **Study data (.csv)** ‚per-module CSV export
+- **Forest plot PNG** ‚main and subgroup forest plots
 - **Funnel plot PNG**
 - **SROC curve PNG**
 
 ---
 
-### ‚öôÔ∏è Project Configuration
+### ‚ Project Configuration
 
-- **Statistical model** ‚Äî Random-Effects (DerSimonian-Laird) or Fixed-Effect
-- **Confidence interval level** ‚Äî 90%, 95%, or 99%
-- **Prevalence transformation** ‚Äî Freeman-Tukey, Logit, or Raw
-- **Custom moderator variables** ‚Äî define categorical or continuous moderators for subgroup and regression analysis
+- **Statistical model** ‚ Random-Effects (DerSimonian-Laird) or Fixed-Effect
+- **Confidence interval level** ‚90%, 95%, or 99%
+- **Prevalence transformation** ‚Freeman-Tukey, Logit, or Raw
+- **Custom moderator variables** ‚define categorical or continuous moderators for subgroup and regression analysis
 
 ---
 
@@ -162,29 +162,29 @@ Convert raw reported statistics into effect sizes for meta-analysis. Results can
 
 1. Download `meta-analysis-tool-v5.html`
 2. Double-click the file to open it in any modern browser (Chrome, Firefox, Edge, Safari)
-3. The app loads instantly ‚Äî no internet connection required for analysis
+3. The app loads instantly , no internet connection required for analysis
 
 ### Option B: Host on GitHub Pages (free, shareable URL)
 
 1. **Create a GitHub account** at [github.com](https://github.com)
-2. **Create a new repository** ‚Äî name it `metalens`, set to **Public**
-3. **Upload the file** ‚Äî go to *Add file ‚Üí Upload files*, upload `meta-analysis-tool-v5.html`, **rename it to `index.html`**
-4. **Enable GitHub Pages** ‚Äî go to *Settings ‚Üí Pages ‚Üí Source: Deploy from branch ‚Üí main / (root)* ‚Üí Save
-5. **Access your live URL** ‚Äî `https://[your-username].github.io/metalens/`
+2. **Create a new repository** ‚ name it `metalens`, set to **Public**
+3. **Upload the file** ‚ go to *Add file ‚Üí Upload files*, upload `meta-analysis-tool-v5.html`, **rename it to `index.html`**
+4. **Enable GitHub Pages** ‚ go to *Settings ‚Pages ‚ Source: Deploy from branch ‚main / (root)* ‚Üí Save
+5. **Access your live URL** ‚ `https://[your-username].github.io/metalens/`
 
-> Updates: To deploy a new version, go to `index.html` in your repository ‚Üí edit ‚Üí paste the new content ‚Üí commit. GitHub Pages redeploys in ~1 minute.
+> Updates: To deploy a new version, go to `index.html` in your repository ‚ edit ‚ paste the new content ‚ commit. GitHub Pages redeploys in ~1 minute.
 
 ---
 
 ## Workflow Guide
 
 ```
-1. Project Setup  ‚Üí  Set analysis model, CI level, prevalence transform, moderators
-2. Import Data    ‚Üí  Select study type, upload Excel/CSV or add studies manually
-3. Data Table     ‚Üí  Review, search, and manage imported studies
-4. Analysis       ‚Üí  Navigate each section (Pooled ‚Üí Forest ‚Üí Heterogeneity ‚Üí Bias ‚Üí Subgroup ‚Üí Regression)
-5. Effect Converter (optional) ‚Üí Convert raw statistics and add to dataset
-6. Export         ‚Üí  Download report and plots
+1. Project Setup  ‚  Set analysis model, CI level, prevalence transform, moderators
+2. Import Data    ‚ Select study type, upload Excel/CSV or add studies manually
+3. Data Table     ‚  Review, search, and manage imported studies
+4. Analysis       ‚  Navigate each section (Pooled ‚ Forest ‚ Heterogeneity ‚ Bias ‚ Subgroup ,Regression)
+5. Effect Converter (optional) ‚ Convert raw statistics and add to dataset
+6. Export         ‚  Download report and plots
 ```
 
 ---
@@ -212,11 +212,11 @@ Convert raw reported statistics into effect sizes for meta-analysis. Results can
 
 | Browser | Support |
 |---|---|
-| Google Chrome 90+ | ‚úÖ Fully supported |
-| Mozilla Firefox 88+ | ‚úÖ Fully supported |
-| Microsoft Edge 90+ | ‚úÖ Fully supported |
-| Safari 14+ | ‚úÖ Fully supported |
-| Internet Explorer | ‚ùå Not supported |
+| Google Chrome 90+ | ‚ Fully supported |
+| Mozilla Firefox 88+ | ‚ Fully supported |
+| Microsoft Edge 90+ | ‚ Fully supported |
+| Safari 14+ | ‚ Fully supported |
+| Internet Explorer | ‚ Not supported |
 
 ---
 
@@ -239,14 +239,14 @@ Available at: https://github.com/[your-username]/metalens
 Department of Biostatistics, Epidemiology, and Population Health
 Faculty of Medicine, Public Health, and Nursing (FK-KMK)
 Universitas Gadjah Mada, Yogyakarta, Indonesia
-‚úâ bayu.satria@ugm.ac.id
-üåê https://fkkmk.ugm.ac.id
+bayu.satria@ugm.ac.id
+https://fkkmk.ugm.ac.id
 
 ---
 ---
 
 <a name="bahasa-indonesia"></a>
-# üáÆüá© Bahasa Indonesia
+# Bahasa Indonesia
 
 ## Gambaran Umum
 
