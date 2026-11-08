@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MetaLens v13.3 — Meta-Analysis Studio by Bayu Satria Wiratama</title>
+<title>MetaLens v13.4 — Meta-Analysis Studio by Bayu Satria Wiratama</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap');
@@ -778,7 +778,7 @@ Mada; 2026. Available from: http://ugm.id/metalens</div>
                 <tr><td data-i18n="about_m8">Prevalence</td><td>Freeman-Tukey arcsine</td></tr>
                 <tr><td>Prediction interval</td><td>Higgins–Thompson–Spiegelhalter (t, k−2 df)</td></tr>
                 <tr><td>Small-study adjustment</td><td>Duval &amp; Tweedie trim-and-fill (L₀ / R₀)</td></tr>
-                <tr><td>Sensitivity</td><td>Leave-one-out, cumulative, influence diagnostics</td></tr>
+                <tr><td>Sensitivity</td><td>Leave-one-out, Baujat plot, cumulative, influence diagnostics</td></tr>
                 <tr><td>Sequential monitoring</td><td>TSA — O'Brien–Fleming α-spending, D²-adjusted RIS</td></tr>
                 <tr><td>Certainty of evidence</td><td>GRADE (8 domains, Summary of Findings)</td></tr>
               </tbody>
@@ -1600,6 +1600,28 @@ function leaveOneOut(ys, vs, model, ci) {
     });
   }
   return { full, rows };
+}
+
+/* Baujat et al. (2002) — always on the fixed-effect (inverse-variance) model,
+   as in metafor::baujat() and meta::baujat().
+   x = study's contribution to Cochran's Q:      w_i (y_i - θ)²       (Σx = Q)
+   y = influence on the pooled estimate:         (θ - θ₍₋ᵢ₎)² / Var(θ₍₋ᵢ₎)  */
+function baujatData(ys, vs) {
+  const k = ys.length;
+  const w = vs.map(v=>1/v);
+  const W = w.reduce((a,b)=>a+b,0);
+  const theta = w.reduce((s,wi,i)=>s+wi*ys[i],0)/W;
+  const rows = ys.map((y,i)=>{
+    const Wi = W - w[i];
+    const thetaI = (theta*W - w[i]*y)/Wi;
+    return { i, qc: w[i]*(y-theta)**2, infl: (theta-thetaI)**2 * Wi,
+             thetaI, weight: 100*w[i]/W };
+  });
+  const Q = rows.reduce((s,r)=>s+r.qc,0);
+  rows.forEach(r=>{ r.qPct = Q>0 ? 100*r.qc/Q : 0; });
+  const meanQ = Q/k, meanInfl = rows.reduce((s,r)=>s+r.infl,0)/k;
+  rows.forEach(r=>{ r.hot = r.qc > meanQ && r.infl > meanInfl; });
+  return { theta, Q, df:k-1, k, meanQ, meanInfl, rows };
 }
 
 function cumulativeMeta(studies, ys, vs, model, ci, orderBy) {
@@ -5017,7 +5039,8 @@ function renderSensitivitySection(type, el) {
     const cum  = cumulativeMeta(D.studies, D.ys, D.vs, model, ci, order);
     const est  = estimatorComparison(D.ys, D.vs, ci);
     const tf   = trimAndFill(D.ys, D.vs, {});
-    window._lastSensitivity = {D, loo, cum, est, tf, type};
+    const bj   = baujatData(D.ys, D.vs);
+    window._lastSensitivity = {D, loo, cum, est, tf, bj, type};
 
     const full = loo.full;
     const influential = loo.rows.filter(r => r.flipsSig || r.flipsSign || Math.abs(r.resid) > 1.96 || Math.abs(r.dI2) > 15);
@@ -5076,8 +5099,43 @@ function renderSensitivitySection(type, el) {
       ${worst?`<div class="text-sm mt-2">${t('sa_largest')}: <strong>${D.studies[worst.i].author||'?'} ${D.studies[worst.i].year||''}</strong> — ${t('sa_largest_sub')} ${D.fmtDisp(worst.theta)}.</div>`:''}
     </div>
 
+
     <div class="card">
-      <div class="card-title">2️⃣ ${t('sa_cum')} <span>${t('sa_cum_sub')}</span></div>
+      <div class="card-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">2️⃣ ${t('sa_baujat')} <span>${t('sa_baujat_sub')}</span>
+        <button class="btn btn-secondary btn-sm" style="margin-left:auto" onclick="downloadCanvasPNG('sa-baujat-canvas','baujat_plot.png')">⬇️ PNG</button></div>
+      <div class="forest-container mb-2"><canvas id="sa-baujat-canvas"></canvas></div>
+      ${(() => {
+        const hot = bj.rows.filter(r=>r.hot).sort((a,b)=>b.qc-a.qc);
+        const top = bj.rows.slice().sort((a,b)=>b.qc-a.qc)[0];
+        const nm = r => { const s=D.studies[r.i]; return `${s.author||('#'+(r.i+1))}${s.year?' '+s.year:''}`; };
+        const msg = hot.length
+          ? t('sa_bj_hot').replace('{who}', hot.map(nm).join(', '))
+          : t('sa_bj_none');
+        const topMsg = top && bj.Q>0 ? ' '+t('sa_bj_top').replace('{who}', nm(top)).replace('{p}', fmt(top.qPct,1)) : '';
+        const qp = bj.df>0 ? 1-chiSqCDF(bj.Q, bj.df) : 1;
+        const low = qp >= 0.10 ? ' '+t('sa_bj_lowhet').replace('{q}', fmt(bj.Q,2)).replace('{df}', bj.df).replace('{p}', fmtP(qp)) : '';
+        const cls = hot.length && qp < 0.10 ? 'notice-warn' : (hot.length ? 'notice-info' : 'notice-success');
+        return `<div class="notice ${cls}"><span>${hot.length && qp<0.10?'⚠️':(hot.length?'ℹ️':'✓')}</span><div>${msg}${topMsg}${low}</div></div>`;
+      })()}
+      <div class="table-wrap"><table>
+        <thead><tr><th>#</th><th>${t('lbl_study')}</th><th>${t('sa_bj_w')}</th><th>${t('sa_bj_x')}</th><th>% Q</th><th>${t('sa_bj_y')}</th><th>${t('sa_flag')}</th></tr></thead>
+        <tbody>${bj.rows.slice().sort((a,b)=>b.qc-a.qc).map(r=>{ const s=D.studies[r.i];
+          return `<tr${r.hot?' style="background:var(--warn-soft)"':''}>
+            <td class="mono">${r.i+1}</td>
+            <td>${s.author||'?'} ${s.year?'('+s.year+')':''}</td>
+            <td class="mono">${fmt(r.weight,1)}%</td>
+            <td class="mono">${fmt(r.qc,3)}</td>
+            <td class="mono">${fmt(r.qPct,1)}%</td>
+            <td class="mono">${fmt(r.infl,3)}</td>
+            <td>${r.hot?`<span class="tag tag-yellow">${t('sa_bj_flag')}</span>`:'<span class="tag tag-green">—</span>'}</td></tr>`; }).join('')}
+          <tr style="background:var(--accent-soft)"><td></td><td><strong>${t('sa_full')} (k=${bj.k})</strong></td><td class="mono">100%</td>
+            <td class="mono"><strong>Q = ${fmt(bj.Q,3)}</strong></td><td class="mono">100%</td><td>—</td><td>—</td></tr>
+        </tbody></table></div>
+      <div class="text-sm mt-2">${t('sa_bj_note')}</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">3️⃣ ${t('sa_cum')} <span>${t('sa_cum_sub')}</span></div>
       <div class="forest-container mb-2"><canvas id="sa-cum-canvas"></canvas></div>
       <div class="table-wrap"><table>
         <thead><tr><th>${t('sa_added')}</th><th>k</th><th>${D.measure}</th><th>${ciPct}% CI</th><th>p</th><th>I²</th></tr></thead>
@@ -5092,7 +5150,7 @@ function renderSensitivitySection(type, el) {
     </div>
 
     <div class="card">
-      <div class="card-title">3️⃣ ${t('sa_est_cmp')} <span>${t('sa_est_cmp_sub')}</span></div>
+      <div class="card-title">4️⃣ ${t('sa_est_cmp')} <span>${t('sa_est_cmp_sub')}</span></div>
       <div class="table-wrap"><table>
         <thead><tr><th>${t('lbl_model')}</th><th>${D.measure}</th><th>${ciPct}% CI</th><th>p</th><th>τ²</th><th>SE</th></tr></thead>
         <tbody>${est.map(e=>`<tr>
@@ -5116,6 +5174,7 @@ function renderSensitivitySection(type, el) {
     </div>`;
 
     drawLooPlot(D, loo, ciPct);
+    drawBaujatPlot(D, bj);
     drawCumulativePlot(D, cum, ciPct, loo.full);
   }, 20);
 }
@@ -5135,6 +5194,100 @@ function drawLooPlot(D, loo, ciPct) {
     axisFmt: D.axisFmt, valFmt: D.fmtDisp
   });
   lastPlotCanvas = o.canvas;
+}
+
+function niceTicks(max, n) {
+  if (!(max>0)) return [0,1];
+  const raw = max/n, mag = Math.pow(10, Math.floor(Math.log10(raw)));
+  const step = [1,2,2.5,5,10].map(m=>m*mag).find(s=>s>=raw) || raw;
+  const out=[]; for (let v=0; v<=max+1e-12; v+=step) out.push(+v.toFixed(10));
+  if (out[out.length-1] < max) out.push(+(out[out.length-1]+step).toFixed(10));
+  return out;
+}
+
+function drawBaujatPlot(D, bj) {
+  const o = makeCanvas('sa-baujat-canvas', 960, 600); if (!o) return;
+  const {ctx, canvas} = o;
+  const m = {t:30, r:40, b:96, l:96};
+  const W = canvas.width-m.l-m.r, H = canvas.height-m.t-m.b;
+  const xt = niceTicks(Math.max(...bj.rows.map(r=>r.qc), bj.meanQ)*1.08, 5);
+  const yt = niceTicks(Math.max(...bj.rows.map(r=>r.infl), bj.meanInfl)*1.10, 5);
+  const xMax = xt[xt.length-1], yMax = yt[yt.length-1];
+  const px = v => m.l + v/xMax*W, py = v => m.t + H - v/yMax*H;
+
+  // grid
+  ctx.strokeStyle=C.grid; ctx.lineWidth=1; ctx.globalAlpha=.45;
+  xt.forEach(v=>{ ctx.beginPath(); ctx.moveTo(px(v),m.t); ctx.lineTo(px(v),m.t+H); ctx.stroke(); });
+  yt.forEach(v=>{ ctx.beginPath(); ctx.moveTo(m.l,py(v)); ctx.lineTo(m.l+W,py(v)); ctx.stroke(); });
+  ctx.globalAlpha=1;
+
+  // shaded "hot" quadrant + mean guide lines
+  ctx.fillStyle = C.danger; ctx.globalAlpha=.06;
+  ctx.fillRect(px(bj.meanQ), m.t, m.l+W-px(bj.meanQ), py(bj.meanInfl)-m.t);
+  ctx.globalAlpha=1;
+  ctx.strokeStyle=C.text3; ctx.lineWidth=1.2; ctx.setLineDash([6,4]);
+  ctx.beginPath(); ctx.moveTo(px(bj.meanQ),m.t); ctx.lineTo(px(bj.meanQ),m.t+H); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(m.l,py(bj.meanInfl)); ctx.lineTo(m.l+W,py(bj.meanInfl)); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // points (area ∝ fixed-effect weight)
+  const wMax = Math.max(...bj.rows.map(r=>r.weight));
+  const rad = r => 4 + 7*Math.sqrt(r.weight/wMax);
+  const order = bj.rows.slice().sort((a,b)=>b.weight-a.weight);
+  order.forEach(r=>{
+    ctx.fillStyle = r.hot ? C.danger : C.accent; ctx.globalAlpha=.78;
+    ctx.beginPath(); ctx.arc(px(r.qc), py(r.infl), rad(r), 0, Math.PI*2); ctx.fill();
+    ctx.globalAlpha=1; ctx.strokeStyle=C.bg; ctx.lineWidth=1.5; ctx.stroke();
+  });
+
+  // labels — greedy placement to limit overlap
+  ctx.font = "12px 'DM Sans',sans-serif"; ctx.textBaseline='middle';
+  const boxes = bj.rows.map(r=>{ const rr=rad(r); return {x:px(r.qc)-rr, y:py(r.infl)-rr, w:2*rr, h:2*rr}; });
+  const hit = b => boxes.some(q => b.x<q.x+q.w && b.x+b.w>q.x && b.y<q.y+q.h && b.y+b.h>q.y);
+  bj.rows.slice().sort((a,b)=>(b.qc/xMax+b.infl/yMax)-(a.qc/xMax+a.infl/yMax)).forEach(r=>{
+    const s = D.studies[r.i];
+    const lbl = `${s.author||('#'+(r.i+1))}${s.year?' '+s.year:''}`;
+    const th = 14, x0 = px(r.qc), y0 = py(r.infl), d = rad(r)+3;
+    const place = (text) => {
+      const w = ctx.measureText(text).width;
+      const cs = [[x0+d, y0-th/2],[x0-d-w, y0-th/2],[x0-w/2, y0-d-th],[x0-w/2, y0+d],
+                  [x0+d, y0-th-4],[x0+d, y0+4],[x0-d-w, y0-th-4],[x0-d-w, y0+4]];
+      const p = cs.find(([x,y])=>{ const b={x,y,w,h:th};
+        return x>=m.l+2 && x+w<=m.l+W-2 && y>=m.t && y+th<=m.t+H+16 && !hit(b); });
+      return p ? {x:p[0], y:p[1], w, text} : null;
+    };
+    /* full name if it fits, else the study number (the table's # column), else nothing */
+    const pick = place(lbl) || place(String(r.i+1));
+    if (!pick) return;
+    boxes.push({x:pick.x, y:pick.y, w:pick.w, h:th});
+    ctx.fillStyle = r.hot ? C.danger : C.text2;
+    ctx.textAlign='left'; ctx.fillText(pick.text, pick.x, pick.y+th/2);
+  });
+  ctx.textBaseline='alphabetic';
+
+  // axes
+  ctx.strokeStyle=C.text2; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(m.l,m.t); ctx.lineTo(m.l,m.t+H); ctx.lineTo(m.l+W,m.t+H); ctx.stroke();
+  ctx.fillStyle=C.text2; ctx.font=FONT.ax; ctx.textAlign='center';
+  xt.forEach(v=>{ ctx.beginPath(); ctx.moveTo(px(v),m.t+H); ctx.lineTo(px(v),m.t+H+5); ctx.stroke();
+    ctx.fillText(fmt(v, v<10?2:1), px(v), m.t+H+20); });
+  ctx.textAlign='right';
+  yt.forEach(v=>{ ctx.beginPath(); ctx.moveTo(m.l-5,py(v)); ctx.lineTo(m.l,py(v)); ctx.stroke();
+    ctx.fillText(fmt(v, v<10?2:1), m.l-9, py(v)+4); });
+  ctx.fillStyle=C.text; ctx.font=FONT.ttl; ctx.textAlign='center';
+  ctx.fillText(t('sa_bj_xaxis'), m.l+W/2, m.t+H+46);
+  ctx.save(); ctx.translate(26, m.t+H/2); ctx.rotate(-Math.PI/2); ctx.fillText(t('sa_bj_yaxis'),0,0); ctx.restore();
+
+  // footer
+  ctx.textAlign='left'; ctx.font=FONT.ax; ctx.fillStyle=C.text3;
+  ctx.fillText(`${t('sa_bj_foot')}   Q(${bj.df}) = ${fmt(bj.Q,2)}   k = ${bj.k}   ${D.scaleName?'· '+D.scaleName:''}`, 10, m.t+H+72);
+  ctx.fillText(t('sa_bj_legend'), 10, m.t+H+88);
+}
+
+function downloadCanvasPNG(id, name) {
+  const canvas = document.getElementById(id);
+  if (!canvas || !canvas.width) return alert('Generate the plot first.');
+  const a = document.createElement('a'); a.download = name; a.href = canvas.toDataURL('image/png'); a.click();
 }
 
 function drawCumulativePlot(D, cum, ciPct, full) {
@@ -5158,6 +5311,11 @@ function exportSensitivityCSV() {
   out += ['FULL',esc('All studies'),loo.full.n,fmt(D.disp(loo.full.theta),4),fmt(D.disp(loo.full.ci_lo),4),fmt(D.disp(loo.full.ci_hi),4),fmt(loo.full.p,4),fmt(loo.full.I2,2),fmt(loo.full.tau2,5)].join(',')+'\n';
   cum.forEach(c=>{ out += ['CUMULATIVE',esc(`+ ${c.study.author||'?'} ${c.study.year||''}`),c.k,fmt(D.disp(c.theta),4),fmt(D.disp(c.ci_lo),4),fmt(D.disp(c.ci_hi),4),fmt(c.p,4),fmt(c.I2,2),''].join(',')+'\n'; });
   est.forEach(e=>{ out += ['ESTIMATOR',esc(e.label),e.r.n,fmt(D.disp(e.r.theta),4),fmt(D.disp(e.r.ci_lo),4),fmt(D.disp(e.r.ci_hi),4),fmt(e.r.p,4),fmt(e.r.I2,2),fmt(e.tau2,5)].join(',')+'\n'; });
+  if (S.bj) {
+    out += '\nSECTION,Study,FE_weight_pct,Q_contribution,Q_pct,Influence,Hot_quadrant\n';
+    S.bj.rows.forEach(r=>{ const s=D.studies[r.i];
+      out += ['BAUJAT',esc(`${s.author||'?'} ${s.year||''}`),fmt(r.weight,2),fmt(r.qc,4),fmt(r.qPct,2),fmt(r.infl,4),r.hot?'yes':'no'].join(',')+'\n'; });
+  }
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([out],{type:'text/csv'}));
   a.download='metalens_sensitivity_analysis.csv'; a.click();
@@ -5956,7 +6114,7 @@ function downloadAllTemplates() {
 //  CITATION
 // ═══════════════════════════════════════════════════════════════════════
 const APP_META = {
-  name: 'MetaLens', version: '13.3', year: 2026,
+  name: 'MetaLens', version: '13.4', year: 2026,
   /* family = surname used in journal bylines; given = full given names.
      Order is the authorship order and is the single source of truth for
      every citation style below. */
@@ -6019,7 +6177,7 @@ function citationText(style) {
   url       = {${M.url}}
 }`;
   if (style === 'methods')
-    return `All meta-analyses were performed in ${M.name} version ${M.version} (${authorsInText()}, ${M.year}). Effects were pooled using both fixed-effect inverse-variance and DerSimonian–Laird random-effects models; the random-effects model is reported as primary. Between-study heterogeneity was quantified with Cochran's Q, I², and tau², and a 95% prediction interval was computed following Higgins, Thompson and Spiegelhalter (2009). Small-study effects were examined with funnel plots, Egger's regression test, Begg and Mazumdar's rank correlation, and the Duval and Tweedie (2000) trim-and-fill procedure. Effect sizes reported on different metrics were harmonised to a common scale before pooling, using the conversions in Borenstein et al. (2009) with delta-method variance propagation. Robustness was assessed by leave-one-out and cumulative meta-analysis and by comparing alternative tau² estimators. Trial Sequential Analysis was conducted with a two-sided alpha of 0.05, 80% power, and an anticipated relative risk reduction of 20%, using O'Brien–Fleming alpha-spending monitoring boundaries and a diversity-adjusted required information size (Wetterslev et al., 2008, 2009). Certainty of evidence was rated using the GRADE approach (Guyatt et al., 2011).`;
+    return `All meta-analyses were performed in ${M.name} version ${M.version} (${authorsInText()}, ${M.year}). Effects were pooled using both fixed-effect inverse-variance and DerSimonian–Laird random-effects models; the random-effects model is reported as primary. Between-study heterogeneity was quantified with Cochran's Q, I², and tau², and a 95% prediction interval was computed following Higgins, Thompson and Spiegelhalter (2009). Small-study effects were examined with funnel plots, Egger's regression test, Begg and Mazumdar's rank correlation, and the Duval and Tweedie (2000) trim-and-fill procedure. Effect sizes reported on different metrics were harmonised to a common scale before pooling, using the conversions in Borenstein et al. (2009) with delta-method variance propagation. Robustness was assessed by leave-one-out and cumulative meta-analysis, by Baujat plots identifying studies that contribute most to heterogeneity and to the pooled estimate (Baujat et al., 2002), and by comparing alternative tau² estimators. Trial Sequential Analysis was conducted with a two-sided alpha of 0.05, 80% power, and an anticipated relative risk reduction of 20%, using O'Brien–Fleming alpha-spending monitoring boundaries and a diversity-adjusted required information size (Wetterslev et al., 2008, 2009). Certainty of evidence was rated using the GRADE approach (Guyatt et al., 2011).`;
   return '';
 }
 
@@ -6033,6 +6191,7 @@ const METHOD_REFS = [
   ['Funnel asymmetry (Egger)', 'Egger M, Davey Smith G, Schneider M, Minder C. Bias in meta-analysis detected by a simple, graphical test. BMJ. 1997;315(7109):629–34.'],
   ['Rank correlation (Begg)', 'Begg CB, Mazumdar M. Operating characteristics of a rank correlation test for publication bias. Biometrics. 1994;50(4):1088–101.'],
   ['Trim-and-fill', 'Duval S, Tweedie R. Trim and fill: a simple funnel-plot-based method of testing and adjusting for publication bias in meta-analysis. Biometrics. 2000;56(2):455–63.'],
+  ['Baujat plot', 'Baujat B, Mahé C, Pignon JP, Hill C. A graphical method for exploring heterogeneity in meta-analyses: application to a meta-analysis of 65 trials. Stat Med. 2002;21(18):2641–52.'],
   ['Trial Sequential Analysis', 'Wetterslev J, Thorlund K, Brok J, Gluud C. Trial sequential analysis may establish when firm evidence is reached in cumulative meta-analysis. J Clin Epidemiol. 2008;61(1):64–75.'],
   ['Diversity (D²)', 'Wetterslev J, Thorlund K, Brok J, Gluud C. Estimating required information size by quantifying diversity in random-effects model meta-analyses. BMC Med Res Methodol. 2009;9:86.'],
   ['α-spending boundaries', 'Lan KKG, DeMets DL. Discrete sequential boundaries for clinical trials. Biometrika. 1983;70(3):659–63.'],
@@ -6475,7 +6634,7 @@ Object.assign(i18n.en, {
 
   /* sensitivity analysis */
   sec_sensitivity: 'Sensitivity analysis',
-  sec_sensitivity_sub: 'leave-one-out, cumulative, influence and estimator comparison in one click',
+  sec_sensitivity_sub: 'leave-one-out, Baujat plot, cumulative, influence and estimator comparison in one click',
   sa_loo: 'Leave-one-out analysis',
   sa_loo_sub: 'the pooled estimate recomputed with each study removed in turn',
   sa_omitted: 'Study omitted',
@@ -6500,6 +6659,22 @@ Object.assign(i18n.en, {
   sa_f_sig: 'Changes significance',
   sa_f_het: 'Drives heterogeneity',
   sa_f_weight: 'Dominant weight',
+  lbl_study: 'Study',
+  sa_baujat: 'Baujat plot',
+  sa_baujat_sub: 'which studies drive heterogeneity, and which of them also drive the result',
+  sa_bj_x: 'Contribution to Q',
+  sa_bj_y: 'Influence on result',
+  sa_bj_w: 'Weight (FE)',
+  sa_bj_flag: 'Heterogeneous + influential',
+  sa_bj_xaxis: 'Contribution to overall heterogeneity (Cochran\'s Q)',
+  sa_bj_yaxis: 'Influence on pooled result',
+  sa_bj_foot: 'Baujat plot · fixed-effect (inverse-variance) model',
+  sa_bj_legend: 'Dashed lines = mean of each axis · shaded = above both means · point size ∝ weight',
+  sa_bj_hot: 'In the upper-right quadrant: <strong>{who}</strong>. These studies add most to heterogeneity <em>and</em> move the pooled estimate most — check their population, design, risk of bias and extracted data first.',
+  sa_bj_none: 'No study is above average on both axes — heterogeneity is not concentrated in a study that also drives the pooled result.',
+  sa_bj_top: 'The largest single contributor to Q is <strong>{who}</strong> ({p}% of Q).',
+  sa_bj_lowhet: 'Note: overall heterogeneity is not significant (Q = {q}, df = {df}, p = {p}), so these contributions are small in absolute terms — read the plot as a relative ranking only.',
+  sa_bj_note: 'Baujat et al. (2002). x = w<sub>i</sub>(y<sub>i</sub> − θ̂)², which sums to Cochran\'s Q; y = (θ̂ − θ̂<sub>(−i)</sub>)² / Var(θ̂<sub>(−i)</sub>). Both axes use the fixed-effect model, as in metafor::baujat() and meta::baujat(), regardless of the model chosen for pooling. The plot is exploratory: it points to studies worth investigating, not studies to remove.',
   sa_largest: 'Most influential study',
   sa_largest_sub: 'largest shift in the pooled estimate when removed',
   sa_verdict: 'Robustness verdict',
@@ -6773,7 +6948,7 @@ Object.assign(i18n.id, {
   tf_v_flip: 'Signifikansi statistik berubah setelah imputasi — temuan tidak kokoh terhadap bias publikasi. Tafsirkan dengan hati-hati.',
 
   sec_sensitivity: 'Analisis sensitivitas',
-  sec_sensitivity_sub: 'leave-one-out, kumulatif, diagnostik pengaruh dan perbandingan estimator dalam satu klik',
+  sec_sensitivity_sub: 'leave-one-out, plot Baujat, kumulatif, diagnostik pengaruh dan perbandingan estimator dalam satu klik',
   sa_loo: 'Analisis leave-one-out',
   sa_loo_sub: 'estimasi gabungan dihitung ulang dengan menghapus satu studi bergantian',
   sa_omitted: 'Studi dikeluarkan',
@@ -6798,6 +6973,22 @@ Object.assign(i18n.id, {
   sa_f_sig: 'Mengubah signifikansi',
   sa_f_het: 'Pendorong heterogenitas',
   sa_f_weight: 'Bobot dominan',
+  lbl_study: 'Studi',
+  sa_baujat: 'Plot Baujat',
+  sa_baujat_sub: 'studi mana yang memicu heterogenitas, dan mana yang sekaligus menggerakkan hasil',
+  sa_bj_x: 'Kontribusi ke Q',
+  sa_bj_y: 'Pengaruh ke hasil',
+  sa_bj_w: 'Bobot (FE)',
+  sa_bj_flag: 'Heterogen + berpengaruh',
+  sa_bj_xaxis: 'Kontribusi terhadap heterogenitas total (Q Cochran)',
+  sa_bj_yaxis: 'Pengaruh terhadap hasil gabungan',
+  sa_bj_foot: 'Plot Baujat · model efek tetap (inverse-variance)',
+  sa_bj_legend: 'Garis putus-putus = rerata tiap sumbu · area arsir = di atas kedua rerata · ukuran titik ∝ bobot',
+  sa_bj_hot: 'Di kuadran kanan atas: <strong>{who}</strong>. Studi ini paling banyak menambah heterogenitas <em>dan</em> paling menggeser estimasi gabungan — periksa dulu populasi, desain, risiko bias, dan data yang diekstraksi.',
+  sa_bj_none: 'Tidak ada studi yang berada di atas rerata pada kedua sumbu — heterogenitas tidak terpusat pada studi yang sekaligus menggerakkan hasil gabungan.',
+  sa_bj_top: 'Penyumbang terbesar terhadap Q adalah <strong>{who}</strong> ({p}% dari Q).',
+  sa_bj_lowhet: 'Catatan: heterogenitas total tidak signifikan (Q = {q}, df = {df}, p = {p}), sehingga kontribusi ini kecil secara absolut — baca plot ini sebagai peringkat relatif saja.',
+  sa_bj_note: 'Baujat dkk. (2002). x = w<sub>i</sub>(y<sub>i</sub> − θ̂)², yang jumlahnya sama dengan Q Cochran; y = (θ̂ − θ̂<sub>(−i)</sub>)² / Var(θ̂<sub>(−i)</sub>). Kedua sumbu memakai model efek tetap, seperti metafor::baujat() dan meta::baujat(), apa pun model yang dipilih untuk pooling. Plot ini bersifat eksploratif: menunjuk studi yang perlu ditelusuri, bukan studi yang harus dibuang.',
   sa_largest: 'Studi paling berpengaruh',
   sa_largest_sub: 'pergeseran estimasi gabungan terbesar saat dikeluarkan',
   sa_verdict: 'Kesimpulan kekokohan',
