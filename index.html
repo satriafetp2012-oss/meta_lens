@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MetaLens v13.4 — Meta-Analysis Studio by Bayu Satria Wiratama</title>
+<title>MetaLens v13.7 — Meta-Analysis Studio by Bayu Satria Wiratama</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600;700;800&display=swap');
 
 /* ═══ LIGHT THEME (default) ═══ */
 :root{
@@ -270,9 +270,220 @@ canvas{max-width:100%;}
 .pbar{height:11px;background:var(--surface3);border-radius:6px;overflow:hidden;margin-top:7px;}
 .pbar>div{height:100%;background:var(--accent);border-radius:6px;transition:width .4s;}
 
+
+/* ═══ IMPORT PREVIEW (v13.6) ═══ */
+.imp-controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;align-items:end;margin-bottom:12px;}
+.imp-static{padding:9px 11px;border:1px dashed var(--border2);border-radius:7px;font-size:14px;color:var(--text2);background:var(--surface2);}
+.imp-stat{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 12px;}
+.imp-stat .val{font-family:'DM Mono',monospace;font-size:22px;font-weight:600;color:var(--accent);line-height:1.2;}
+.imp-stat .lbl{font-size:12px;color:var(--text2);}
+.imp-cols{display:flex;flex-direction:column;gap:7px;font-size:13px;margin-bottom:12px;}
+.imp-cols .tag{margin:1px 2px;}
+.preview-wrap{max-height:430px;overflow:auto;border:1px solid var(--border);border-radius:8px;}
+.preview-wrap th{position:sticky;top:0;z-index:2;}
+.preview-wrap td{white-space:nowrap;max-width:320px;overflow:hidden;text-overflow:ellipsis;font-size:13px;padding:6px 10px;}
+.imp-table th.imp-req{color:var(--accent2);}
+.imp-table th.imp-opt{color:var(--accent);}
+.imp-raw{font-size:10px;font-weight:500;text-transform:none;letter-spacing:0;color:var(--text3);}
+.imp-ck{width:34px;text-align:center;}
+.imp-ck input{width:16px;height:16px;cursor:pointer;}
+.imp-bad{background:var(--danger-soft)!important;box-shadow:inset 0 0 0 1px var(--danger);}
+tr.imp-off td{opacity:.45;}
+
+/* ═══ SCREENING ═══ */
+.sr-steps{display:flex;gap:8px;margin-bottom:16px;overflow-x:auto;padding-bottom:2px;}
+.sr-step{display:flex;align-items:center;gap:9px;padding:9px 13px;border:1px solid var(--border);border-radius:10px;background:var(--surface);cursor:pointer;min-width:max-content;transition:all .15s;}
+.sr-step:hover{border-color:var(--accent);}
+.sr-step.on{border-color:var(--accent);background:var(--accent-soft);}
+.sr-step strong{display:block;font-size:13.5px;line-height:1.2;}
+.sr-step small{display:block;font-size:12px;color:var(--text3);}
+.sr-step-n{width:26px;height:26px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:var(--surface3);font-weight:700;font-size:13px;flex-shrink:0;}
+.sr-step.done .sr-step-n{background:var(--accent2);color:var(--btn-fg);}
+.sr-step.on .sr-step-n{background:var(--accent);color:var(--btn-fg);}
+.sr-help{font-size:14px;color:var(--text2);}
+.sr-help summary{cursor:pointer;font-weight:600;}
+.sr-help ul{margin:8px 0 0 20px;line-height:1.8;}
+.sr-pend{border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px;background:var(--surface2);}
+.sr-pend-head{display:flex;align-items:center;gap:8px;margin-bottom:10px;word-break:break-all;}
+.sr-pend-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin-bottom:10px;}
+.sr-pend-stats{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
+.sr-cell-title{white-space:normal!important;min-width:260px;max-width:520px!important;}
+
+.sr-pair{border:1px solid var(--border);border-radius:10px;background:var(--surface);padding:14px;margin-bottom:12px;box-shadow:var(--shadow);}
+.sr-pair-head{margin-bottom:8px;}
+.sr-pair-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.sr-pair-act{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}
+.sr-mini{border:1px solid var(--border);border-radius:8px;padding:11px 12px;font-size:13.5px;background:var(--surface2);display:flex;flex-direction:column;gap:3px;min-width:0;}
+.sr-mini-title{font-weight:700;font-size:14.5px;margin-bottom:4px;line-height:1.35;}
+.sr-mini .sr-k{display:inline-block;min-width:64px;color:var(--text3);font-size:12px;}
+.sr-mini .sr-diff{background:var(--warn-soft);border-radius:4px;}
+.sr-mini-ab{font-size:12.5px;color:var(--text2);margin-top:6px;line-height:1.5;}
+
+.sr-top{display:grid;grid-template-columns:minmax(200px,1fr) auto;gap:10px 16px;align-items:center;margin-bottom:12px;}
+.sr-progress{min-width:0;}
+.sr-chips{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;}
+.sr-chip{border:1px solid var(--border2);background:var(--surface);color:var(--text2);border-radius:20px;padding:5px 11px;font-size:13px;cursor:pointer;font-family:inherit;}
+.sr-chip b{font-family:'DM Mono',monospace;margin-left:3px;}
+.sr-chip.on{background:var(--accent);border-color:var(--accent);color:var(--btn-fg);}
+.sr-chip-include.on{background:var(--accent2);border-color:var(--accent2);}
+.sr-chip-exclude.on{background:var(--danger);border-color:var(--danger);}
+.sr-chip-maybe.on{background:var(--warn);border-color:var(--warn);}
+.sr-tools{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;}
+.sr-tools input{flex:1;min-width:180px;}
+.sr-tools select{width:auto;}
+.sr-layout{display:grid;grid-template-columns:minmax(260px,360px) minmax(0,1fr);gap:14px;align-items:start;}
+.sr-listcol{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;position:sticky;top:0;}
+.sr-listtoggle{display:none;width:100%;justify-content:center;border-radius:0;}
+.sr-bulk{display:flex;gap:6px;align-items:center;padding:8px 10px;border-bottom:1px solid var(--border);background:var(--surface2);flex-wrap:wrap;}
+.sr-bulk .btn-sm{padding:3px 10px;}
+.sr-bulk-all{display:flex;align-items:center;gap:6px;margin:0;font-size:12.5px;flex:1;cursor:pointer;}
+.sr-bulk-all input{width:15px;height:15px;}
+.sr-list{max-height:calc(100vh - 300px);min-height:240px;overflow-y:auto;}
+.sr-item{display:flex;gap:8px;align-items:flex-start;padding:9px 10px;border-bottom:1px solid var(--border);cursor:pointer;border-left:3px solid transparent;}
+.sr-item:hover{background:var(--surface2);}
+.sr-item.on{background:var(--accent-soft);border-left-color:var(--accent);}
+.sr-item input{width:15px;height:15px;margin-top:3px;flex-shrink:0;}
+.sr-item-body{min-width:0;flex:1;}
+.sr-item-title{font-size:13.5px;font-weight:600;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.sr-item-meta{font-size:12px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sr-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;margin-top:6px;background:var(--border2);}
+.sr-dot-include{background:var(--accent2);} .sr-dot-exclude{background:var(--danger);} .sr-dot-maybe{background:var(--warn);} .sr-dot-nr{background:var(--text3);}
+.sr-detail{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 18px;min-width:0;}
+.sr-nav{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.sr-title{font-size:19px;line-height:1.4;margin-bottom:8px;font-weight:700;}
+.sr-meta{font-size:14px;color:var(--text2);margin-bottom:3px;}
+.sr-links{font-size:13.5px;margin:8px 0 12px;}
+.sr-links a{color:var(--accent);text-decoration:none;font-weight:600;}
+.sr-abstract{font-size:15.5px;line-height:1.7;white-space:pre-line;padding:12px 0;border-top:1px solid var(--border);}
+.sr-kw{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px;}
+mark.hl-inc{background:rgba(23,127,67,.22);color:inherit;border-radius:3px;padding:0 1px;}
+mark.hl-exc{background:rgba(192,43,43,.2);color:inherit;border-radius:3px;padding:0 1px;}
+mark.hl-q{background:rgba(255,196,0,.45);color:inherit;border-radius:3px;}
+.sr-actionbar{position:sticky;top:-22px;z-index:5;background:var(--surface);margin:-16px -18px 12px;padding:12px 18px 10px;border-bottom:1px solid var(--border);border-radius:10px 10px 0 0;}
+.sr-actionbar .sr-nav{margin-bottom:8px;}
+.sr-decide{border-top:1px solid var(--border);padding-top:6px;margin-top:6px;}
+.sr-dbtns{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;}
+.sr-dbtn{justify-content:center;border:2px solid var(--border2);background:var(--surface);color:var(--text);padding:8px 10px;}
+.sr-dbtn kbd,.sr-reason kbd,.sr-keys kbd,.sr-nav kbd{font-family:'DM Mono',monospace;font-size:11px;padding:0 5px;border:1px solid var(--border2);border-radius:4px;background:var(--surface2);color:var(--text2);}
+.sr-dbtn-include:hover,.sr-dbtn-include.on{border-color:var(--accent2);background:var(--accent2-soft);color:var(--accent2);}
+.sr-dbtn-exclude:hover,.sr-dbtn-exclude.on{border-color:var(--danger);background:var(--danger-soft);color:var(--danger);}
+.sr-dbtn-maybe:hover,.sr-dbtn-maybe.on{border-color:var(--warn);background:var(--warn-soft);color:var(--warn);}
+.sr-dbtn-nr:hover,.sr-dbtn-nr.on{border-color:var(--text3);background:var(--surface3);}
+.sr-dbtn.on{box-shadow:inset 0 0 0 1px currentColor;}
+.sr-reasons{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;align-items:center;padding:8px;border-radius:8px;}
+.sr-reasons .text-xs{width:100%;}
+.sr-reasons.need{background:var(--danger-soft);outline:1px dashed var(--danger);}
+.sr-reason{border:1px solid var(--border2);background:var(--surface2);color:var(--text);border-radius:16px;padding:4px 10px;font-size:13px;cursor:pointer;font-family:inherit;}
+.sr-reason:hover{border-color:var(--danger);}
+.sr-reason.on{background:var(--danger);color:#fff;border-color:var(--danger);}
+.sr-reason.on kbd{color:#fff;background:transparent;}
+.sr-note{margin-top:8px;min-height:44px;font-size:14px;}
+.sr-keys{margin-top:10px;line-height:2;}
+.sr-pdf{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px;}
+.sr-pdf-frame{width:100%;height:70vh;border:1px solid var(--border);border-radius:8px;background:#fff;}
+.sr-settings textarea{min-height:60px;font-size:13.5px;}
+.sr-sets{display:flex;flex-direction:column;gap:6px;}
+.sr-set{display:flex;align-items:center;gap:10px;padding:8px 11px;border:1px solid var(--border);border-radius:8px;cursor:pointer;margin:0;font-size:14px;color:var(--text);}
+.sr-set input{width:auto;}
+.sr-set span{flex:1;}
+.sr-set.on{border-color:var(--accent);background:var(--accent-soft);}
+.nav-badge{margin-left:auto;font-size:11px;padding:1px 7px;border-radius:10px;background:var(--surface3);color:var(--text2);font-family:'DM Mono',monospace;}
+#sr-toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:var(--text);color:var(--surface);padding:10px 18px;border-radius:9px;font-size:14px;opacity:0;pointer-events:none;transition:all .25s;z-index:3000;box-shadow:var(--shadow-lg);max-width:90vw;}
+#sr-toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* ═══ PRISMA ═══ */
+.pr-layout{display:grid;grid-template-columns:minmax(280px,360px) minmax(0,1fr);gap:16px;align-items:start;}
+.pr-form{max-height:calc(100vh - 130px);overflow-y:auto;position:sticky;top:0;}
+.pr-group{border-bottom:1px solid var(--border);padding-bottom:10px;margin-bottom:12px;}
+.pr-group h4{font-size:13px;text-transform:uppercase;letter-spacing:.6px;color:var(--accent);margin-bottom:8px;}
+.pr-field{margin-bottom:8px;}
+.pr-field label{font-size:12.5px;margin-bottom:3px;}
+.pr-field input{padding:6px 9px;font-size:14px;}
+.pr-field textarea{min-height:64px;font-size:13px;font-family:'DM Mono',monospace;}
+.pr-field input::placeholder,.pr-field textarea::placeholder{color:var(--text3);opacity:.9;}
+.pr-check{display:flex;gap:8px;align-items:flex-start;font-size:13.5px;margin:6px 0;cursor:pointer;}
+.pr-check input{width:auto;margin-top:3px;}
+.prisma-wrap{background:#fff;border:1px solid var(--border);border-radius:10px;padding:14px;overflow:auto;}
+
+/* ═══ RESPONSIVE SHELL ═══ */
+.menu-btn{display:none;}
+.sidebar-backdrop{display:none;}
+@media(max-width:1200px){
+  .pr-layout{grid-template-columns:1fr;}
+  .pr-form{max-height:none;position:static;}
+  .pr-view{order:-1;}
+}
+@media(max-width:900px){
+  .app{height:100vh;height:100dvh;}
+  .sidebar{position:fixed;z-index:1001;top:0;left:0;bottom:0;transform:translateX(-105%);transition:transform .22s ease;box-shadow:var(--shadow-lg);width:min(300px,86vw);}
+  body.nav-open .sidebar{transform:none;}
+  .sidebar-backdrop{display:block;position:fixed;inset:0;background:rgba(10,16,24,.45);z-index:1000;opacity:0;pointer-events:none;transition:opacity .2s;}
+  body.nav-open .sidebar-backdrop{opacity:1;pointer-events:auto;}
+  .menu-btn{display:inline-flex;}
+  .topbar{padding:8px 12px;gap:8px;height:auto;min-height:56px;flex-wrap:wrap;}
+  .topbar .badge{display:none;}
+  .topbar h2{font-size:17px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .topbar .spacer{display:none;}
+  .content{padding:14px;}
+  .grid-2,.form-group{grid-template-columns:1fr;}
+  .sr-top{grid-template-columns:1fr;}
+  .sr-chips{justify-content:flex-start;}
+  .sr-layout{grid-template-columns:1fr;}
+  .sr-listcol{position:static;}
+  .sr-listtoggle{display:flex;}
+  .sr-layout.list-closed .sr-list,.sr-layout.list-closed #sr-bulk{display:none;}
+  .sr-list{max-height:45vh;min-height:0;}
+  .sr-actionbar{position:fixed;top:auto;left:0;right:0;bottom:0;margin:0;border-radius:0;border-top:1px solid var(--border2);box-shadow:0 -6px 16px -8px rgba(0,0,0,.25);padding:8px 12px calc(8px + env(safe-area-inset-bottom));z-index:900;}
+  .sr-actionbar .sr-nav{margin-bottom:6px;}
+  .sr-detail{padding-bottom:130px;}
+  body.nav-open .sr-actionbar{display:none;}
+  .sr-keys{display:none;}
+}
+@media(max-width:640px){
+  .grid-3,.grid-4,.form-group-3,.form-group-4{grid-template-columns:1fr 1fr;}
+  .card{padding:14px;}
+  .sr-pair-grid{grid-template-columns:1fr;}
+  .sr-title{font-size:17px;}
+  .sr-abstract{font-size:15px;}
+  .sr-dbtns{grid-template-columns:repeat(auto-fit,minmax(64px,1fr));gap:6px;}
+  .sr-dbtn{padding:8px 4px;font-size:13.5px;}
+  .sr-dbtn kbd,.sr-reason kbd,.sr-nav kbd{display:none;}
+  .stat-box .val{font-size:22px;}
+  .file-drop{padding:22px 14px;}
+  #study-badge-top{display:none;}
+}
+/* fixed action bar must not move with the panel fade-in */
+@keyframes srFade{from{opacity:0}to{opacity:1}}
+#panel-screen.active{animation:srFade .2s ease;}
+
+/* ═══ DUAL REVIEW ═══ */
+.nav-badge-red{background:var(--danger);color:#fff;}
+.sr-rvbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 12px;margin-bottom:12px;border:1px solid var(--accent4);background:var(--accent4-soft);border-radius:10px;font-size:14px;}
+.sr-rvbar select{width:auto;padding:5px 9px;font-size:14px;}
+.sr-others{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;font-size:13px;padding:8px 10px;margin-bottom:10px;border:1px dashed var(--border2);border-radius:8px;background:var(--surface2);}
+.sr-other small{color:var(--text3);}
+.sr-howto{margin:4px 0 12px 20px;line-height:1.75;font-size:14px;color:var(--text2);}
+.sr-conf{border:1px solid var(--border);border-left:4px solid var(--danger);border-radius:8px;padding:12px 14px;margin-bottom:10px;background:var(--surface);}
+.sr-conf.resolved{border-left-color:var(--accent);}
+.sr-conf.agreed{border-left-color:var(--accent2);}
+.sr-conf-title{font-weight:700;font-size:15px;line-height:1.4;margin-bottom:3px;}
+.sr-conf-votes{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0;}
+.sr-vote{display:flex;flex-direction:column;gap:2px;min-width:150px;flex:1;padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);font-size:13.5px;}
+.sr-vote small{color:var(--text3);font-size:12px;}
+.sr-vote-include{border-color:var(--accent2);background:var(--accent2-soft);}
+.sr-vote-exclude{border-color:var(--danger);background:var(--danger-soft);}
+.sr-vote-maybe{border-color:var(--warn);background:var(--warn-soft);}
+.sr-conf-act{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+.sr-conf-act input{flex:1;min-width:200px;padding:6px 9px;font-size:13.5px;}
+.sr-conf-act select{width:auto;padding:6px 9px;font-size:13.5px;}
+.sr-conf-final{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:14px;}
+.pr-field input:not(:placeholder-shown),.pr-field textarea:not(:placeholder-shown){border-color:var(--warn);background:var(--warn-soft);}
+.pr-status{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px;}
+.pr-methods{font-size:14.5px;line-height:1.7;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;white-space:pre-wrap;}
+
 /* ═══ PRINT ═══ */
 @media print{
-  .sidebar,.topbar,.btn,.seg{display:none!important;}
+  .sidebar,.topbar,.btn,.seg,.sidebar-backdrop,.sr-steps{display:none!important;}
   .content{overflow:visible;padding:0;}
   body{font-size:11pt;}
   .card{break-inside:avoid;box-shadow:none;}
@@ -287,12 +498,21 @@ canvas{max-width:100%;}
 <aside class="sidebar">
   <div class="logo">
     <h1>MetaLens</h1>
-    <p>Meta-Analysis Studio v11</p>
+    <p>Meta-Analysis Studio v13.7</p>
   </div>
   <nav class="nav">
     <div class="nav-section" data-i18n="nav_setup">Setup</div>
     <div class="nav-item" onclick="showPanel('setup')"><span class="icon">⚙️</span> <span data-i18n="nav_project_setup">Project Setup</span></div>
     <div class="nav-item" onclick="showPanel('about')"><span class="icon">ℹ️</span> About & Help</div>
+
+    <div class="nav-section" data-i18n="nav_sr">Systematic Review</div>
+    <div class="nav-item" onclick="showScreen('records')"><span class="icon">📚</span> <span data-i18n="nav_sr_records">Import Records</span><span class="nav-badge" id="nav-sr-rec" style="display:none"></span></div>
+    <div class="nav-item nav-sub" onclick="showScreen('dedup')"><span class="icon">🧬</span> <span data-i18n="nav_sr_dedup">Duplicates</span><span class="nav-badge" id="nav-sr-dup" style="display:none"></span></div>
+    <div class="nav-item nav-sub" onclick="showScreen('ta')"><span class="icon">📝</span> <span data-i18n="nav_sr_ta">Title / Abstract</span><span class="nav-badge" id="nav-sr-ta" style="display:none"></span></div>
+    <div class="nav-item nav-sub" onclick="showScreen('ft')"><span class="icon">📄</span> <span data-i18n="nav_sr_ft">Full-text</span><span class="nav-badge" id="nav-sr-ft" style="display:none"></span></div>
+    <div class="nav-item nav-sub" onclick="showScreen('team')"><span class="icon">👥</span> <span data-i18n="nav_sr_team">Dual Review &amp; Conflicts</span><span class="nav-badge nav-badge-red" id="nav-sr-conf" style="display:none"></span></div>
+    <div class="nav-item nav-sub" onclick="showScreen('srexport')"><span class="icon">⬇️</span> <span data-i18n="nav_sr_export">Export Records</span></div>
+    <div class="nav-item nav-sub" onclick="showPanel('prisma')"><span class="icon">🔀</span> <span data-i18n="nav_sr_prisma">PRISMA Flow Diagram</span></div>
 
     <div class="nav-section" data-i18n="nav_data">Data</div>
     <div class="nav-item" onclick="showPanel('import')"><span class="icon">📥</span> <span data-i18n="nav_import">Import / Add Data</span></div>
@@ -353,10 +573,12 @@ canvas{max-width:100%;}
     <a class="owner-contact" href="mailto:bayu.satria@ugm.ac.id">✉ bayu&#46;satria&#64;ugm&#46;ac&#46;id</a>
   </div>
 </aside>
+<div class="sidebar-backdrop" onclick="document.body.classList.remove('nav-open')"></div>
 
 <!-- ═══ MAIN ═══ -->
 <div class="main">
   <div class="topbar">
+    <button class="icon-btn menu-btn" onclick="document.body.classList.toggle('nav-open')" aria-label="Menu" title="Menu">☰</button>
     <h2 id="panel-title">Project Setup</h2>
     <span id="panel-badge" class="badge">Configure your meta-analysis</span>
     <div class="spacer"></div>
@@ -471,10 +693,10 @@ canvas{max-width:100%;}
             ondragover="event.preventDefault();this.classList.add('drag')"
             ondragleave="this.classList.remove('drag')" ondrop="handleFileDrop(event)">
             <span class="icon">📂</span>
-            <strong>Click or drag & drop Excel / CSV</strong>
-            <p class="text-xs mt-2">Supports .xlsx, .xls, .csv</p>
+            <strong data-i18n="import_drop">Click or drag & drop Excel / CSV</strong>
+            <p class="text-xs mt-2" data-i18n="import_drop_hint">Supports .xlsx, .xls, .csv, .tsv — you can choose the sheet and check the data before importing</p>
           </div>
-          <input type="file" id="file-input" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleFileSelect(event)">
+          <input type="file" id="file-input" accept=".xlsx,.xls,.csv,.tsv,.txt" style="display:none" onchange="handleFileSelect(event)">
           <div class="flex gap-2 mt-2" style="flex-wrap:wrap">
             <button class="btn btn-secondary btn-sm" onclick="downloadTemplate()">⬇️ <span data-i18n="tpl_download_one">Template for this type</span></button>
             <button class="btn btn-primary btn-sm" onclick="downloadAllTemplates()">📚 <span data-i18n="tpl_download_all">All templates (one workbook)</span></button>
@@ -489,16 +711,12 @@ canvas{max-width:100%;}
         </div>
       </div>
     </div>
-    <div class="card" id="import-preview" style="display:none">
-      <div class="card-title">👁️ Import Preview <span id="import-count"></span></div>
-      <div class="table-wrap" id="import-table"></div>
-      <hr class="divider">
-      <div class="flex gap-2">
-        <button class="btn btn-success" onclick="confirmImport()"><span data-i18n="import_confirm">✓ Import All</span></button>
-        <button class="btn btn-secondary" onclick="document.getElementById('import-preview').style.display='none'">Cancel</button>
-      </div>
-    </div>
+    <div class="card" id="import-preview" style="display:none"></div>
   </div>
+
+  <!-- ═══ SYSTEMATIC REVIEW SCREENING ═══ -->
+  <div id="panel-screen" class="panel"><div id="sr-body"></div></div>
+  <div id="panel-prisma" class="panel"><div id="prisma-body"></div></div>
 
   <!-- ═══ DATA TABLE ═══ -->
   <div id="panel-table" class="panel">
@@ -860,6 +1078,7 @@ function showPanel(id) {
   if (id==='esharm') { renderEsPanel(); }
   if (id==='converter') { esFillConvSelects(); }
   if (id==='cite') { renderCitePanel(); }
+  if (id==='prisma') { renderPrisma(); document.getElementById('panel-title').textContent = tl('PRISMA 2020 Flow Diagram','Diagram Alir PRISMA 2020'); document.getElementById('panel-badge').textContent = tl('Generated from screening; every count can be edited','Dibuat dari penapisan; semua angka dapat diubah'); }
   updateStudyCount();
 }
 
@@ -1035,57 +1254,284 @@ function handleFileDrop(e) {
 }
 function handleFileSelect(e) { if(e.target.files[0]) processFile(e.target.files[0]); }
 
-function processFile(file) {
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    let data;
-    if (file.name.endsWith('.csv')) {
-      const rows = e.target.result.split('\n').filter(r=>r.trim());
-      const headers = rows[0].split(',').map(h=>h.trim().replace(/"/g,''));
-      data = rows.slice(1).map(row=>{
-        const vals = row.split(',').map(v=>v.trim().replace(/"/g,''));
-        const obj = {};
-        headers.forEach((h,i)=>{ obj[h] = isNaN(vals[i])||vals[i]===''?vals[i]:parseFloat(vals[i]); });
-        return obj;
-      }).filter(r=>Object.values(r).some(v=>v!==''&&v!=null));
-    } else {
-      const wb = XLSX.read(e.target.result, {type:'binary'});
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      data = XLSX.utils.sheet_to_json(ws);
-    }
-    showImportPreview(data);
-  };
-  file.name.endsWith('.csv') ? reader.readAsText(file) : reader.readAsBinaryString(file);
+/* ── File import with sheet choice and a full preview ──────────────────
+   The file is parsed into rows once; the user then picks the sheet and the
+   header row, sees which required columns were found, which cells are
+   empty or non-numeric, and ticks the rows to bring in.                  */
+let IMP = null;
+const IMP_NUMERIC = new Set(['effect_size','variance','se','ci_lower','ci_upper','n_total','n_intervention',
+  'n_control','events_intervention','events_control','sd','tp','fp','fn','tn','cases','n','age_mean']);
+const IMP_ALIAS = { first_author:'author', authors:'author', study:'author', study_id:'author', es:'effect_size',
+  effect:'effect_size', yi:'effect_size', var:'variance', vi:'variance', std_err:'se', standard_error:'se', sei:'se',
+  lower_ci:'ci_lower', upper_ci:'ci_upper', lci:'ci_lower', uci:'ci_upper', ci_low:'ci_lower', ci_high:'ci_upper',
+  lower:'ci_lower', upper:'ci_upper', sample_size:'n_total', total_n:'n_total', publication_year:'year' };
+
+/* RFC-4180 style parser: quoted fields, embedded delimiters/newlines, and
+   comma / semicolon / tab / pipe delimiters detected from the first line. */
+function parseDelimited(text, delim) {
+  text = String(text || '').replace(/^\uFEFF/, '');
+  if (!delim) {
+    const nl = text.search(/\r?\n/);
+    const first = nl > 0 ? text.slice(0, nl) : text;
+    const counts = { ',':0, ';':0, '\t':0, '|':0 };
+    let q = false;
+    for (const c of first) { if (c === '"') q = !q; else if (!q && c in counts) counts[c]++; }
+    delim = Object.keys(counts).reduce((a,b)=>counts[b] > counts[a] ? b : a, ',');
+  }
+  const rows = []; let row = [], f = '', q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) {
+      if (c === '"') { if (text[i+1] === '"') { f += '"'; i++; } else q = false; }
+      else f += c;
+    } else if (c === '"' && f === '') q = true;
+    else if (c === delim) { row.push(f); f = ''; }
+    else if (c === '\n' || c === '\r') {
+      if (c === '\r' && text[i+1] === '\n') i++;
+      row.push(f); rows.push(row); row = []; f = '';
+    } else f += c;
+  }
+  if (f !== '' || row.length) { row.push(f); rows.push(row); }
+  const out = rows.filter(r => r.some(v => String(v).trim() !== ''));
+  out.delimiter = delim;
+  return out;
 }
 
+function impSheetAoa(wb, name) {
+  return XLSX.utils.sheet_to_json(wb.Sheets[name], { header:1, defval:'', raw:true, blankrows:false });
+}
+function impKey(h) {
+  return String(h ?? '').trim().toLowerCase().replace(/[\s\-.\/]+/g,'_').replace(/[^a-z0-9_]/g,'').replace(/^_+|_+$/g,'');
+}
+/* Columns the engine reads by name: required ones, numeric ones and the
+   effect-type label. Free-text optional columns keep their own spelling so
+   moderator names are not silently changed. */
+function impCanonSet(type) {
+  return new Set([...IMPORT_COLS[type].required, ...IMPORT_COLS[type].optional.filter(k=>IMP_NUMERIC.has(k)), 'effect_type']);
+}
+function impHeaderKeys(header, type) {
+  const canon = impCanonSet(type), keys = header.map(()=>null), used = new Set();
+  header.forEach((h,i)=>{ const k = impKey(h); if (canon.has(k) && !used.has(k)) { keys[i] = k; used.add(k); } });
+  header.forEach((h,i)=>{ if (keys[i]) return; const a = IMP_ALIAS[impKey(h)];
+    if (a && canon.has(a) && !used.has(a)) { keys[i] = a; used.add(a); } });
+  header.forEach((h,i)=>{ if (keys[i]) return; let k = String(h ?? '').trim() || ('column_'+(i+1));
+    while (used.has(k)) k += '_' + (i+1);
+    keys[i] = k; used.add(k); });
+  return keys;
+}
+function impScore(header, type) {
+  const hs = new Set(impHeaderKeys(header.map(h=>String(h??'')), type));
+  const req = IMPORT_COLS[type].required;
+  let s = 0;
+  req.forEach(k=>{
+    if (hs.has(k)) s++;
+    else if (k==='variance' && (hs.has('se') || (hs.has('ci_lower') && hs.has('ci_upper')))) s++;
+  });
+  return s / req.length;
+}
+function impBestSheet(wb) {
+  const type = document.getElementById('import-type').value;
+  let best = null, bs = -1;
+  wb.SheetNames.forEach(n=>{
+    if (/read ?me|guide|dictionary|panduan/i.test(n)) return;
+    const aoa = impSheetAoa(wb, n);
+    if (!aoa.length) return;
+    const s = Math.max(...Object.keys(IMPORT_COLS).map(t=>impScore(aoa[0], t))) + impScore(aoa[0], type) * 0.01;
+    if (s > bs) { bs = s; best = n; }
+  });
+  return best || wb.SheetNames[0];
+}
+function impAoa() { return IMP.wb ? impSheetAoa(IMP.wb, IMP.sheet) : IMP.aoa; }
+
+/* If the sheet clearly holds another study type, switch the selector. */
+function impAutoType() {
+  const sel = document.getElementById('import-type');
+  const aoa = impAoa(), hr = Math.max(1, IMP.headerRow|0);
+  const header = aoa[hr-1] || [];
+  IMP.autoSwitched = null;
+  if (impScore(header, sel.value) >= 1) return;
+  const hit = Object.keys(IMPORT_COLS).find(t=>impScore(header, t) >= 1);
+  if (hit) { sel.value = hit; IMP.autoSwitched = hit; updateImportInfo(); updateManualForm(); }
+}
+
+function processFile(file) {
+  const isText = /\.(csv|tsv|txt)$/i.test(file.name);
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      IMP = { name:file.name, wb:null, sheet:null, aoa:null, headerRow:1 };
+      if (isText) IMP.aoa = parseDelimited(e.target.result);
+      else { IMP.wb = XLSX.read(new Uint8Array(e.target.result), { type:'array' }); IMP.sheet = impBestSheet(IMP.wb); }
+      impAutoType(); impBuild(); renderImportPreview();
+      document.getElementById('import-preview').scrollIntoView({ behavior:'smooth', block:'start' });
+    } catch (err) {
+      console.error(err);
+      alert(tl('Could not read this file: ', 'Berkas tidak dapat dibaca: ') + err.message);
+    }
+  };
+  isText ? reader.readAsText(file) : reader.readAsArrayBuffer(file);
+  const fi = document.getElementById('file-input'); if (fi) fi.value = '';
+}
+
+function impBuild() {
+  const aoa = impAoa();
+  const type = document.getElementById('import-type').value;
+  const hr = Math.min(Math.max(1, IMP.headerRow|0), Math.max(1, aoa.length));
+  IMP.headerRow = hr;
+  const header = (aoa[hr-1] || []).map(h=>String(h ?? '').trim());
+  const body = aoa.slice(hr);
+  let width = header.length; body.forEach(r=>{ if (r.length > width) width = r.length; });
+  while (header.length < width) header.push('');
+  const keep = header.map((h,i)=> h !== '' || body.some(r=>String(r[i] ?? '').trim() !== ''));
+  const keys = impHeaderKeys(header, type);
+  const decComma = aoa.delimiter === ';';
+  IMP.type = type;
+  IMP.keys = keys.filter((k,i)=>keep[i]);
+  IMP.rawHeader = header.filter((k,i)=>keep[i]);
+  IMP.rows = body.map(r=>{
+    const o = {};
+    keys.forEach((k,i)=>{
+      if (!keep[i]) return;
+      let v = r[i];
+      if (typeof v === 'string') {
+        v = v.trim();
+        const vv = decComma && /^-?\d+,\d+$/.test(v) ? v.replace(',', '.') : v;
+        if (vv !== '' && /^[-+]?(\d+\.?\d*|\.\d+)([eE][-+]?\d+)?$/.test(vv)) v = parseFloat(vv);
+      }
+      o[k] = v ?? '';
+    });
+    return o;
+  }).filter(o=>Object.values(o).some(v=>v !== '' && v != null));
+  /* the template's worked example row is unticked by default */
+  IMP.sel = new Set(IMP.rows.map((r,i)=>i).filter(i=>!/^\s*(example|contoh)\b/i.test(String(IMP.rows[i].author ?? ''))));
+  impValidate();
+}
+
+function impValidate() {
+  const type = IMP.type, req = IMPORT_COLS[type].required, keys = new Set(IMP.keys);
+  const has = v => v !== '' && v != null;
+  const num = v => typeof v === 'number' && isFinite(v);
+  const varOk = keys.has('variance') || keys.has('se') || (keys.has('ci_lower') && keys.has('ci_upper'));
+  IMP.missing = req.filter(k=> k === 'variance' ? !varOk : !keys.has(k));
+  IMP.recognised = IMP.keys.filter(k=>req.includes(k) || IMPORT_COLS[type].optional.includes(k) || k === 'effect_type');
+  IMP.extra = IMP.keys.filter(k=>!IMP.recognised.includes(k));
+  const needsU = (type === 'eff' || type === 'assoc');
+  IMP.bad = IMP.rows.map(row=>{
+    const b = new Set();
+    req.forEach(k=>{ if (k !== 'variance' && keys.has(k) && !has(row[k])) b.add(k); });
+    if (needsU && !(num(row.variance) || num(row.se) || (num(row.ci_lower) && num(row.ci_upper))))
+      ['variance','se','ci_lower','ci_upper'].forEach(k=>{ if (keys.has(k)) b.add(k); });
+    Object.keys(row).forEach(k=>{ if (IMP_NUMERIC.has(k) && has(row[k]) && !num(row[k])) b.add(k); });
+    return b;
+  });
+}
+
+function impSetSheet(name) { IMP.sheet = name; IMP.headerRow = 1; impAutoType(); impBuild(); renderImportPreview(); }
+function impSetHeaderRow(v) { IMP.headerRow = parseInt(v) || 1; impBuild(); renderImportPreview(); }
+function impToggleRow(i, on) { on ? IMP.sel.add(i) : IMP.sel.delete(i); impUpdateSelCount(); }
+function impToggleAll(on) {
+  IMP.sel = on ? new Set(IMP.rows.map((r,i)=>i)) : new Set();
+  document.querySelectorAll('#import-preview tbody input[type=checkbox]').forEach(cb=>cb.checked = on);
+  impUpdateSelCount();
+}
+function impDeselectBad() {
+  IMP.bad.forEach((b,i)=>{ if (b.size) IMP.sel.delete(i); });
+  renderImportPreview();
+}
+function impUpdateSelCount() {
+  const n = IMP.sel.size;
+  const b = document.getElementById('imp-go'); if (b) { b.disabled = !n || IMP.missing.length > 0; }
+  const c = document.getElementById('imp-go-n'); if (c) c.textContent = n;
+}
+function impCancel() {
+  IMP = null;
+  const p = document.getElementById('import-preview'); p.style.display = 'none'; p.innerHTML = '';
+}
+
+function renderImportPreview() {
+  const p = document.getElementById('import-preview');
+  if (!IMP) { p.style.display = 'none'; return; }
+  const type = IMP.type, rows = IMP.rows, MAXR = 500;
+  const aoa = impAoa();
+  const nBad = IMP.bad.filter(b=>b.size).length;
+  const sheetCtl = IMP.wb ? (IMP.wb.SheetNames.length > 1
+      ? `<select onchange="impSetSheet(this.value)">${IMP.wb.SheetNames.map(n=>`<option ${n===IMP.sheet?'selected':''} value="${srEsc(n)}">${srEsc(n)}</option>`).join('')}</select>`
+      : `<div class="imp-static">${srEsc(IMP.sheet)}</div>`)
+    : `<div class="imp-static">${tl('CSV · delimiter','CSV · pemisah')} “${aoa.delimiter === '\t' ? 'tab' : srEsc(aoa.delimiter || ',')}”</div>`;
+  const typeOpts = Object.keys(IMPORT_COLS).map(t=>`<option value="${t}" ${t===type?'selected':''}>${srEsc(TYPES[t]||t)}</option>`).join('');
+  const reqTags = IMPORT_COLS[type].required.map(k=>{
+    const miss = IMP.missing.includes(k);
+    const alt = (k==='variance' && !miss && !IMP.keys.includes('variance')) ? ` <small>(${tl('from SE/CI','dari SE/CI')})</small>` : '';
+    return `<span class="tag ${miss?'tag-red':'tag-green'}">${miss?'✕':'✓'} ${k}${alt}</span>`;
+  }).join(' ');
+  const optTags = IMP.recognised.filter(k=>!IMPORT_COLS[type].required.includes(k)).map(k=>`<span class="tag tag-blue">${srEsc(k)}</span>`).join(' ');
+  const extraTags = IMP.extra.map(k=>`<span class="tag tag-gray">${srEsc(k)}</span>`).join(' ');
+  const head = `<tr><th class="imp-ck"><input type="checkbox" ${IMP.sel.size===rows.length&&rows.length?'checked':''} onchange="impToggleAll(this.checked)" title="${tl('Select all','Pilih semua')}"></th><th>#</th>${IMP.keys.map((k,i)=>{
+      const raw = IMP.rawHeader[i];
+      const cls = IMP.missing.includes(k) ? '' : (IMPORT_COLS[type].required.includes(k) ? 'imp-req' : (IMP.recognised.includes(k) ? 'imp-opt' : ''));
+      return `<th class="${cls}">${srEsc(k)}${raw && impKey(raw) !== impKey(k) ? `<div class="imp-raw">${srEsc(raw)}</div>` : ''}</th>`;
+    }).join('')}</tr>`;
+  const body = rows.slice(0, MAXR).map((r,i)=>`<tr class="${IMP.sel.has(i)?'':'imp-off'}"><td class="imp-ck"><input type="checkbox" ${IMP.sel.has(i)?'checked':''} onchange="impToggleRow(${i},this.checked);this.closest('tr').classList.toggle('imp-off',!this.checked)"></td><td class="mono text-xs">${IMP.headerRow+i+1}</td>${IMP.keys.map(k=>{
+      const v = r[k];
+      return `<td class="${IMP.bad[i].has(k)?'imp-bad':''} ${typeof v==='number'?'mono':''}">${srEsc(v)}</td>`;
+    }).join('')}</tr>`).join('');
+  p.innerHTML = `
+    <div class="card-title">👁️ ${tl('Import preview','Pratinjau impor')} <span>— ${srEsc(IMP.name)}</span></div>
+    ${IMP.autoSwitched ? `<div class="notice notice-info"><span>🔁</span><div>${tl('The columns match','Kolom cocok dengan tipe')} <strong>${srEsc(TYPES[IMP.autoSwitched])}</strong>${tl(', so the study type was switched.',', jadi tipe studi diganti otomatis.')}</div></div>` : ''}
+    <div class="imp-controls">
+      <div><label>${tl('Sheet','Sheet')}</label>${sheetCtl}</div>
+      <div><label>${tl('Header row','Baris header')}</label><input type="number" min="1" max="${Math.max(1,aoa.length)}" value="${IMP.headerRow}" onchange="impSetHeaderRow(this.value)"></div>
+      <div><label>${tl('Import as','Impor sebagai')}</label><select onchange="document.getElementById('import-type').value=this.value;document.getElementById('import-type').dispatchEvent(new Event('change'))">${typeOpts}</select></div>
+      <div class="imp-stat"><div class="val">${rows.length}</div><div class="lbl">${tl('rows','baris')} · ${IMP.keys.length} ${tl('columns','kolom')}</div></div>
+    </div>
+    <div class="imp-cols">
+      <div><strong>${tl('Required','Wajib')}:</strong> ${reqTags}</div>
+      ${optTags ? `<div><strong>${tl('Recognised','Dikenali')}:</strong> ${optTags}</div>` : ''}
+      ${extraTags ? `<div><strong>${tl('Kept as moderators / extra','Disimpan sebagai moderator / tambahan')}:</strong> ${extraTags}</div>` : ''}
+    </div>
+    ${IMP.missing.length ? `<div class="notice notice-danger"><span>⛔</span><div>${tl('Missing required column(s):','Kolom wajib tidak ditemukan:')} <strong>${IMP.missing.join(', ')}</strong>. ${tl('Check the sheet and header row, or rename the column in your file.','Periksa sheet dan baris header, atau ganti nama kolom di berkas.')}</div></div>` : ''}
+    ${nBad ? `<div class="notice notice-warn"><span>⚠️</span><div>${nBad} ${tl('row(s) have empty or non-numeric values in key columns (highlighted). They may be skipped by the analysis.','baris memiliki nilai kosong atau bukan angka pada kolom kunci (disorot). Baris ini mungkin dilewati saat analisis.')} <button class="btn btn-secondary btn-sm" onclick="impDeselectBad()">${tl('Untick these rows','Batalkan centang baris ini')}</button></div></div>` : ''}
+    <div class="preview-wrap"><table class="imp-table"><thead>${head}</thead><tbody>${body}</tbody></table></div>
+    ${rows.length > MAXR ? `<p class="text-xs mt-2">${tl(`Showing the first ${MAXR} of ${rows.length} rows. All ticked rows are imported.`,`Menampilkan ${MAXR} dari ${rows.length} baris pertama. Semua baris yang dicentang akan diimpor.`)}</p>` : ''}
+    <hr class="divider">
+    <div class="flex gap-2" style="flex-wrap:wrap">
+      <button class="btn btn-success" id="imp-go" onclick="confirmImport()" ${!IMP.sel.size||IMP.missing.length?'disabled':''}>✓ ${tl('Import ticked rows','Impor baris tercentang')} (<span id="imp-go-n">${IMP.sel.size}</span>)</button>
+      <button class="btn btn-secondary" onclick="impCancel()">${tl('Cancel','Batal')}</button>
+    </div>`;
+  p.style.display = 'block';
+}
+/* kept for any older caller */
 function showImportPreview(data) {
-  if (!data.length) return;
+  if (!data || !data.length) return;
   const keys = Object.keys(data[0]);
-  document.getElementById('import-count').textContent = `— ${data.length} rows`;
-  const html = `<table><thead><tr>${keys.map(k=>`<th>${k}</th>`).join('')}</tr></thead>
-    <tbody>${data.slice(0,8).map(row=>`<tr>${keys.map(k=>`<td>${row[k]??''}</td>`).join('')}</tr>`).join('')}
-    ${data.length>8?`<tr><td colspan="${keys.length}" class="text-xs" style="text-align:center">...and ${data.length-8} more</td></tr>`:''}</tbody></table>`;
-  document.getElementById('import-table').innerHTML = html;
-  document.getElementById('import-preview').style.display = 'block';
-  document.getElementById('import-preview')._data = data;
+  IMP = { name:'data', wb:null, sheet:null, aoa:[keys, ...data.map(r=>keys.map(k=>r[k]))], headerRow:1 };
+  impBuild(); renderImportPreview();
 }
 
 function confirmImport() {
-  const data = document.getElementById('import-preview')._data;
-  if (!data) return;
+  if (!IMP || !IMP.rows) return;
   const t = document.getElementById('import-type').value;
-  const normalized = data.map(row=>{
+  if (t !== IMP.type) { impBuild(); }
+  if (IMP.missing.length) { alert(tl('Required columns are missing: ','Kolom wajib tidak ada: ') + IMP.missing.join(', ')); return; }
+  const rows = IMP.rows.filter((r,i)=>IMP.sel.has(i));
+  if (!rows.length) { alert(tl('No rows are ticked.','Tidak ada baris yang dicentang.')); return; }
+  const normalized = rows.map(row=>{
     const clean = { id:Date.now()+Math.random(), study_type:t };
-    Object.entries(row).forEach(([k,v])=>{ clean[String(k).trim()] = typeof v==='string'?v.trim():v; });
+    Object.entries(row).forEach(([k,v])=>{ clean[k] = typeof v === 'string' ? v.trim() : v; });
     normalizeStudy(clean);
     return clean;
   });
   state.studies[t].push(...normalized);
   save(); updateStudyCount();
-  document.getElementById('import-preview').style.display = 'none';
-  alert(`Imported ${normalized.length} ${TYPES[t]} studies!`);
+  impCancel();
+  alert(tl(`Imported ${normalized.length} ${TYPES[t]} studies.`, `${normalized.length} studi ${TYPES[t]} berhasil diimpor.`));
   showPanel('table'); switchDataTab(t);
 }
+
+document.addEventListener('DOMContentLoaded', ()=>{
+  const sel = document.getElementById('import-type');
+  if (sel) sel.addEventListener('change', ()=>{ if (IMP) { impBuild(); renderImportPreview(); } });
+});
 
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -1818,14 +2264,67 @@ function toggleTheme(){ applyTheme(isDark() ? 'light' : 'dark'); }
 //  CANVAS DRAWING UTILITIES
 // ═══════════════════════════════════════════════════════════════════════
 const FONT = {
-  h:   "700 14px 'DM Sans',sans-serif",
-  lbl: "13px 'DM Sans',sans-serif",
-  lblB:"600 13px 'DM Sans',sans-serif",
-  num: "13px 'DM Mono',monospace",
-  numS:"12px 'DM Mono',monospace",
-  ax:  "12px 'DM Mono',monospace",
-  ttl: "700 15px 'DM Sans',sans-serif"
+  h:   "800 14px 'DM Sans',sans-serif",
+  lbl: "600 13px 'DM Sans',sans-serif",
+  lblB:"700 13px 'DM Sans',sans-serif",
+  num: "600 13px 'DM Mono',monospace",
+  numS:"600 12px 'DM Mono',monospace",
+  ax:  "600 12px 'DM Mono',monospace",
+  ttl: "800 15px 'DM Sans',sans-serif"
 };
+
+/* Make sure the heavier weights used on the plots are loaded before the
+   first plot is drawn (canvas text silently falls back otherwise). */
+if (document.fonts && document.fonts.load) {
+  ["600 13px 'DM Sans'","700 13px 'DM Sans'","800 13px 'DM Sans'","500 13px 'DM Mono'"]
+    .forEach(f => document.fonts.load(f).catch(()=>{}));
+}
+
+/* ── High-resolution plot rendering ──────────────────────────────────
+   Each canvas keeps a backing store PLOT_SCALE times its logical size and
+   its 2D context is pre-scaled to match, so all drawing code keeps working
+   in logical pixels.  canvas.width / canvas.height still read and write the
+   logical size, the canvas is displayed at that size in CSS pixels (sharp
+   on retina screens), and toDataURL() exports the full-resolution image.
+   The scale is reduced for very large plots to stay within browser canvas
+   limits.                                                               */
+const PLOT_SCALE = Math.max(3, Math.ceil(window.devicePixelRatio || 1));
+const PLOT_MAX_DIM = 16000, PLOT_MAX_AREA = 40e6;
+function plotScaleFor(w, h) {
+  let s = PLOT_SCALE;
+  if (w > 0) s = Math.min(s, PLOT_MAX_DIM / w);
+  if (h > 0) s = Math.min(s, PLOT_MAX_DIM / h);
+  if (w > 0 && h > 0) s = Math.min(s, Math.sqrt(PLOT_MAX_AREA / (w * h)));
+  return Math.max(1, s);
+}
+(function installHiResCanvas() {
+  const P = HTMLCanvasElement.prototype;
+  const dW = Object.getOwnPropertyDescriptor(P, 'width');
+  const dH = Object.getOwnPropertyDescriptor(P, 'height');
+  if (!dW || !dH || !dW.set || !dH.set) return;
+  function resize(el) {
+    const lw = el._lw, lh = el._lh, s = plotScaleFor(lw, lh);
+    dW.set.call(el, Math.round(lw * s));
+    dH.set.call(el, Math.round(lh * s));
+    el._ps = s;
+    el.style.width = lw + 'px';
+    const ctx = el.getContext('2d');
+    if (ctx) ctx.setTransform(s, 0, 0, s, 0, 0);
+  }
+  function init(el) {
+    if (el._lw == null) { el._lw = dW.get.call(el); el._lh = dH.get.call(el); }
+  }
+  Object.defineProperty(P, 'width', {
+    configurable: true, enumerable: dW.enumerable,
+    get() { return this._lw != null ? this._lw : dW.get.call(this); },
+    set(v) { init(this); this._lw = Number(v) >>> 0; resize(this); }
+  });
+  Object.defineProperty(P, 'height', {
+    configurable: true, enumerable: dH.enumerable,
+    get() { return this._lh != null ? this._lh : dH.get.call(this); },
+    set(v) { init(this); this._lh = Number(v) >>> 0; resize(this); }
+  });
+})();
 
 function makeCanvas(id, w, h) {
   const canvas = document.getElementById(id);
@@ -1947,7 +2446,7 @@ function drawForestCore(ctx,canvas,sorted,pooled,label,ciPct,z_c,opts={}) {
   const drawDiamond=(yy,th,lo,hi,col,name)=>{
     ctx.fillStyle=col; ctx.font=FONT.ttl; ctx.textAlign='left';
     ctx.fillText(name,10,yy+5);
-    ctx.fillStyle=C.text; ctx.font="600 13px 'DM Mono',monospace";
+    ctx.fillStyle=C.text; ctx.font="700 13px 'DM Mono',monospace";
     ctx.fillText(vf(th),lW+10,yy+5);
     ctx.fillText('['+vf(lo)+', '+vf(hi)+']',lW+esW+10,yy+5);
     const dl=toX(lo),dr=toX(hi),dc=toX(th);
@@ -2117,7 +2616,7 @@ function drawSubgroupForestCore(ctx,canvas,groupPooled,rAll,label,ciPct,opts) {
   const pMax=rng===0 ? mx+1 : mx+rng*0.06;
   const toX=v=>plotX+((v-pMin)/(pMax-pMin))*plotW;
 
-  ctx.fillStyle=C.text2;ctx.font='600 13px DM Sans,sans-serif';
+  ctx.fillStyle=C.text2;ctx.font='700 13px DM Sans,sans-serif';
   const hdr=String(opts.esHeader||'ES');
   ctx.fillText('Study',8,30);
   ctx.fillText(hdr.length>12?hdr.slice(0,11)+'…':hdr,lW+8,30);
@@ -2137,15 +2636,15 @@ function drawSubgroupForestCore(ctx,canvas,groupPooled,rAll,label,ciPct,opts) {
   let curY=hH;
   groupPooled.forEach(({grp,gs,r},gi)=>{
     const col=GRP_COLORS[gi%GRP_COLORS.length];
-    ctx.fillStyle=col;ctx.font='bold 14px DM Sans,sans-serif';
+    ctx.fillStyle=col;ctx.font='800 14px DM Sans,sans-serif';
     ctx.fillText('▸ '+grp,8,curY+rowH*0.65);curY+=rowH;
     gs.forEach((s,si)=>{
       const y=curY+rowH/2;
       const w=r.weights?r.weights[si]:null;
       const bz=w?Math.max(3,Math.min(10,w*0.4+3)):5;
-      ctx.fillStyle=C.text;ctx.font='14px DM Sans,sans-serif';
+      ctx.fillStyle=C.text;ctx.font='600 14px DM Sans,sans-serif';
       ctx.fillText('  '+(s.author||'?')+' ('+(s.year||'?')+')',8,y+4);
-      ctx.fillStyle=C.text2;ctx.font='13px DM Mono,monospace';
+      ctx.fillStyle=C.text2;ctx.font='600 13px DM Mono,monospace';
       ctx.fillText(V(s._es),lW+8,y+4);
       ctx.fillText('['+V(s._lo)+', '+V(s._hi)+']',lW+esW+8,y+4);
       const x1=toX(s._lo),x2=toX(s._hi),xm=toX(s._es);
@@ -2153,17 +2652,17 @@ function drawSubgroupForestCore(ctx,canvas,groupPooled,rAll,label,ciPct,opts) {
       ctx.beginPath();ctx.moveTo(x1,y);ctx.lineTo(x2,y);ctx.stroke();
       [x1,x2].forEach(x=>{ctx.beginPath();ctx.moveTo(x,y-4);ctx.lineTo(x,y+4);ctx.stroke();});
       ctx.fillStyle=col;ctx.fillRect(xm-bz/2,y-bz/2,bz,bz);
-      if(w) {ctx.fillStyle=C.text2;ctx.font='13px DM Mono,monospace';ctx.fillText(fmt(w,1)+'%',wX,y+4);}
+      if(w) {ctx.fillStyle=C.text2;ctx.font='600 13px DM Mono,monospace';ctx.fillText(fmt(w,1)+'%',wX,y+4);}
       curY+=rowH;
     });
     const py=curY+rowH/2;
     ctx.strokeStyle=C.border;ctx.lineWidth=1;
     ctx.beginPath();ctx.moveTo(8,py-rowH/2+2);ctx.lineTo(canvas.width-8,py-rowH/2+2);ctx.stroke();
-    ctx.fillStyle=col;ctx.font='bold 14px DM Sans,sans-serif';ctx.fillText('  Subtotal — '+grp,8,py+4);
-    ctx.fillStyle=C.text2;ctx.font='13px DM Mono,monospace';
+    ctx.fillStyle=col;ctx.font='800 14px DM Sans,sans-serif';ctx.fillText('  Subtotal — '+grp,8,py+4);
+    ctx.fillStyle=C.text2;ctx.font='600 13px DM Mono,monospace';
     ctx.fillText(V(r.theta),lW+8,py+4);
     ctx.fillText('['+V(r.ci_lo)+', '+V(r.ci_hi)+']',lW+esW+8,py+4);
-    ctx.fillStyle=r.I2<50?C.green:C.warn;ctx.font='12px DM Mono,monospace';
+    ctx.fillStyle=r.I2<50?C.green:C.warn;ctx.font='600 12px DM Mono,monospace';
     ctx.fillText('I²='+fmt(r.I2,1)+'%',wX,py+4);
     const dl=toX(r.ci_lo),dr=toX(r.ci_hi),dc=toX(r.theta);
     ctx.fillStyle=col;ctx.beginPath();ctx.moveTo(dl,py);ctx.lineTo(dc,py-7);ctx.lineTo(dr,py);ctx.lineTo(dc,py+7);ctx.closePath();ctx.fill();
@@ -2174,8 +2673,8 @@ function drawSubgroupForestCore(ctx,canvas,groupPooled,rAll,label,ciPct,opts) {
   curY+=4;
   ctx.strokeStyle=C.border;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(0,curY);ctx.lineTo(canvas.width,curY);ctx.stroke();curY+=4;
   const opy=curY+rowH/2;
-  ctx.fillStyle=C.green;ctx.font='bold 14px DM Sans,sans-serif';ctx.fillText('Overall Pooled',8,opy+4);
-  ctx.fillStyle=C.text2;ctx.font='13px DM Mono,monospace';
+  ctx.fillStyle=C.green;ctx.font='800 14px DM Sans,sans-serif';ctx.fillText('Overall Pooled',8,opy+4);
+  ctx.fillStyle=C.text2;ctx.font='600 13px DM Mono,monospace';
   ctx.fillText(V(rAll.theta),lW+8,opy+4);
   ctx.fillText('['+V(rAll.ci_lo)+', '+V(rAll.ci_hi)+']',lW+esW+8,opy+4);
   const odl=toX(rAll.ci_lo),odr=toX(rAll.ci_hi),odc=toX(rAll.theta);
@@ -2183,7 +2682,7 @@ function drawSubgroupForestCore(ctx,canvas,groupPooled,rAll,label,ciPct,opts) {
   curY+=rowH+6;
   ctx.strokeStyle=C.border;ctx.lineWidth=1;
   ctx.beginPath();ctx.moveTo(plotX,curY);ctx.lineTo(plotX+plotW,curY);ctx.stroke();
-  ctx.fillStyle=C.text2;ctx.font='12px DM Mono,monospace';ctx.textAlign='center';
+  ctx.fillStyle=C.text2;ctx.font='600 12px DM Mono,monospace';ctx.textAlign='center';
   /* round ratio ticks on a ratio axis, for the same reason the main forest
      has them: evenly spaced log positions exponentiate to unreadable labels
      and never land on the null value */
@@ -2193,14 +2692,14 @@ function drawSubgroupForestCore(ctx,canvas,groupPooled,rAll,label,ciPct,opts) {
   const ticks = tickVals || Array.from({length:6},(_,i)=>pMin+i/5*(pMax-pMin));
   ticks.forEach(v=>{const tx=toX(v);ctx.beginPath();ctx.moveTo(tx,curY);ctx.lineTo(tx,curY+4);ctx.stroke();ctx.fillText(aF(v),tx,curY+13);});
   ctx.textAlign='left';
-  ctx.fillStyle=C.text3;ctx.font='12px DM Mono,monospace';
+  ctx.fillStyle=C.text3;ctx.font='600 12px DM Mono,monospace';
   ctx.fillText(`Overall: I²=${fmt(rAll.I2,1)}%  Q=${fmt(rAll.Q,2)},p=${fmtP(rAll.Qp)}  ${label}${
     opts.measure ? '  ·  '+opts.measure : ''}`,plotX,curY+30);
   let lgx=plotX;
   groupPooled.forEach(({grp},gi)=>{
     const col=GRP_COLORS[gi%GRP_COLORS.length];
     ctx.fillStyle=col;ctx.fillRect(lgx,curY+42,9,9);
-    ctx.fillStyle=C.text2;ctx.font='12px DM Sans,sans-serif';ctx.textAlign='left';
+    ctx.fillStyle=C.text2;ctx.font='600 12px DM Sans,sans-serif';ctx.textAlign='left';
     ctx.fillText(grp.slice(0,12),lgx+12,curY+50);lgx+=ctx.measureText(grp.slice(0,12)).width+26;
   });
 }
@@ -4013,7 +4512,7 @@ function drawSROCOnCanvas(canvasId,comp,pooledSens,pooledSpec,a,b,dxStudies) {
   comp.forEach((c,i)=>{
     ctx.fillStyle=C.warn;ctx.strokeStyle=C.bg;ctx.lineWidth=1;
     ctx.beginPath();ctx.arc(px(1-c.spec),py(c.sens),5,0,Math.PI*2);ctx.fill();ctx.stroke();
-    ctx.fillStyle=C.text2;ctx.font='12px DM Sans,sans-serif';ctx.textAlign='left';
+    ctx.fillStyle=C.text2;ctx.font='600 12px DM Sans,sans-serif';ctx.textAlign='left';
     ctx.fillText((dxStudies[i]?.author||'').slice(0,10),px(1-c.spec)+7,py(c.sens)+3);
   });
 
@@ -4024,12 +4523,12 @@ function drawSROCOnCanvas(canvasId,comp,pooledSens,pooledSpec,a,b,dxStudies) {
   ctx.beginPath();ctx.moveTo(px(0),py(0));ctx.lineTo(px(1),py(0));ctx.stroke();
   ctx.beginPath();ctx.moveTo(px(0),py(0));ctx.lineTo(px(0),py(1));ctx.stroke();
 
-  ctx.fillStyle=C.text2;ctx.font='12px DM Mono,monospace';ctx.textAlign='center';
+  ctx.fillStyle=C.text2;ctx.font='600 12px DM Mono,monospace';ctx.textAlign='center';
   [0,0.2,0.4,0.6,0.8,1].forEach(v=>{ctx.fillText(fmt(v,1),px(v),py(0)+14);ctx.textAlign='right';ctx.fillText(fmt(v,1),px(0)-5,py(v)+3);ctx.textAlign='center';});
-  ctx.fillStyle=C.text;ctx.font='bold 14px DM Sans,sans-serif';ctx.textAlign='center';
+  ctx.fillStyle=C.text;ctx.font='800 14px DM Sans,sans-serif';ctx.textAlign='center';
   ctx.fillText('1 − Specificity',px(0.5),py(0)+36);
   ctx.save();ctx.translate(14,py(0.5));ctx.rotate(-Math.PI/2);ctx.fillText('Sensitivity',0,0);ctx.restore();
-  ctx.fillStyle=C.text;ctx.font='bold 15px DM Sans,sans-serif';ctx.textAlign='left';
+  ctx.fillStyle=C.text;ctx.font='800 15px DM Sans,sans-serif';ctx.textAlign='left';
   ctx.fillText(`SROC Curve  |  AUC ≈ ${fmt(srocAUC(a,b),3)}`,m.l,28);
   lastPlotCanvas=canvas;
 }
@@ -4766,6 +5265,9 @@ function toggleLanguage() {
   }
   if (document.getElementById('panel-grade')?.classList.contains('active')) renderGradePanel();
   if (document.getElementById('panel-cite')?.classList.contains('active')) renderCitePanel();
+  if (document.getElementById('panel-screen')?.classList.contains('active')) srRender();
+  if (document.getElementById('panel-prisma')?.classList.contains('active')) showPanel('prisma');
+  if (IMP) renderImportPreview();
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -5241,7 +5743,7 @@ function drawBaujatPlot(D, bj) {
   });
 
   // labels — greedy placement to limit overlap
-  ctx.font = "12px 'DM Sans',sans-serif"; ctx.textBaseline='middle';
+  ctx.font = "600 12px 'DM Sans',sans-serif"; ctx.textBaseline='middle';
   const boxes = bj.rows.map(r=>{ const rr=rad(r); return {x:px(r.qc)-rr, y:py(r.infl)-rr, w:2*rr, h:2*rr}; });
   const hit = b => boxes.some(q => b.x<q.x+q.w && b.x+b.w>q.x && b.y<q.y+q.h && b.y+b.h>q.y);
   bj.rows.slice().sort((a,b)=>(b.qc/xMax+b.infl/yMax)-(a.qc/xMax+a.infl/yMax)).forEach(r=>{
@@ -7217,6 +7719,1967 @@ Object.assign(i18n.id, {
 });
 
 // ═══════════════════════════════════════════════════════════════════════
+//  SYSTEMATIC REVIEW — RECORD IMPORT, DEDUPLICATION, SCREENING, EXPORT
+// ═══════════════════════════════════════════════════════════════════════
+/* Records live in IndexedDB rather than localStorage: a search export with a
+   few thousand abstracts easily passes the ~5 MB localStorage limit.       */
+function tl(en, id) { return currentLang === 'id' ? id : en; }
+function srEsc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function srDownload(name, content, mime) {
+  const a = document.createElement('a');
+  a.href = content instanceof Blob ? URL.createObjectURL(content) : URL.createObjectURL(new Blob([content], { type:mime }));
+  a.download = name; document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+}
+function srStamp() { return new Date().toISOString().slice(0,10); }
+
+const SR_REASONS_TA = ['Wrong population','Wrong intervention / exposure','Wrong comparator','Wrong outcome',
+  'Wrong study design','Wrong publication type','Not in humans','Duplicate (missed)','Other'];
+const SR_REASONS_FT = ['Wrong population','Wrong intervention / exposure','Wrong comparator','Wrong outcome',
+  'Wrong study design','Insufficient data for meta-analysis','Conference abstract only',
+  'Overlapping sample / duplicate report','Language','Other'];
+const SR_REASON_ID = {
+  'Wrong population':'Populasi tidak sesuai', 'Wrong intervention / exposure':'Intervensi / paparan tidak sesuai',
+  'Wrong comparator':'Pembanding tidak sesuai', 'Wrong outcome':'Luaran tidak sesuai',
+  'Wrong study design':'Desain studi tidak sesuai', 'Wrong publication type':'Jenis publikasi tidak sesuai',
+  'Not in humans':'Bukan pada manusia', 'Duplicate (missed)':'Duplikat (terlewat)', 'Other':'Lainnya',
+  'Insufficient data for meta-analysis':'Data tidak cukup untuk meta-analisis',
+  'Conference abstract only':'Hanya abstrak konferensi',
+  'Overlapping sample / duplicate report':'Sampel tumpang tindih / laporan ganda', 'Language':'Bahasa',
+  'Reason not recorded':'Alasan tidak dicatat'
+};
+function srReasonLabel(r) { return currentLang === 'id' && SR_REASON_ID[r] ? SR_REASON_ID[r] : r; }
+
+const SR_DB_NAMES = ['PubMed / MEDLINE','Embase','Scopus','Web of Science','Cochrane CENTRAL','CINAHL','PsycINFO',
+  'Google Scholar','ProQuest','LILACS','Garuda','ClinicalTrials.gov','WHO ICTRP','Other'];
+
+function srBlank() {
+  return { version:2, nextId:1, projectId:'p' + Date.now().toString(36) + Math.random().toString(36).slice(2,8),
+    dual:{ on:false, blind:true }, reviewers:[], me:null,
+    sources:[], records:[], dupPairs:[], notDup:[], dupChecked:false,
+    settings:{ autoAdvance:true, reasonsTA:SR_REASONS_TA.slice(), reasonsFT:SR_REASONS_FT.slice(),
+      kwInclude:'random*, trial, cohort, case-control, cross-sectional, prospective',
+      kwExclude:'review, meta-analys*, case report, editorial, letter, comment*, protocol, animal*, mice, rat, rats, in vitro' },
+    prisma:{ showOther:false, showDbBreakdown:true, showMeta:false, v:{} } };
+}
+let SR = srBlank();
+const SRV = { view:'records', stage:'ta', filter:{ ta:'undecided', ft:'undecided' }, q:'', sort:'default',
+  cur:{ ta:null, ft:null }, sticky:{ ta:null, ft:null }, sel:new Set(), limit:200, pending:[], pdf:{}, listOpen:true, dupPage:0, exportSet:'unique' };
+
+/* ── storage ─────────────────────────────────────────────────────────── */
+let srDbPromise = null;
+function srIdb() {
+  if (srDbPromise) return srDbPromise;
+  srDbPromise = new Promise((res, rej)=>{
+    if (!window.indexedDB) return rej(new Error('IndexedDB unavailable'));
+    const r = indexedDB.open('metalens-screening', 1);
+    r.onupgradeneeded = ()=> r.result.createObjectStore('kv');
+    r.onsuccess = ()=> res(r.result);
+    r.onerror = ()=> rej(r.error);
+  });
+  return srDbPromise;
+}
+function srAdopt(v) {
+  const b = srBlank();
+  SR = Object.assign(b, v || {});
+  SR.settings = Object.assign(srBlank().settings, (v && v.settings) || {});
+  SR.prisma = Object.assign(srBlank().prisma, (v && v.prisma) || {});
+  SR.prisma.v = SR.prisma.v || {};
+  SR.dual = Object.assign({ on:false, blind:true }, (v && v.dual) || {});
+  SR.reviewers = (v && v.reviewers) || [];
+  if (!SR.projectId) SR.projectId = srBlank().projectId;
+  if (SR.reviewers.length && !SR.reviewers.some(x=>x.id === SR.me)) SR.me = SR.reviewers[0].id;
+  SR.records.forEach(r=>{ r.ta = r.ta || { d:null, r:[], n:'' }; r.ft = r.ft || { d:null, r:[], n:'' }; });
+}
+
+/* ── dual-reviewer decisions ─────────────────────────────────────────
+   Each reviewer's decision lives in record.rv[reviewerId][stage].
+   record.ta / record.ft hold the FINAL decision: in dual mode it is set
+   only when all reviewers agree or a conflict has been resolved, and it
+   is what the full-text pool, exports and PRISMA use.                  */
+function srDual() { return !!(SR.dual && SR.dual.on && SR.reviewers.length >= 2); }
+function srMe() { return SR.reviewers.find(x=>x.id === SR.me) || SR.reviewers[0] || null; }
+function srRvName(id) { const x = SR.reviewers.find(v=>v.id === id); return x ? x.name : '?'; }
+function srRv(r, rid, stage, create) {
+  if (!r.rv) { if (!create) return null; r.rv = {}; }
+  if (!r.rv[rid]) { if (!create) return null; r.rv[rid] = {}; }
+  if (!r.rv[rid][stage]) { if (!create) return null; r.rv[rid][stage] = { d:null, r:[], n:'' }; }
+  return r.rv[rid][stage];
+}
+const SR_EMPTY_DEC = Object.freeze({ d:null, r:[], n:'' });
+/* the decision the person at this computer edits */
+function srMine(r, stage, create) {
+  if (!srDual()) return r[stage];
+  return srRv(r, srMe().id, stage, create) || SR_EMPTY_DEC;
+}
+function srStatus(r, stage) {
+  if (!srDual()) return r[stage].d ? 'agreed' : 'awaiting';
+  if (r[stage].res) return 'resolved';
+  const ds = SR.reviewers.map(v=>srRv(r, v.id, stage, false));
+  if (ds.some(x=>!x || !x.d)) return 'awaiting';
+  const d0 = ds[0].d;
+  if (d0 === 'maybe' || ds.some(x=>x.d !== d0)) return 'conflict';
+  if (stage === 'ft' && d0 === 'exclude') { const r0 = ds[0].r[0] || ''; if (ds.some(x=>(x.r[0] || '') !== r0)) return 'conflict'; }
+  return 'agreed';
+}
+function srReconcile(r, stage) {
+  if (!srDual()) {
+    /* single-reviewer edits are mirrored into the active reviewer's record so
+       they survive switching dual screening back on */
+    const me = srMe();
+    if (me && r[stage].d !== undefined) { srRv(r, me.id, stage, true); r.rv[me.id][stage] = { d:r[stage].d, r:(r[stage].r || []).slice(), n:r[stage].n || '', t:r[stage].t || new Date().toISOString() }; }
+    return;
+  }
+  const st = srStatus(r, stage), f = r[stage];
+  if (st === 'resolved') return;
+  if (st === 'agreed') {
+    const ds = SR.reviewers.map(v=>srRv(r, v.id, stage, false));
+    f.d = ds[0].d;
+    f.r = stage === 'ft' ? ds[0].r.slice(0, 1) : [...new Set(ds.flatMap(x=>x.r))];
+    f.by = 'consensus';
+  } else { f.d = null; f.r = []; f.by = null; }
+}
+function srReconcileAll() { if (!srDual()) return; SR.records.forEach(r=>{ srReconcile(r, 'ta'); srReconcile(r, 'ft'); }); }
+function srStageCounts(stage) {
+  const c = { awaiting:0, conflict:0, agreed:0, resolved:0 };
+  srPool(stage).forEach(r=>c[srStatus(r, stage)]++);
+  return c;
+}
+async function srLoad() {
+  try {
+    const db = await srIdb();
+    const v = await new Promise((res, rej)=>{
+      const q = db.transaction('kv').objectStore('kv').get('project');
+      q.onsuccess = ()=> res(q.result); q.onerror = ()=> rej(q.error);
+    });
+    if (v && v.records) srAdopt(v);
+  } catch (e) {
+    try { const s = localStorage.getItem('metalens_screening'); if (s) srAdopt(JSON.parse(s)); } catch (e2) {}
+    console.warn('Screening storage: IndexedDB unavailable, using localStorage', e);
+  }
+  srUpdateBadges();
+}
+let srSaveTimer = null;
+function srSave() {
+  clearTimeout(srSaveTimer);
+  srSaveTimer = setTimeout(async ()=>{
+    try {
+      const db = await srIdb();
+      await new Promise((res, rej)=>{
+        const tx = db.transaction('kv', 'readwrite');
+        tx.objectStore('kv').put(SR, 'project');
+        tx.oncomplete = res; tx.onerror = ()=> rej(tx.error);
+      });
+    } catch (e) {
+      try { localStorage.setItem('metalens_screening', JSON.stringify(SR)); }
+      catch (e2) { console.warn('Screening project could not be saved', e2); }
+    }
+  }, 250);
+  srUpdateBadges();
+}
+
+/* ── field helpers ───────────────────────────────────────────────────── */
+function srYear(v) {
+  if (typeof v === 'number' && v > 1700 && v < 2200) return Math.round(v);
+  const m = String(v ?? '').match(/\b(1[6-9]\d\d|20\d\d|21\d\d)\b/);
+  return m ? +m[1] : null;
+}
+function srCleanDoi(v) {
+  let s = String(v ?? '').trim();
+  if (!s) return '';
+  s = s.replace(/^(https?:\/\/)?(dx\.)?doi\.org\//i, '').replace(/^doi:\s*/i, '');
+  const m = s.match(/10\.\d{4,9}\/[^\s"<>]+/);
+  return m ? m[0].replace(/[.,;)\]]+$/, '') : '';
+}
+function srCleanPmid(v) { const m = String(v ?? '').match(/^\s*(?:PMID:?\s*)?(\d{1,8})\s*$/i); return m ? m[1] : ''; }
+function srSplitKw(v) {
+  const arr = Array.isArray(v) ? v : [v];
+  const out = [];
+  arr.forEach(x=>String(x ?? '').split(/\s*;\s*|\n/).forEach(k=>{ k = k.trim(); if (k && !out.includes(k)) out.push(k); }));
+  return out;
+}
+function srSplitAuthors(v) {
+  if (Array.isArray(v)) return v.flatMap(x=>srSplitAuthors(x));
+  const s = String(v ?? '').trim();
+  if (!s) return [];
+  if (s.includes(';')) return s.split(';').map(x=>x.trim()).filter(Boolean);
+  if (/\s+and\s+/i.test(s)) return s.split(/\s+and\s+/i).map(x=>x.trim()).filter(Boolean);
+  const parts = s.split(/,\s*/);
+  if (parts.length > 1 && parts.every(p=>/^[^\s,]+(?:[ '\-][^\s,]+)* [A-Z]{1,3}\.?$/.test(p))) return parts;
+  if (/\.,\s/.test(s)) return s.split(/\.,\s*/).map((p,i,a)=> i < a.length-1 ? p + '.' : p);
+  return [s];
+}
+function srMk(o) {
+  const s = v => (v == null ? '' : String(Array.isArray(v) ? v.join(' ') : v)).replace(/\s+/g, ' ').trim();
+  const r = {
+    ty:s(o.ty), title:s(o.title).replace(/([^.])\.$/, '$1'), abstract:s(o.abstract),
+    authors:srSplitAuthors(o.authors || []), year:srYear(o.year), journal:s(o.journal),
+    volume:s(o.volume), issue:s(o.issue), pages:s(o.pages), doi:srCleanDoi(o.doi), pmid:srCleanPmid(o.pmid),
+    url:s(o.url), keywords:srSplitKw(o.keywords || []), lang:s(o.lang)
+  };
+  if (!r.doi) { const m = (r.url + ' ' + s(o.extra)).match(/10\.\d{4,9}\/[^\s"<>]+/); if (m) r.doi = srCleanDoi(m[0]); }
+  if (!r.pmid) { const m = r.url.match(/pubmed\.ncbi\.nlm\.nih\.gov\/(\d{1,8})|[?&]list_uids=(\d{1,8})/); if (m) r.pmid = m[1] || m[2]; }
+  return r;
+}
+function srNormTitle(s) {
+  return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+    .replace(/<[^>]+>/g, ' ').replace(/[^a-z0-9]+/g, ' ').trim();
+}
+function srSurname(a) {
+  a = String(a || '').trim();
+  if (!a) return '';
+  if (a.includes(',')) return a.split(',')[0].trim();
+  const t = a.split(/\s+/);
+  if (t.length > 1 && /^[A-Z]{1,3}\.?$|^([A-Z]\.)+$/.test(t[t.length-1])) return t.slice(0,-1).join(' ');
+  return t[t.length-1];
+}
+function srShort(r) {
+  const s = srSurname(r.authors[0]);
+  return `${s || tl('Anon.','Anon.')}${r.authors.length > 1 ? ' et al.' : ''}${r.year ? ' ' + r.year : ''}`;
+}
+
+/* ── parsers ─────────────────────────────────────────────────────────── */
+const SR_FORMATS = { ris:'RIS (.ris)', medline:'PubMed / MEDLINE (.nbib, .txt)', wos:'Web of Science plain text',
+  bibtex:'BibTeX (.bib)', endnote:'EndNote XML', csv:'CSV / TSV (Scopus, WoS, Rayyan, Covidence…)', xlsx:'Excel (.xlsx, .xls)' };
+
+function srDetectFormat(text, name) {
+  const ext = (String(name).split('.').pop() || '').toLowerCase();
+  if (ext === 'xlsx' || ext === 'xls') return 'xlsx';
+  const head = String(text).slice(0, 6000).replace(/^\uFEFF/, '');
+  if (/^\s*TY  -/m.test(head)) return 'ris';
+  if (/^PMID- /m.test(head)) return 'medline';
+  if (/^(FN |VR |PT [A-Z]\s*$)/m.test(head) && /^(TI|AU) /m.test(head)) return 'wos';
+  if (/^\s*@[a-zA-Z]+\s*[{(]/m.test(head)) return 'bibtex';
+  if (/<record>/i.test(head) && /<(xml|records)>|<\?xml/i.test(head)) return 'endnote';
+  if (ext === 'ris') return 'ris';
+  if (ext === 'nbib') return 'medline';
+  if (ext === 'bib') return 'bibtex';
+  if (ext === 'xml') return 'endnote';
+  return 'csv';
+}
+
+function srParseRIS(text) {
+  const recs = []; let cur = null, last = null;
+  String(text).replace(/^\uFEFF/, '').replace(/\r\n?/g, '\n').split('\n').forEach(line=>{
+    const m = line.match(/^([A-Z][A-Z0-9])  -(?: (.*))?\s*$/);
+    if (m) {
+      const tag = m[1], val = (m[2] || '').trim();
+      if (tag === 'ER') { cur = null; last = null; return; }
+      if (tag === 'TY' || !cur) { cur = {}; recs.push(cur); }
+      (cur[tag] = cur[tag] || []).push(val); last = tag;
+    } else if (cur && last && line.trim()) {
+      const a = cur[last]; a[a.length-1] += ' ' + line.trim();
+    }
+  });
+  return recs.map(t=>{
+    const g = (...ks)=>{ for (const k of ks) if (t[k] && t[k].some(Boolean)) return t[k].filter(Boolean); return []; };
+    const f = (...ks)=> g(...ks)[0] || '';
+    const sp = f('SP'), ep = f('EP');
+    const an = f('AN');
+    return srMk({ ty:f('TY'), title:f('TI','T1','CT','BT'), abstract:g('AB','N2').join(' '), authors:g('AU','A1'),
+      year:f('PY','Y1','DA','Y2'), journal:f('T2','JO','JF','JA','J2'), volume:f('VL'), issue:f('IS'),
+      pages: sp && ep && !sp.includes('-') ? sp + '-' + ep : sp, doi:f('DO'), url:f('UR','L2'),
+      keywords:g('KW'), lang:f('LA'), pmid: /^\d{1,8}$/.test(an) ? an : '', extra:g('N1','M3').join(' '), _db:f('DB','DP') });
+  }).filter(r=>r.title || r.abstract);
+}
+
+function srParseMedline(text) {
+  const recs = []; let cur = null, last = null;
+  String(text).replace(/^\uFEFF/, '').replace(/\r\n?/g, '\n').split('\n').forEach(line=>{
+    const m = line.match(/^([A-Z]{2,4})\s{0,3}- (.*)$/);
+    if (m) {
+      const tag = m[1], val = m[2].trim();
+      if (tag === 'PMID' || !cur) { cur = {}; recs.push(cur); }
+      (cur[tag] = cur[tag] || []).push(val); last = tag;
+    } else if (cur && last && /^\s{2,}\S/.test(line)) {
+      const a = cur[last]; a[a.length-1] += ' ' + line.trim();
+    }
+  });
+  return recs.map(t=>{
+    const g = k => t[k] || [], f = k => (t[k] || [])[0] || '';
+    const doi = [...g('LID'), ...g('AID')].find(x=>/\[doi\]/i.test(x)) || '';
+    return srMk({ ty:f('PT'), title:f('TI') || f('BTI'), abstract:g('AB').join(' '), authors:g('FAU').length ? g('FAU') : g('AU'),
+      year:f('DP'), journal:f('JT') || f('TA'), volume:f('VI'), issue:f('IP'), pages:f('PG'), doi:doi.replace(/\s*\[doi\]/i, ''),
+      pmid:f('PMID'), keywords:[...g('OT'), ...g('MH')], lang:f('LA') });
+  }).filter(r=>r.title || r.abstract);
+}
+
+function srParseWoS(text) {
+  const recs = []; let cur = null, last = null;
+  String(text).replace(/^\uFEFF/, '').replace(/\r\n?/g, '\n').split('\n').forEach(line=>{
+    if (/^ER\s*$/.test(line)) { cur = null; last = null; return; }
+    if (/^EF\s*$/.test(line)) return;
+    const m = line.match(/^([A-Z][A-Z0-9]) (.*)$/);
+    if (m && !/^(FN|VR)$/.test(m[1])) {
+      if (!cur) { cur = {}; recs.push(cur); }
+      (cur[m[1]] = cur[m[1]] || []).push(m[2].trim()); last = m[1];
+    } else if (cur && last && /^ {3}\S/.test(line)) cur[last].push(line.trim());
+  });
+  return recs.map(t=>{
+    const g = k => t[k] || [], f = k => (t[k] || []).join(' ');
+    const bp = f('BP'), ep = f('EP');
+    return srMk({ ty:f('DT') || f('PT'), title:f('TI'), abstract:f('AB'), authors:g('AF').length ? g('AF') : g('AU'),
+      year:f('PY'), journal:f('SO'), volume:f('VL'), issue:f('IS'), pages: bp && ep ? bp + '-' + ep : (bp || f('AR')),
+      doi:f('DI'), pmid:f('PM'), keywords:[...srSplitKw(f('DE')), ...srSplitKw(f('ID'))], lang:f('LA') });
+  }).filter(r=>r.title || r.abstract);
+}
+
+function srBibClean(v) {
+  return String(v || '')
+    .replace(/\\[`'^"~=.]\{?\\?([a-zA-Z])\}?/g, '$1')
+    .replace(/\\(&|%|\$|#|_)/g, '$1')
+    .replace(/\\[a-zA-Z]+\s*/g, '')
+    .replace(/[{}]/g, '').replace(/\s+/g, ' ').trim();
+}
+function srParseBib(text) {
+  const out = []; let i = 0; text = String(text);
+  while ((i = text.indexOf('@', i)) !== -1) {
+    const m = /^@([a-zA-Z]+)\s*([{(])/.exec(text.slice(i, i + 60));
+    if (!m) { i++; continue; }
+    const type = m[1].toLowerCase(), close = m[2] === '{' ? '}' : ')';
+    let j = i + m[0].length, depth = 0;
+    const start = j;
+    for (; j < text.length; j++) {
+      const c = text[j];
+      if (c === '{') depth++;
+      else if (c === '}') { if (depth === 0 && close === '}') break; depth--; }
+      else if (c === ')' && close === ')' && depth === 0) break;
+    }
+    const body = text.slice(start, j); i = j + 1;
+    if (['comment','preamble','string'].includes(type)) continue;
+    const comma = body.indexOf(',');
+    const fs = comma >= 0 ? body.slice(comma + 1) : '';
+    const fields = {}; let p = 0;
+    while (p < fs.length) {
+      const fm = /^[\s,]*([A-Za-z][\w\-:]*)\s*=\s*/.exec(fs.slice(p));
+      if (!fm) break;
+      p += fm[0].length;
+      let val = '';
+      if (fs[p] === '{') {
+        let d = 0, q = p;
+        for (; q < fs.length; q++) { if (fs[q] === '{') d++; else if (fs[q] === '}') { d--; if (d === 0) break; } }
+        val = fs.slice(p + 1, q); p = q + 1;
+      } else if (fs[p] === '"') {
+        let d = 0, q = p + 1;
+        for (; q < fs.length; q++) { if (fs[q] === '{') d++; else if (fs[q] === '}') d--; else if (fs[q] === '"' && d === 0 && fs[q-1] !== '\\') break; }
+        val = fs.slice(p + 1, q); p = q + 1;
+      } else {
+        const q = fs.indexOf(',', p); val = fs.slice(p, q < 0 ? fs.length : q); p = q < 0 ? fs.length : q;
+      }
+      fields[fm[1].toLowerCase()] = srBibClean(val);
+    }
+    out.push(srMk({ ty:type, title:fields.title, abstract:fields.abstract, authors:(fields.author || '').split(/\s+and\s+/i),
+      year:fields.year || fields.date, journal:fields.journal || fields.journaltitle || fields.booktitle,
+      volume:fields.volume, issue:fields.number || fields.issue, pages:(fields.pages || '').replace(/-+/g, '-'),
+      doi:fields.doi, url:fields.url, keywords:(fields.keywords || '').split(/\s*[;,]\s*/), lang:fields.language,
+      pmid:fields.pmid }));
+  }
+  return out.filter(r=>r.title || r.abstract);
+}
+
+function srParseEndnote(text) {
+  const doc = new DOMParser().parseFromString(String(text), 'application/xml');
+  return [...doc.getElementsByTagName('record')].map(r=>{
+    const q = sel => { const e = r.querySelector(sel); return e ? e.textContent.trim() : ''; };
+    const qa = sel => [...r.querySelectorAll(sel)].map(e=>e.textContent.trim()).filter(Boolean);
+    const rt = r.querySelector('ref-type');
+    return srMk({ ty: rt ? (rt.getAttribute('name') || rt.textContent) : '', title:q('titles > title'), abstract:q('abstract'),
+      authors:qa('contributors > authors > author'), year:q('dates > year'),
+      journal:q('periodical > full-title') || q('titles > secondary-title'), volume:q('volume'), issue:q('number'),
+      pages:q('pages'), doi:q('electronic-resource-num'), url:q('urls related-urls url'),
+      keywords:qa('keywords > keyword'), lang:q('language'), pmid:q('accession-num') });
+  }).filter(r=>r.title || r.abstract);
+}
+
+const SR_COLMAP = {
+  title:['title','article title','document title','ti','primary title','study title','title of article'],
+  abstract:['abstract','ab','abstract note','abstracts'],
+  authors:['authors','author','author full names','author names','au','af','full author names','author s'],
+  year:['year','publication year','py','pubyear','year published','pub year','publication date','date'],
+  journal:['source title','journal','journal book','journal title','publication title','so','secondary title','periodical','journal name','source'],
+  doi:['doi','di'], pmid:['pmid','pubmed id','pm','pubmed'], volume:['volume','vl','vol'], issue:['issue','is','number','no'],
+  pages:['pages','page range','pg'], pageStart:['page start','bp','start page','beginning page'],
+  pageEnd:['page end','ep','end page','ending page'], url:['url','link','links'],
+  lang:['language','language of original document','la'], ty:['document type','publication type','type','pt','dt','item type']
+};
+const SR_KWCOLS = ['keywords','author keywords','index keywords','de','keywords plus','mesh terms','mesh','subject headings','emtree terms','manual tags','automatic tags'];
+function srHdr(h) { return String(h ?? '').toLowerCase().replace(/\(.*?\)/g, '').replace(/[^a-z0-9]+/g, ' ').trim(); }
+function srFromTable(aoa) {
+  if (!aoa || !aoa.length) return [];
+  let hr = 0;
+  for (let i = 0; i < Math.min(10, aoa.length); i++) {
+    const hs = aoa[i].map(srHdr);
+    if (hs.some(h=>SR_COLMAP.title.includes(h))) { hr = i; break; }
+  }
+  const hs = aoa[hr].map(srHdr), idx = {};
+  Object.entries(SR_COLMAP).forEach(([f, syn])=>{ for (const s of syn) { const k = hs.indexOf(s); if (k >= 0) { idx[f] = k; break; } } });
+  const kwIdx = hs.map((h,i)=>(SR_KWCOLS.includes(h) || (h === 'id' && hs.includes('de'))) ? i : -1).filter(i=>i >= 0);
+  if (idx.title == null) throw new Error(tl('No title column found in this file.','Kolom judul tidak ditemukan di berkas ini.'));
+  return aoa.slice(hr + 1).map(row=>{
+    const v = f => idx[f] == null ? '' : row[idx[f]];
+    const ps = v('pageStart'), pe = v('pageEnd');
+    return srMk({ ty:v('ty'), title:v('title'), abstract:v('abstract'), authors:v('authors'), year:v('year'), journal:v('journal'),
+      volume:v('volume'), issue:v('issue'), pages:v('pages') || (ps && pe ? ps + '-' + pe : ps), doi:v('doi'), pmid:v('pmid'),
+      url:v('url'), lang:v('lang'), keywords:kwIdx.map(i=>row[i]).filter(Boolean) });
+  }).filter(r=>r.title || r.abstract);
+}
+
+function srParse(p) {
+  switch (p.format) {
+    case 'ris': return srParseRIS(p.text);
+    case 'medline': return srParseMedline(p.text);
+    case 'wos': return srParseWoS(p.text);
+    case 'bibtex': return srParseBib(p.text);
+    case 'endnote': return srParseEndnote(p.text);
+    case 'xlsx': return srFromTable(impSheetAoa(p.wb, p.sheet));
+    default: return srFromTable(parseDelimited(p.text));
+  }
+}
+function srGuessDb(p) {
+  const n = p.name.toLowerCase(), dbTag = (p.records.find(r=>r._db) || {})._db || '';
+  const hay = n + ' ' + dbTag.toLowerCase() + ' ' + (p.text ? p.text.slice(0, 3000).toLowerCase() : '');
+  if (p.format === 'medline' || /pubmed|medline/.test(n + ' ' + dbTag.toLowerCase())) return 'PubMed / MEDLINE';
+  if (p.format === 'wos' || /savedrecs|wos|web of science/.test(n + ' ' + dbTag.toLowerCase())) return 'Web of Science';
+  if (/scopus/.test(hay)) return 'Scopus';
+  if (/embase/.test(hay)) return 'Embase';
+  if (/cochrane|central/.test(hay)) return 'Cochrane CENTRAL';
+  if (/cinahl/.test(hay)) return 'CINAHL';
+  if (/psycinfo/.test(hay)) return 'PsycINFO';
+  if (/clinicaltrials/.test(hay)) return 'ClinicalTrials.gov';
+  if (/ictrp/.test(hay)) return 'WHO ICTRP';
+  return 'Other';
+}
+
+/* ── import of record files ──────────────────────────────────────────── */
+function srHandleFiles(files) {
+  [...files].forEach(file=>{
+    const isX = /\.(xlsx|xls)$/i.test(file.name);
+    const reader = new FileReader();
+    reader.onload = e => {
+      const p = { key:Math.random().toString(36).slice(2), name:file.name, text:null, wb:null, sheet:null, records:[], error:'' };
+      try {
+        if (isX) { p.wb = XLSX.read(new Uint8Array(e.target.result), { type:'array' }); p.sheet = p.wb.SheetNames[0]; p.format = 'xlsx'; }
+        else { p.text = e.target.result; p.format = srDetectFormat(p.text, file.name); }
+        srReparse(p, true);
+      } catch (err) { p.error = err.message; }
+      SRV.pending.push(p);
+      srRender();
+    };
+    isX ? reader.readAsArrayBuffer(file) : reader.readAsText(file);
+  });
+  const fi = document.getElementById('sr-file'); if (fi) fi.value = '';
+}
+function srReparse(p, guess) {
+  p.error = '';
+  try { p.records = srParse(p); } catch (err) { p.records = []; p.error = err.message; }
+  if (guess) { p.db = srGuessDb(p); p.kind = /ClinicalTrials|ICTRP/.test(p.db) ? 'register' : 'database'; }
+  if (!p.error && !p.records.length) p.error = tl('No records were recognised. Check the file format.','Tidak ada rekaman yang dikenali. Periksa format berkas.');
+}
+function srPending(key) { return SRV.pending.find(p=>p.key === key); }
+function srPendSet(key, field, val) {
+  const p = srPending(key); if (!p) return;
+  p[field] = val;
+  if (field === 'format' || field === 'sheet') { srReparse(p, false); srRender(); }
+}
+function srPendRemove(key) { SRV.pending = SRV.pending.filter(p=>p.key !== key); srRender(); }
+function srAddPending() {
+  let added = 0;
+  SRV.pending.filter(p=>p.records.length).forEach(p=>{
+    const src = { id:'s' + Date.now().toString(36) + Math.random().toString(36).slice(2,6), name:p.name,
+      db:(p.db || 'Other').trim() || 'Other', kind:p.kind || 'database', format:p.format, count:p.records.length, at:new Date().toISOString() };
+    SR.sources.push(src);
+    p.records.forEach(r=>{
+      delete r._db;
+      SR.records.push(Object.assign(r, { id:SR.nextId++, src:src.id, dup:null, ta:{ d:null, r:[], n:'' }, ft:{ d:null, r:[], n:'' } }));
+      added++;
+    });
+  });
+  SRV.pending = [];
+  srFindDuplicates();
+  srSave();
+  srRender();
+  srToast(tl(`${added} records added. Duplicate check finished.`, `${added} rekaman ditambahkan. Pemeriksaan duplikat selesai.`));
+}
+function srRemoveSource(id) {
+  const s = SR.sources.find(x=>x.id === id); if (!s) return;
+  if (!confirm(tl(`Remove "${s.name}" and its ${s.count} records? Screening decisions on them are lost.`,
+                  `Hapus "${s.name}" beserta ${s.count} rekamannya? Keputusan penapisan untuk rekaman itu akan hilang.`))) return;
+  const gone = new Set(SR.records.filter(r=>r.src === id).map(r=>r.id));
+  SR.records = SR.records.filter(r=>r.src !== id);
+  SR.records.forEach(r=>{ if (r.dup && gone.has(r.dup.of)) r.dup = null; });
+  SR.sources = SR.sources.filter(x=>x.id !== id);
+  SR.dupPairs = SR.dupPairs.filter(p=>!gone.has(p.a) && !gone.has(p.b));
+  srSave(); srRender();
+}
+function srSetSource(id, field, val) { const s = SR.sources.find(x=>x.id === id); if (s) { s[field] = val; srSave(); } }
+
+/* ── duplicates ──────────────────────────────────────────────────────── */
+const srTokCache = new WeakMap();
+function srTok(r) {
+  let t = srTokCache.get(r);
+  if (!t) { t = new Set(srNormTitle(r.title).split(' ').filter(w=>w.length > 2)); srTokCache.set(r, t); }
+  return t;
+}
+function srSim(a, b) {
+  const A = srTok(a), B = srTok(b);
+  if (!A.size || !B.size) return 0;
+  let inter = 0; for (const w of A) if (B.has(w)) inter++;
+  return 2 * inter / (A.size + B.size);
+}
+function srRec(id) { return SR.records.find(r=>r.id === id); }
+function srPairKey(a, b) { return a < b ? a + '-' + b : b + '-' + a; }
+
+function srFindDuplicates() {
+  const live = SR.records.filter(r=>!r.dup);
+  const known = new Set([...(SR.notDup || []), ...SR.dupPairs.map(p=>srPairKey(p.a, p.b))]);
+  const add = (x, y, score, why, exact)=>{
+    const k = srPairKey(x.id, y.id); if (known.has(k)) return; known.add(k);
+    SR.dupPairs.push({ a:Math.min(x.id, y.id), b:Math.max(x.id, y.id), score, why, exact });
+  };
+  const byDoi = new Map(), byPmid = new Map(), byTitle = new Map();
+  live.forEach(r=>{
+    const d = r.doi && r.doi.toLowerCase();
+    if (d) { if (byDoi.has(d)) add(byDoi.get(d), r, 1, 'doi', true); else byDoi.set(d, r); }
+    if (r.pmid) { if (byPmid.has(r.pmid)) add(byPmid.get(r.pmid), r, 1, 'pmid', true); else byPmid.set(r.pmid, r); }
+    const nt = srNormTitle(r.title);
+    if (nt.length >= 15) {
+      const k = nt + '|' + (r.year || '');
+      if (byTitle.has(k)) {
+        const o = byTitle.get(k);
+        const clash = o.doi && r.doi && o.doi.toLowerCase() !== r.doi.toLowerCase();
+        add(o, r, clash ? 0.99 : 1, 'title', !clash);
+      } else byTitle.set(k, r);
+    }
+  });
+  /* near-identical titles: compared within the same or adjacent year */
+  const byYear = new Map();
+  live.forEach(r=>{ const y = r.year || 0; if (!byYear.has(y)) byYear.set(y, []); byYear.get(y).push(r); });
+  const noYear = byYear.get(0) || [];
+  const cmp = (A, B, same)=>{
+    for (let i = 0; i < A.length; i++) {
+      const x = A[i], tx = srTok(x); if (tx.size < 3) continue;
+      for (let j = same ? i + 1 : 0; j < B.length; j++) {
+        const y = B[j], ty = srTok(y);
+        if (ty.size < 3 || Math.min(tx.size, ty.size) / Math.max(tx.size, ty.size) < 0.7) continue;
+        const s = srSim(x, y);
+        if (s < 0.8) continue;
+        const sameAu = srNormTitle(srSurname(x.authors[0])) === srNormTitle(srSurname(y.authors[0])) && x.authors.length > 0;
+        if (s >= 0.9 || (s >= 0.8 && sameAu)) add(x, y, Math.round(s * 100) / 100, 'similar', false);
+      }
+    }
+  };
+  [...byYear.keys()].filter(y=>y).forEach(y=>{
+    const A = byYear.get(y);
+    cmp(A, A, true);
+    if (byYear.has(y + 1)) cmp(A, byYear.get(y + 1), false);
+    if (noYear.length) cmp(A, noYear, false);
+  });
+  cmp(noYear, noYear, true);
+  SR.dupCheckedAt = new Date().toISOString();
+}
+function srCompleteness(r) {
+  return (r.abstract ? 3 : 0) + (r.doi ? 1 : 0) + (r.pmid ? 1 : 0) + (r.keywords.length ? 0.5 : 0) + (r.journal ? 0.3 : 0) + (r.authors.length ? 0.2 : 0);
+}
+/* keep `keep`, mark `drop` as its duplicate, carry over missing metadata */
+function srMarkDup(keep, drop, how) {
+  drop.dup = { of:keep.id, how };
+  ['abstract','doi','pmid','journal','volume','issue','pages','url','lang'].forEach(f=>{ if (!keep[f] && drop[f]) keep[f] = drop[f]; });
+  if (!keep.year && drop.year) keep.year = drop.year;
+  if (!keep.authors.length && drop.authors.length) keep.authors = drop.authors.slice();
+  drop.keywords.forEach(k=>{ if (!keep.keywords.includes(k)) keep.keywords.push(k); });
+  /* screening already done on the dropped copy is not lost */
+  ['ta','ft'].forEach(st=>{ if (!keep[st].d && drop[st].d) keep[st] = JSON.parse(JSON.stringify(drop[st])); });
+  if (drop.rv) Object.keys(drop.rv).forEach(rid=>['ta','ft'].forEach(st=>{
+    const a = srRv(keep, rid, st, false), b = srRv(drop, rid, st, false);
+    if (b && b.d && !(a && a.d)) { srRv(keep, rid, st, true); keep.rv[rid][st] = JSON.parse(JSON.stringify(b)); }
+  }));
+  ['ta','ft'].forEach(st=>srReconcile(keep, st));
+  /* pairs that pointed at the dropped record now point at the kept one */
+  SR.dupPairs.forEach(p=>{ if (p.done) return; if (p.a === drop.id) p.a = keep.id; if (p.b === drop.id) p.b = keep.id; if (p.a === p.b) p.done = 'merged'; });
+  const seen = new Set();
+  SR.dupPairs = SR.dupPairs.filter(p=>{ if (p.done) return true; const k = srPairKey(p.a, p.b); if (seen.has(k)) return false; seen.add(k); return true; });
+}
+function srResolvePair(idx, keepSide) {
+  const p = SR.dupPairs.filter(x=>!x.done)[idx]; if (!p) return;
+  const A = srRec(p.a), B = srRec(p.b);
+  if (!A || !B || A.dup || B.dup) { p.done = 'stale'; srSave(); srRender(); return; }
+  if (keepSide === 'none') { p.done = 'notdup'; SR.notDup.push(srPairKey(p.a, p.b)); }
+  else { const keep = keepSide === 'a' ? A : B, drop = keepSide === 'a' ? B : A; srMarkDup(keep, drop, p.why === 'similar' ? 'manual' : p.why); p.done = 'dup'; }
+  srSave(); srRender();
+}
+function srAutoResolveExact() {
+  let n = 0;
+  SR.dupPairs.filter(p=>!p.done && p.exact).forEach(p=>{
+    const A = srRec(p.a), B = srRec(p.b);
+    if (!A || !B || A.dup || B.dup) { p.done = 'stale'; return; }
+    const keepA = srCompleteness(A) >= srCompleteness(B);
+    srMarkDup(keepA ? A : B, keepA ? B : A, p.why); p.done = 'dup'; n++;
+  });
+  srSave(); srRender();
+  srToast(tl(`${n} exact duplicates removed.`, `${n} duplikat persis dihapus.`));
+}
+function srRestoreDup(id) {
+  const r = srRec(id); if (!r) return;
+  r.dup = null;
+  SR.notDup.push(...SR.dupPairs.filter(p=>p.done === 'dup' && (p.a === id || p.b === id)).map(p=>srPairKey(p.a, p.b)));
+  srSave(); srRender();
+}
+function srRecheckDups() {
+  SR.dupPairs = SR.dupPairs.filter(p=>p.done);
+  srFindDuplicates(); srSave(); srRender();
+  srToast(tl('Duplicate check finished.','Pemeriksaan duplikat selesai.'));
+}
+
+/* ── screening pools and decisions ───────────────────────────────────── */
+function srLive() { return SR.records.filter(r=>!r.dup); }
+function srPool(stage) { return stage === 'ta' ? srLive() : srLive().filter(r=>r.ta.d === 'include'); }
+function srStats(stage, mine) {
+  const pool = srPool(stage), c = { total:pool.length, undecided:0, include:0, exclude:0, maybe:0, nr:0 };
+  pool.forEach(r=>{ const d = mine ? srMine(r, stage).d : r[stage].d; if (!d) c.undecided++; else c[d]++; });
+  c.decided = c.total - c.undecided;
+  return c;
+}
+function srTerms(list) {
+  return String(list || '').split(/[,;\n]/).map(s=>s.trim()).filter(Boolean)
+    .map(t=>t.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '\\w*'));
+}
+function srHighlight(text) {
+  let h = srEsc(text);
+  const inc = srTerms(SR.settings.kwInclude), exc = srTerms(SR.settings.kwExclude);
+  const mark = (terms, cls)=>{
+    if (!terms.length) return;
+    const re = new RegExp('(^|[^\\w>])(' + terms.join('|') + ')(?![\\w])', 'gi');
+    h = h.replace(re, (m, pre, w)=> pre + `<mark class="${cls}">${w}</mark>`);
+  };
+  mark(exc, 'hl-exc'); mark(inc, 'hl-inc');
+  if (SRV.q) {
+    const q = SRV.q.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    if (q.length > 1) h = h.replace(new RegExp('(' + q + ')(?![^<]*>)', 'gi'), '<mark class="hl-q">$1</mark>');
+  }
+  return h;
+}
+function srFiltered(stage) {
+  const f = SRV.filter[stage], q = SRV.q.trim().toLowerCase();
+  const sticky = SRV.sticky[stage];
+  let list = srPool(stage).filter(r=>{
+    const d = srMine(r, stage).d;
+    if (r.id === sticky) { /* the record just decided stays visible until the user moves on */ }
+    else if (f === 'undecided' && d) return false;
+    else if (['include','exclude','maybe','nr'].includes(f) && d !== f) return false;
+    if (q) {
+      const hay = (r.title + ' ' + r.abstract + ' ' + r.authors.join(' ') + ' ' + r.journal + ' ' + r.keywords.join(' ') + ' ' + (r.year || '')).toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+  const s = SRV.sort;
+  if (s === 'title') list.sort((a,b)=>srNormTitle(a.title).localeCompare(srNormTitle(b.title)));
+  else if (s === 'year') list.sort((a,b)=>(b.year || 0) - (a.year || 0));
+  else if (s === 'author') list.sort((a,b)=>srSurname(a.authors[0]).localeCompare(srSurname(b.authors[0])));
+  else if (s === 'relevance') {
+    const inc = srTerms(SR.settings.kwInclude), exc = srTerms(SR.settings.kwExclude);
+    const cnt = (txt, terms)=> terms.length ? (txt.match(new RegExp('\\b(' + terms.join('|') + ')\\b', 'gi')) || []).length : 0;
+    const score = r=>{ const t = r.title + ' ' + r.abstract; return cnt(t, inc) - 1.5 * cnt(t, exc); };
+    const sc = new Map(list.map(r=>[r.id, score(r)]));
+    list.sort((a,b)=>sc.get(b.id) - sc.get(a.id));
+  }
+  return list;
+}
+function srCurrent(stage, list) {
+  list = list || srFiltered(stage);
+  let r = list.find(x=>x.id === SRV.cur[stage]);
+  if (!r) { r = list[0] || null; SRV.cur[stage] = r ? r.id : null; }
+  return r;
+}
+function srDecide(d, reason) {
+  const stage = SRV.stage, list = srFiltered(stage), r = srCurrent(stage, list);
+  if (!r) return;
+  const i = list.indexOf(r), next = list[i + 1] || list[i - 1] || null;
+  const st = srMine(r, stage, true);
+  if (d === null) { st.d = null; st.r = []; }
+  else {
+    st.d = d;
+    if (d !== 'exclude') st.r = [];
+    if (reason) st.r = stage === 'ft' ? [reason] : (st.r.includes(reason) ? st.r : [...st.r, reason]);
+  }
+  st.t = new Date().toISOString();
+  srReconcile(r, stage);
+  /* full-text exclusions need a reason for PRISMA; wait for it */
+  const waitReason = stage === 'ft' && d === 'exclude' && !st.r.length;
+  SRV.sticky[stage] = r.id;
+  if (SR.settings.autoAdvance && d && !waitReason && next) { SRV.cur[stage] = next.id; SRV.sticky[stage] = null; }
+  srSave(); srRender();
+}
+function srToggleReason(reason) {
+  const stage = SRV.stage, r = srCurrent(stage); if (!r) return;
+  const st = srMine(r, stage, true);
+  if (stage === 'ft' || st.d !== 'exclude') { srDecide('exclude', reason); return; }
+  st.r = st.r.includes(reason) ? st.r.filter(x=>x !== reason) : [...st.r, reason];
+  srReconcile(r, stage);
+  srSave(); srRender();
+}
+function srNote(v) { const r = srCurrent(SRV.stage); if (r) { srMine(r, SRV.stage, true).n = v; if (!srDual()) srReconcile(r, SRV.stage); srSave(); } }
+function srGo(step) {
+  const stage = SRV.stage, list = srFiltered(stage), r = srCurrent(stage, list);
+  if (!r) return;
+  const i = list.indexOf(r) + step;
+  if (i >= 0 && i < list.length) { SRV.cur[stage] = list[i].id; SRV.sticky[stage] = null; srRender(); }
+}
+function srPick(id) {
+  SRV.cur[SRV.stage] = id; SRV.sticky[SRV.stage] = null;
+  const narrow = window.matchMedia('(max-width:900px)').matches;
+  if (narrow) SRV.listOpen = false;
+  srRender();
+  const d = document.getElementById('sr-detail');
+  if (d && narrow) d.scrollIntoView({ block:'start' });
+}
+function srBulk(d) {
+  const stage = SRV.stage;
+  if (!SRV.sel.size) return;
+  if (d === 'exclude' && stage === 'ft' && !confirm(tl('Full-text exclusions need a reason for PRISMA. They will be recorded as "Reason not recorded" until you add one. Continue?',
+    'Eksklusi teks lengkap memerlukan alasan untuk PRISMA. Alasan akan tercatat "Alasan tidak dicatat" sampai Anda mengisinya. Lanjutkan?'))) return;
+  SR.records.forEach(r=>{
+    if (!SRV.sel.has(r.id)) return;
+    const st = srMine(r, stage, true); st.d = d; if (d !== 'exclude') st.r = []; st.t = new Date().toISOString();
+    srReconcile(r, stage);
+  });
+  SRV.sel.clear(); srSave(); srRender();
+}
+function srSelToggle(id, on) { on ? SRV.sel.add(id) : SRV.sel.delete(id); srRenderBulkBar(); }
+function srSelAll(on) {
+  if (on) srFiltered(SRV.stage).slice(0, SRV.limit).forEach(r=>SRV.sel.add(r.id)); else SRV.sel.clear();
+  srRender();
+}
+function srSetFilter(f) { SRV.filter[SRV.stage] = f; SRV.sticky[SRV.stage] = null; SRV.limit = 200; SRV.sel.clear(); srRender(); }
+let srQTimer = null;
+function srSetQuery(v) { clearTimeout(srQTimer); srQTimer = setTimeout(()=>{ SRV.q = v; SRV.limit = 200; srRender(); const i = document.getElementById('sr-q'); if (i) { i.focus(); i.setSelectionRange(v.length, v.length); } }, 200); }
+
+/* ── views ───────────────────────────────────────────────────────────── */
+const SR_VIEWS = {
+  records:['Import Records','Impor Rekaman','Load search results from bibliographic databases','Muat hasil pencarian dari basis data bibliografi'],
+  dedup:['Duplicates','Duplikat','Find and resolve duplicate records','Temukan dan selesaikan rekaman duplikat'],
+  ta:['Title / Abstract Screening','Penapisan Judul / Abstrak','Include, exclude or mark maybe','Sertakan, eksklusi, atau tandai mungkin'],
+  ft:['Full-text Screening','Penapisan Teks Lengkap','Assess eligibility of retrieved reports','Nilai kelayakan laporan yang diperoleh'],
+  team:['Dual Review & Conflicts','Reviu Ganda & Konflik','Blind screening by two or more reviewers, agreement and conflict resolution','Penapisan buta oleh dua reviewer atau lebih, kesepakatan, dan penyelesaian konflik'],
+  srexport:['Screening Export','Ekspor Penapisan','CSV, RIS, Excel and project backup','CSV, RIS, Excel, dan cadangan proyek']
+};
+function showScreen(view) {
+  SRV.view = view;
+  if (view === 'ta' || view === 'ft') { SRV.stage = view; SRV.sel.clear(); }
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active', (n.getAttribute('onclick') || '') === `showScreen('${view}')`));
+  document.getElementById('panel-screen').classList.add('active');
+  document.getElementById('type-indicator').style.display = 'none';
+  srRender();
+  document.querySelector('.content').scrollTop = 0;
+}
+function srRender() {
+  const v = SR_VIEWS[SRV.view];
+  if (document.getElementById('panel-screen').classList.contains('active')) {
+    document.getElementById('panel-title').textContent = tl(v[0], v[1]);
+    document.getElementById('panel-badge').textContent = tl(v[2], v[3]);
+  }
+  const el = document.getElementById('sr-body');
+  if (SRV.view === 'records') el.innerHTML = srViewImport();
+  else if (SRV.view === 'dedup') el.innerHTML = srViewDedup();
+  else if (SRV.view === 'ta' || SRV.view === 'ft') { el.innerHTML = srViewScreen(SRV.view); srAfterScreenRender(); }
+  else if (SRV.view === 'srexport') el.innerHTML = srViewExport();
+  else if (SRV.view === 'team') el.innerHTML = srViewTeam();
+  srUpdateBadges();
+}
+function srSteps() {
+  const live = srLive().length, pend = SR.dupPairs.filter(p=>!p.done).length;
+  const ta = srStats('ta'), ft = srStats('ft');
+  const step = (id, n, label, sub, done)=>`<div class="sr-step ${SRV.view === id ? 'on' : ''} ${done ? 'done' : ''}" onclick="showScreen('${id}')">
+      <span class="sr-step-n">${done ? '✓' : n}</span><span><strong>${label}</strong><small>${sub}</small></span></div>`;
+  return `<div class="sr-steps">
+    ${step('records', 1, tl('Import','Impor'), `${SR.records.length} ${tl('records','rekaman')}`, SR.records.length > 0)}
+    ${step('dedup', 2, tl('Duplicates','Duplikat'), pend ? `${pend} ${tl('to review','perlu ditinjau')}` : `${SR.records.length - live} ${tl('removed','dihapus')}`, SR.records.length > 0 && !pend)}
+    ${step('ta', 3, tl('Title/abstract','Judul/abstrak'), `${ta.decided}/${ta.total}`, ta.total > 0 && !ta.undecided && !ta.maybe)}
+    ${step('ft', 4, tl('Full text','Teks lengkap'), `${ft.decided}/${ft.total}`, ft.total > 0 && !ft.undecided && !ft.maybe)}
+    ${srDual() ? step('team', '👥', tl('Conflicts','Konflik'), `${srStageCounts('ta').conflict + srStageCounts('ft').conflict} ${tl('open','terbuka')}`, SR.records.length > 0 && !(srStageCounts('ta').conflict + srStageCounts('ft').conflict + srStageCounts('ta').awaiting + srStageCounts('ft').awaiting)) : ''}
+    ${step('srexport', 5, tl('Export','Ekspor'), 'CSV · RIS · XLSX', false)}
+    <div class="sr-step" onclick="showPanel('prisma')"><span class="sr-step-n">⇣</span><span><strong>PRISMA</strong><small>${tl('Flow diagram','Diagram alir')}</small></span></div>
+  </div>`;
+}
+
+function srViewImport() {
+  const pend = SRV.pending;
+  const live = srLive().length;
+  const dbList = `<datalist id="sr-dbs">${SR_DB_NAMES.map(d=>`<option value="${d}">`).join('')}</datalist>`;
+  const pendHtml = pend.map(p=>{
+    const withAb = p.records.filter(r=>r.abstract).length, withDoi = p.records.filter(r=>r.doi).length;
+    const pct = n => p.records.length ? Math.round(100 * n / p.records.length) + '%' : '—';
+    return `<div class="sr-pend">
+      <div class="sr-pend-head"><strong>📄 ${srEsc(p.name)}</strong><span class="spacer"></span>
+        <button class="btn btn-danger btn-sm" onclick="srPendRemove('${p.key}')">✕</button></div>
+      <div class="sr-pend-grid">
+        <div><label>${tl('Format','Format')}</label><select onchange="srPendSet('${p.key}','format',this.value)" ${p.format === 'xlsx' ? 'disabled' : ''}>
+          ${Object.entries(SR_FORMATS).filter(([k])=>p.format === 'xlsx' ? k === 'xlsx' : k !== 'xlsx').map(([k,l])=>`<option value="${k}" ${k === p.format ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
+        ${p.wb ? `<div><label>${tl('Sheet','Sheet')}</label><select onchange="srPendSet('${p.key}','sheet',this.value)">${p.wb.SheetNames.map(n=>`<option ${n === p.sheet ? 'selected' : ''}>${srEsc(n)}</option>`).join('')}</select></div>` : ''}
+        <div><label>${tl('Database / source name','Nama basis data / sumber')}</label><input list="sr-dbs" value="${srEsc(p.db || '')}" onchange="srPendSet('${p.key}','db',this.value)"></div>
+        <div><label>${tl('Source type (PRISMA)','Jenis sumber (PRISMA)')}</label><select onchange="srPendSet('${p.key}','kind',this.value)">
+          <option value="database" ${p.kind !== 'register' ? 'selected' : ''}>${tl('Database','Basis data')}</option>
+          <option value="register" ${p.kind === 'register' ? 'selected' : ''}>${tl('Trial register','Registri uji klinis')}</option></select></div>
+      </div>
+      ${p.error ? `<div class="notice notice-danger"><span>⛔</span><div>${srEsc(p.error)}</div></div>` : `
+      <div class="sr-pend-stats"><span class="tag tag-blue">${p.records.length} ${tl('records','rekaman')}</span>
+        <span class="tag tag-gray">${tl('with abstract','dengan abstrak')} ${pct(withAb)}</span>
+        <span class="tag tag-gray">${tl('with DOI','dengan DOI')} ${pct(withDoi)}</span></div>
+      <div class="preview-wrap" style="max-height:260px"><table><thead><tr><th>#</th><th>${tl('Title','Judul')}</th><th>${tl('Authors','Penulis')}</th><th>${tl('Year','Tahun')}</th><th>${tl('Journal','Jurnal')}</th><th>DOI</th><th>${tl('Abstract','Abstrak')}</th></tr></thead><tbody>
+        ${p.records.slice(0, 30).map((r,i)=>`<tr><td class="mono text-xs">${i + 1}</td><td class="sr-cell-title">${srEsc(r.title)}</td><td>${srEsc(srShort(r).replace(/ \d{4}$/, ''))}</td><td class="mono">${r.year || ''}</td><td>${srEsc(r.journal)}</td><td class="mono text-xs">${srEsc(r.doi)}</td><td>${r.abstract ? '✓' : '—'}</td></tr>`).join('')}
+        ${p.records.length > 30 ? `<tr><td colspan="7" class="text-xs" style="text-align:center">… ${p.records.length - 30} ${tl('more','lainnya')}</td></tr>` : ''}
+      </tbody></table></div>`}
+    </div>`;
+  }).join('');
+  const total = pend.reduce((a,p)=>a + p.records.length, 0);
+  const srcRows = SR.sources.map(s=>{
+    const n = SR.records.filter(r=>r.src === s.id).length;
+    return `<tr><td>${srEsc(s.name)}</td>
+      <td><input list="sr-dbs" value="${srEsc(s.db)}" onchange="srSetSource('${s.id}','db',this.value)" style="min-width:150px"></td>
+      <td><select onchange="srSetSource('${s.id}','kind',this.value)"><option value="database" ${s.kind !== 'register' ? 'selected' : ''}>${tl('Database','Basis data')}</option><option value="register" ${s.kind === 'register' ? 'selected' : ''}>${tl('Register','Registri')}</option></select></td>
+      <td class="text-xs">${srEsc(SR_FORMATS[s.format] || s.format)}</td><td class="mono">${n}</td><td class="text-xs">${srEsc((s.at || '').slice(0,10))}</td>
+      <td><button class="btn btn-danger btn-sm" onclick="srRemoveSource('${s.id}')" title="${tl('Remove source','Hapus sumber')}">✕</button></td></tr>`;
+  }).join('');
+  return `${srSteps()}${dbList}
+    <div class="card">
+      <div class="card-title">📚 ${tl('Import search results','Impor hasil pencarian')}</div>
+      <div class="file-drop" id="sr-drop" onclick="document.getElementById('sr-file').click()"
+        ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')"
+        ondrop="event.preventDefault();this.classList.remove('drag');srHandleFiles(event.dataTransfer.files)">
+        <span class="icon">🗂️</span>
+        <strong>${tl('Click or drop one or more files','Klik atau letakkan satu atau beberapa berkas')}</strong>
+        <p class="text-xs mt-2">RIS · PubMed (.nbib / MEDLINE) · Web of Science (.txt) · BibTeX · EndNote XML · CSV / TSV · Excel</p>
+      </div>
+      <input type="file" id="sr-file" multiple accept=".ris,.nbib,.txt,.bib,.xml,.csv,.tsv,.xlsx,.xls" style="display:none" onchange="srHandleFiles(this.files)">
+      <details class="sr-help mt-2"><summary>${tl('Which export should I use for each database?','Ekspor mana yang dipakai untuk tiap basis data?')}</summary>
+        <ul>
+          <li><strong>PubMed</strong>: Send to → Citation manager (.nbib) ${tl('or','atau')} Save → Format: PubMed</li>
+          <li><strong>Scopus</strong>: Export → RIS ${tl('or','atau')} CSV (${tl('tick abstract','centang abstrak')})</li>
+          <li><strong>Web of Science</strong>: Export → Plain text file ${tl('or','atau')} RIS (Full record)</li>
+          <li><strong>Embase / Ovid / EBSCO (CINAHL)</strong>: Export → RIS</li>
+          <li><strong>Cochrane Library</strong>: Export → RIS</li>
+          <li><strong>Zotero / Mendeley / EndNote</strong>: RIS, BibTeX ${tl('or','atau')} EndNote XML</li>
+          <li><strong>Rayyan / Covidence</strong>: CSV ${tl('or','atau')} RIS</li>
+        </ul></details>
+    </div>
+    ${pend.length ? `<div class="card"><div class="card-title">👁️ ${tl('Check before adding','Periksa sebelum menambahkan')}</div>${pendHtml}
+      <div class="flex gap-2 mt-2" style="flex-wrap:wrap"><button class="btn btn-success" onclick="srAddPending()" ${total ? '' : 'disabled'}>✓ ${tl('Add','Tambahkan')} ${total} ${tl('records','rekaman')}</button>
+      <button class="btn btn-secondary" onclick="SRV.pending=[];srRender()">${tl('Cancel','Batal')}</button></div></div>` : ''}
+    <div class="grid-4 mb-2">
+      <div class="stat-box"><div class="val">${SR.records.length}</div><div class="lbl">${tl('Records identified','Rekaman teridentifikasi')}</div></div>
+      <div class="stat-box"><div class="val">${SR.records.length - live}</div><div class="lbl">${tl('Duplicates removed','Duplikat dihapus')}</div></div>
+      <div class="stat-box"><div class="val">${live}</div><div class="lbl">${tl('Records to screen','Rekaman untuk ditapis')}</div></div>
+      <div class="stat-box"><div class="val">${srStats('ft').include}</div><div class="lbl">${tl('Included after full text','Diikutkan setelah teks lengkap')}</div></div>
+    </div>
+    ${SR.sources.length ? `<div class="card" style="padding:0"><div class="card-title" style="padding:16px 18px 0">🗄️ ${tl('Sources','Sumber')}</div>
+      <div class="table-wrap"><table><thead><tr><th>${tl('File','Berkas')}</th><th>${tl('Database','Basis data')}</th><th>${tl('Type','Jenis')}</th><th>${tl('Format','Format')}</th><th>${tl('Records','Rekaman')}</th><th>${tl('Added','Ditambahkan')}</th><th></th></tr></thead><tbody>${srcRows}</tbody></table></div></div>` : ''}`;
+}
+
+function srRecMini(r, other) {
+  const src = SR.sources.find(s=>s.id === r.src);
+  const diff = (f, v)=> other && String(v || '').toLowerCase() !== String(f === 'authors' ? other.authors.join('; ') : (other[f] || '')).toLowerCase() ? 'sr-diff' : '';
+  const row = (lbl, f, v, cls)=> v ? `<div class="${diff(f, v)}"><span class="sr-k">${lbl}</span><span class="${cls || ''}">${srEsc(v)}</span></div>` : '';
+  return `<div class="sr-mini">
+    <div class="sr-mini-title">${srEsc(r.title)}</div>
+    ${row(tl('Authors','Penulis'), 'authors', r.authors.join('; '))}
+    ${row(tl('Year','Tahun'), 'year', r.year)}
+    ${row(tl('Journal','Jurnal'), 'journal', r.journal)}
+    ${row('DOI', 'doi', r.doi, 'mono')}
+    ${row('PMID', 'pmid', r.pmid, 'mono')}
+    <div><span class="sr-k">${tl('Source','Sumber')}</span><span class="tag tag-purple">${srEsc(src ? src.db : '?')}</span> <span class="text-xs">#${r.id}</span></div>
+    ${r.abstract ? `<div class="sr-mini-ab">${srEsc(r.abstract.slice(0, 400))}${r.abstract.length > 400 ? '…' : ''}</div>` : `<div class="text-xs">${tl('No abstract','Tanpa abstrak')}</div>`}
+  </div>`;
+}
+function srViewDedup() {
+  if (!SR.records.length) return srSteps() + srEmpty(tl('Import records first.','Impor rekaman terlebih dahulu.'), 'records');
+  const open = SR.dupPairs.filter(p=>!p.done);
+  const exact = open.filter(p=>p.exact).length;
+  const removed = SR.records.filter(r=>r.dup);
+  const PER = 20, pages = Math.max(1, Math.ceil(open.length / PER));
+  SRV.dupPage = Math.min(SRV.dupPage, pages - 1);
+  const why = p => ({ doi:tl('Same DOI','DOI sama'), pmid:tl('Same PMID','PMID sama'), title:tl('Identical title and year','Judul dan tahun identik'),
+    similar:tl('Similar title','Judul mirip') + ' · ' + Math.round(p.score * 100) + '%' })[p.why];
+  const cards = open.slice(SRV.dupPage * PER, SRV.dupPage * PER + PER).map((p, k)=>{
+    const i = SRV.dupPage * PER + k, A = srRec(p.a), B = srRec(p.b);
+    if (!A || !B) return '';
+    return `<div class="sr-pair">
+      <div class="sr-pair-head"><span class="tag ${p.exact ? 'tag-red' : 'tag-yellow'}">${why(p)}</span></div>
+      <div class="sr-pair-grid">${srRecMini(A, B)}${srRecMini(B, A)}</div>
+      <div class="sr-pair-act">
+        <button class="btn btn-secondary btn-sm" onclick="srResolvePair(${i},'a')">◀ ${tl('Keep left, remove right','Simpan kiri, hapus kanan')}</button>
+        <button class="btn btn-secondary btn-sm" onclick="srResolvePair(${i},'b')">${tl('Keep right, remove left','Simpan kanan, hapus kiri')} ▶</button>
+        <button class="btn btn-sm btn-success" onclick="srResolvePair(${i},'none')">≠ ${tl('Not duplicates','Bukan duplikat')}</button>
+      </div></div>`;
+  }).join('');
+  return `${srSteps()}
+    <div class="grid-4 mb-2">
+      <div class="stat-box"><div class="val">${SR.records.length}</div><div class="lbl">${tl('Records','Rekaman')}</div></div>
+      <div class="stat-box"><div class="val" style="color:var(--danger)">${exact}</div><div class="lbl">${tl('Exact matches to resolve','Kecocokan persis')}</div></div>
+      <div class="stat-box"><div class="val" style="color:var(--warn)">${open.length - exact}</div><div class="lbl">${tl('Possible duplicates','Kemungkinan duplikat')}</div></div>
+      <div class="stat-box"><div class="val">${removed.length}</div><div class="lbl">${tl('Removed as duplicates','Dihapus sebagai duplikat')}</div></div>
+    </div>
+    <div class="card">
+      <div class="flex gap-2" style="flex-wrap:wrap;align-items:center">
+        <button class="btn btn-primary" onclick="srAutoResolveExact()" ${exact ? '' : 'disabled'}>⚡ ${tl('Remove all exact duplicates','Hapus semua duplikat persis')} (${exact})</button>
+        <button class="btn btn-secondary" onclick="srRecheckDups()">🔍 ${tl('Check again','Periksa ulang')}</button>
+        <span class="text-xs">${tl('Exact = same DOI, same PMID, or identical title and year. The copy with the most complete metadata is kept and missing fields are merged into it.',
+          'Persis = DOI sama, PMID sama, atau judul dan tahun identik. Salinan dengan metadata paling lengkap disimpan, dan kolom yang kosong diisi dari salinan lain.')}</span>
+      </div>
+    </div>
+    ${open.length ? cards + (pages > 1 ? `<div class="flex gap-2 mb-2" style="justify-content:center;align-items:center">
+        <button class="btn btn-secondary btn-sm" ${SRV.dupPage ? '' : 'disabled'} onclick="SRV.dupPage--;srRender()">◀</button>
+        <span class="text-xs">${SRV.dupPage + 1} / ${pages}</span>
+        <button class="btn btn-secondary btn-sm" ${SRV.dupPage < pages - 1 ? '' : 'disabled'} onclick="SRV.dupPage++;srRender()">▶</button></div>` : '')
+      : `<div class="notice notice-success"><span>✅</span><div>${tl('No duplicates left to review. Continue to title/abstract screening.','Tidak ada duplikat yang perlu ditinjau. Lanjutkan ke penapisan judul/abstrak.')}
+          <button class="btn btn-success btn-sm" style="margin-left:8px" onclick="showScreen('ta')">${tl('Start screening','Mulai menapis')} →</button></div></div>`}
+    ${removed.length ? `<details class="card"><summary class="card-title" style="cursor:pointer;margin:0">🗑️ ${tl('Removed duplicates','Duplikat yang dihapus')} (${removed.length})</summary>
+      <div class="table-wrap mt-2" style="max-height:360px"><table><thead><tr><th>#</th><th>${tl('Title','Judul')}</th><th>${tl('Duplicate of','Duplikat dari')}</th><th>${tl('Basis','Dasar')}</th><th></th></tr></thead><tbody>
+      ${removed.slice(0, 500).map(r=>`<tr><td class="mono text-xs">${r.id}</td><td class="sr-cell-title">${srEsc(r.title)}</td><td class="mono text-xs">#${r.dup.of}</td><td class="text-xs">${srEsc(r.dup.how)}</td>
+        <td><button class="btn btn-secondary btn-sm" onclick="srRestoreDup(${r.id})">↺ ${tl('Restore','Pulihkan')}</button></td></tr>`).join('')}
+      </tbody></table></div></details>` : ''}`;
+}
+
+function srEmpty(msg, goto) {
+  return `<div class="card"><div class="empty-state"><span class="icon">📭</span><p>${msg}</p>
+    ${goto ? `<button class="btn btn-primary mt-2" onclick="showScreen('${goto}')">${tl('Go','Buka')} →</button>` : ''}</div></div>`;
+}
+function srDecTag(d) {
+  return ({ include:`<span class="tag tag-green">✓ ${tl('Included','Disertakan')}</span>`, exclude:`<span class="tag tag-red">✕ ${tl('Excluded','Dieksklusi')}</span>`,
+    maybe:`<span class="tag tag-yellow">? ${tl('Maybe','Mungkin')}</span>`, nr:`<span class="tag tag-gray">⌀ ${tl('Not retrieved','Tidak diperoleh')}</span>` })[d]
+    || `<span class="tag tag-gray">${tl('Undecided','Belum diputuskan')}</span>`;
+}
+function srViewScreen(stage) {
+  if (!SR.records.length) return srSteps() + srEmpty(tl('Import records first.','Impor rekaman terlebih dahulu.'), 'records');
+  const c = srStats(stage, true);
+  if (!c.total) return srSteps() + srEmpty(stage === 'ft'
+      ? tl('No records were included at title/abstract screening yet.','Belum ada rekaman yang disertakan pada penapisan judul/abstrak.')
+      : tl('All records are marked as duplicates.','Semua rekaman ditandai duplikat.'), stage === 'ft' ? 'ta' : 'dedup');
+  const pendDup = SR.dupPairs.filter(p=>!p.done).length;
+  const list = srFiltered(stage), r = srCurrent(stage, list);
+  const f = SRV.filter[stage];
+  const pct = Math.round(100 * c.decided / c.total);
+  const chip = (k, label, n)=>`<button class="sr-chip ${f === k ? 'on' : ''} sr-chip-${k}" onclick="srSetFilter('${k}')">${label} <b>${n}</b></button>`;
+  const shown = list.slice(0, SRV.limit);
+  const items = shown.map(x=>{
+    const d = srMine(x, stage).d;
+    return `<div class="sr-item ${r && x.id === r.id ? 'on' : ''}" onclick="srPick(${x.id})">
+      <input type="checkbox" ${SRV.sel.has(x.id) ? 'checked' : ''} onclick="event.stopPropagation()" onchange="srSelToggle(${x.id},this.checked)">
+      <span class="sr-dot sr-dot-${d || 'none'}"></span>
+      <div class="sr-item-body"><div class="sr-item-title">${srEsc(x.title || tl('(no title)','(tanpa judul)'))}</div>
+      <div class="sr-item-meta">${srEsc(srShort(x))}${x.journal ? ' · ' + srEsc(x.journal) : ''}</div></div></div>`;
+  }).join('');
+  const reasons = stage === 'ta' ? SR.settings.reasonsTA : SR.settings.reasonsFT;
+  let detail = `<div class="empty-state"><span class="icon">🎉</span><p>${tl('Nothing in this filter.','Tidak ada rekaman pada filter ini.')}</p></div>`;
+  if (r) {
+    const st = srMine(r, stage), src = SR.sources.find(s=>s.id === r.src);
+    const idx = list.indexOf(r);
+    const au = r.authors.length > 8 ? r.authors.slice(0, 8).join('; ') + '; … (' + r.authors.length + ')' : r.authors.join('; ');
+    const links = [
+      r.doi ? `<a href="https://doi.org/${encodeURI(r.doi)}" target="_blank" rel="noopener">DOI ↗</a>` : '',
+      r.pmid ? `<a href="https://pubmed.ncbi.nlm.nih.gov/${r.pmid}/" target="_blank" rel="noopener">PubMed ↗</a>` : '',
+      r.url && !r.url.includes('doi.org') ? `<a href="${srEsc(r.url)}" target="_blank" rel="noopener">${tl('Link','Tautan')} ↗</a>` : '',
+      `<a href="https://scholar.google.com/scholar?q=${encodeURIComponent('"' + r.title + '"')}" target="_blank" rel="noopener">Google Scholar ↗</a>`
+    ].filter(Boolean).join(' · ');
+    const dbtn = (d, key, label, cls)=>`<button class="btn sr-dbtn sr-dbtn-${d} ${st.d === d ? 'on' : ''} ${cls || ''}" onclick="srDecide(${st.d === d ? 'null' : `'${d}'`})">${label} <kbd>${key}</kbd></button>`;
+    const needReason = stage === 'ft' && st.d === 'exclude' && !st.r.length;
+    detail = `
+      <div class="sr-actionbar">
+        <div class="sr-nav">
+          <button class="btn btn-secondary btn-sm" onclick="srGo(-1)" ${idx > 0 ? '' : 'disabled'}>◀ <kbd>K</kbd></button>
+          <span class="text-xs">${idx + 1} / ${list.length}</span>
+          <button class="btn btn-secondary btn-sm" onclick="srGo(1)" ${idx < list.length - 1 ? '' : 'disabled'}><kbd>J</kbd> ▶</button>
+          <span class="spacer"></span>${srDecTag(st.d)}
+        </div>
+        <div class="sr-dbtns">
+          ${dbtn('include', 'I', '✓ ' + tl('Include','Sertakan'))}
+          ${dbtn('maybe', 'M', '? ' + tl('Maybe','Mungkin'))}
+          ${dbtn('exclude', 'E', '✕ ' + tl('Exclude','Eksklusi'))}
+          ${stage === 'ft' ? dbtn('nr', 'N', '⌀ ' + tl('Not retrieved','Tidak diperoleh'), 'sr-dbtn-long') : ''}
+        </div>
+      </div>
+      ${srOthersBox(r, stage)}
+      <h3 class="sr-title">${srHighlight(r.title || tl('(no title)','(tanpa judul)'))}</h3>
+      <div class="sr-meta">${srEsc(au)}</div>
+      <div class="sr-meta">${r.journal ? `<em>${srEsc(r.journal)}</em>` : ''}${r.year ? ' · ' + r.year : ''}${r.volume ? ' · ' + srEsc(r.volume) : ''}${r.issue ? '(' + srEsc(r.issue) + ')' : ''}${r.pages ? ':' + srEsc(r.pages) : ''}
+        <span class="tag tag-purple" style="margin-left:6px">${srEsc(src ? src.db : '')}</span> <span class="text-xs">#${r.id}</span></div>
+      <div class="sr-links">${links}</div>
+      ${stage === 'ft' ? srPdfBox(r) : ''}
+      <div class="sr-abstract">${r.abstract ? srHighlight(r.abstract) : `<em class="text-xs">${tl('No abstract available.','Abstrak tidak tersedia.')}</em>`}</div>
+      ${r.keywords.length ? `<div class="sr-kw">${r.keywords.slice(0, 30).map(k=>`<span class="tag tag-gray">${srHighlight(k)}</span>`).join(' ')}</div>` : ''}
+      <div class="sr-decide">
+        <div class="sr-reasons ${needReason ? 'need' : ''}">
+          <div class="text-xs">${stage === 'ft' ? tl('Reason for exclusion (required, counted in PRISMA):','Alasan eksklusi (wajib, dihitung di PRISMA):') : tl('Exclude with reason (optional):','Eksklusi dengan alasan (opsional):')}</div>
+          ${reasons.map((x, i)=>`<button class="sr-reason ${st.d === 'exclude' && st.r.includes(x) ? 'on' : ''}" onclick="srToggleReason(${srEsc(JSON.stringify(x))})">${i < 9 ? `<kbd>${i + 1}</kbd> ` : ''}${srEsc(srReasonLabel(x))}</button>`).join('')}
+        </div>
+        <textarea class="sr-note" placeholder="${tl('Notes for this record…','Catatan untuk rekaman ini…')}" oninput="srNote(this.value)">${srEsc(st.n || '')}</textarea>
+      </div>`;
+  }
+  return `${srSteps()}${srReviewerBar(stage)}
+    ${stage === 'ta' && pendDup ? `<div class="notice notice-warn"><span>⚠️</span><div>${pendDup} ${tl('possible duplicates are not resolved yet.','kemungkinan duplikat belum diselesaikan.')} <a href="#" onclick="showScreen('dedup');return false">${tl('Review them','Tinjau')}</a></div></div>` : ''}
+    ${stage === 'ft' && srDual() && (srStageCounts('ta').conflict + srStageCounts('ta').awaiting) ? `<div class="notice notice-warn"><span>👥</span><div>${srStageCounts('ta').conflict} ${tl('title/abstract conflicts and','konflik judul/abstrak dan')} ${srStageCounts('ta').awaiting} ${tl('records awaiting another reviewer are not in this list yet. Only records both reviewers included (or resolved as included) go to full text.','rekaman yang menunggu reviewer lain belum masuk daftar ini. Hanya rekaman yang disertakan semua reviewer (atau diselesaikan sebagai disertakan) yang masuk ke teks lengkap.')} <a href="#" onclick="showScreen('team');return false">${tl('Open conflicts','Buka konflik')}</a></div></div>` : ''}
+    ${stage === 'ft' && !srDual() && srStats('ta').maybe ? `<div class="notice notice-warn"><span>⚠️</span><div>${srStats('ta').maybe} ${tl('records are still "maybe" at title/abstract stage and are not in this list until included.','rekaman masih "mungkin" pada tahap judul/abstrak dan belum masuk daftar ini sampai disertakan.')}</div></div>` : ''}
+    <div class="sr-top">
+      <div class="sr-progress"><div class="flex" style="justify-content:space-between"><strong>${c.decided} / ${c.total} ${tl('screened','ditapis')}</strong><span class="mono">${pct}%</span></div>
+        <div class="pbar"><div style="width:${pct}%"></div></div></div>
+      <div class="sr-chips">
+        ${chip('undecided', tl('Undecided','Belum'), c.undecided)}
+        ${chip('include', tl('Included','Disertakan'), c.include)}
+        ${chip('maybe', tl('Maybe','Mungkin'), c.maybe)}
+        ${chip('exclude', tl('Excluded','Dieksklusi'), c.exclude)}
+        ${stage === 'ft' ? chip('nr', tl('Not retrieved','Tidak diperoleh'), c.nr) : ''}
+        ${chip('all', tl('All','Semua'), c.total)}
+      </div>
+      <div class="sr-tools">
+        <input id="sr-q" type="search" placeholder="${tl('Search title, abstract, author…','Cari judul, abstrak, penulis…')}" value="${srEsc(SRV.q)}" oninput="srSetQuery(this.value)">
+        <select onchange="SRV.sort=this.value;srRender()">
+          ${[['default', tl('Import order','Urutan impor')], ['relevance', tl('Keyword relevance','Relevansi kata kunci')], ['title', tl('Title A–Z','Judul A–Z')], ['year', tl('Newest first','Terbaru dulu')], ['author', tl('First author','Penulis pertama')]]
+            .map(([k,l])=>`<option value="${k}" ${SRV.sort === k ? 'selected' : ''}>${l}</option>`).join('')}</select>
+        <button class="btn btn-secondary btn-sm" onclick="srToggleSettings()">⚙️ ${tl('Settings','Pengaturan')}</button>
+      </div>
+    </div>
+    <div id="sr-settings" style="display:${SRV.showSettings ? 'block' : 'none'}">${srSettingsHtml()}</div>
+    <div class="sr-layout ${SRV.listOpen ? '' : 'list-closed'}">
+      <div class="sr-listcol">
+        <button class="btn btn-secondary btn-sm sr-listtoggle" onclick="SRV.listOpen=!SRV.listOpen;srRender()">${SRV.listOpen ? '▲ ' + tl('Hide list','Sembunyikan daftar') : '▼ ' + tl('Show list','Tampilkan daftar')} (${list.length})</button>
+        <div id="sr-bulk"></div>
+        <div class="sr-list" id="sr-list">${items || `<div class="text-xs" style="padding:16px">${tl('No records.','Tidak ada rekaman.')}</div>`}
+          ${list.length > shown.length ? `<button class="btn btn-secondary btn-sm" style="margin:10px" onclick="SRV.limit+=200;srRender()">${tl('Show more','Tampilkan lagi')} (${list.length - shown.length})</button>` : ''}</div>
+      </div>
+      <div class="sr-detail" id="sr-detail">${detail}</div>
+    </div>
+    <div class="sr-keys text-xs">⌨️ <kbd>I</kbd> ${tl('include','sertakan')} · <kbd>E</kbd> ${tl('exclude','eksklusi')} · <kbd>M</kbd> ${tl('maybe','mungkin')} ${stage === 'ft' ? `· <kbd>N</kbd> ${tl('not retrieved','tidak diperoleh')}` : ''} · <kbd>1</kbd>–<kbd>9</kbd> ${tl('reason','alasan')} · <kbd>U</kbd> ${tl('undo','batalkan')} · <kbd>J</kbd>/<kbd>K</kbd> ${tl('next/previous','berikut/sebelumnya')} · <kbd>/</kbd> ${tl('search','cari')}</div>`;
+}
+function srAfterScreenRender() {
+  srRenderBulkBar();
+  const on = document.querySelector('#sr-list .sr-item.on');
+  if (on) { const l = document.getElementById('sr-list'); const top = on.offsetTop - l.offsetTop; if (top < l.scrollTop || top > l.scrollTop + l.clientHeight - 60) l.scrollTop = top - 80; }
+}
+function srRenderBulkBar() {
+  const el = document.getElementById('sr-bulk'); if (!el) return;
+  const n = SRV.sel.size;
+  el.innerHTML = `<div class="sr-bulk">
+    <label class="sr-bulk-all"><input type="checkbox" ${n ? 'checked' : ''} onchange="srSelAll(this.checked)"> ${n ? n + ' ' + tl('selected','dipilih') : tl('Select shown','Pilih yang tampil')}</label>
+    ${n ? `<button class="btn btn-sm btn-success" onclick="srBulk('include')">✓</button><button class="btn btn-sm btn-warn" onclick="srBulk('maybe')">?</button><button class="btn btn-sm btn-danger" onclick="srBulk('exclude')">✕</button><button class="btn btn-sm btn-secondary" onclick="srBulk(null)" title="${tl('Clear decision','Hapus keputusan')}">↺</button>` : ''}
+  </div>`;
+}
+function srPdfBox(r) {
+  const url = SRV.pdf[r.id];
+  return `<div class="sr-pdf">
+    <label class="btn btn-secondary btn-sm" style="margin:0">📎 ${tl('Open local PDF','Buka PDF lokal')}<input type="file" accept="application/pdf" style="display:none" onchange="srOpenPdf(${r.id},this.files[0])"></label>
+    <span class="text-xs">${tl('The PDF is shown for this session only and is not stored.','PDF hanya ditampilkan selama sesi ini dan tidak disimpan.')}</span>
+    ${url ? `<iframe src="${url}" class="sr-pdf-frame" title="PDF"></iframe>` : ''}
+  </div>`;
+}
+function srOpenPdf(id, file) { if (!file) return; if (SRV.pdf[id]) URL.revokeObjectURL(SRV.pdf[id]); SRV.pdf[id] = URL.createObjectURL(file); srRender(); }
+
+function srToggleSettings() { SRV.showSettings = !SRV.showSettings; const el = document.getElementById('sr-settings'); if (el) el.style.display = SRV.showSettings ? 'block' : 'none'; }
+function srSettingsHtml() {
+  const s = SR.settings;
+  return `<div class="card sr-settings">
+    <div class="grid-2">
+      <div class="form-row"><label>🟩 ${tl('Highlight as inclusion terms','Sorot sebagai kata inklusi')}</label><textarea rows="2" onchange="SR.settings.kwInclude=this.value;srSave();srRender()">${srEsc(s.kwInclude)}</textarea></div>
+      <div class="form-row"><label>🟥 ${tl('Highlight as exclusion terms','Sorot sebagai kata eksklusi')}</label><textarea rows="2" onchange="SR.settings.kwExclude=this.value;srSave();srRender()">${srEsc(s.kwExclude)}</textarea></div>
+      <div class="form-row"><label>${tl('Title/abstract exclusion reasons (one per line)','Alasan eksklusi judul/abstrak (satu per baris)')}</label><textarea rows="5" onchange="SR.settings.reasonsTA=this.value.split('\\n').map(x=>x.trim()).filter(Boolean);srSave();srRender()">${srEsc(s.reasonsTA.join('\n'))}</textarea></div>
+      <div class="form-row"><label>${tl('Full-text exclusion reasons (one per line)','Alasan eksklusi teks lengkap (satu per baris)')}</label><textarea rows="5" onchange="SR.settings.reasonsFT=this.value.split('\\n').map(x=>x.trim()).filter(Boolean);srSave();srRender()">${srEsc(s.reasonsFT.join('\n'))}</textarea></div>
+    </div>
+    <label style="display:flex;gap:8px;align-items:center;font-size:14px"><input type="checkbox" style="width:auto" ${s.autoAdvance ? 'checked' : ''} onchange="SR.settings.autoAdvance=this.checked;srSave()"> ${tl('Move to the next record after a decision','Pindah ke rekaman berikutnya setelah memutuskan')}</label>
+    <p class="text-xs mt-2">${tl('Separate terms with commas. Use * as a wildcard, e.g. random* matches randomised and randomized.','Pisahkan kata dengan koma. Gunakan * sebagai wildcard, misalnya random* cocok dengan randomised dan randomized.')}</p>
+  </div>`;
+}
+
+document.addEventListener('keydown', e=>{
+  if (!document.getElementById('panel-screen')?.classList.contains('active')) return;
+  if (SRV.view !== 'ta' && SRV.view !== 'ft') return;
+  const tg = e.target.tagName;
+  if (e.key === 'Escape' && tg === 'INPUT') { e.target.blur(); return; }
+  if (tg === 'INPUT' || tg === 'TEXTAREA' || tg === 'SELECT' || e.metaKey || e.ctrlKey || e.altKey) return;
+  const k = e.key.toLowerCase();
+  const map = { i:'include', e:'exclude', m:'maybe' };
+  if (map[k]) { e.preventDefault(); srDecide(map[k]); }
+  else if (k === 'n' && SRV.stage === 'ft') { e.preventDefault(); srDecide('nr'); }
+  else if (k === 'u') { e.preventDefault(); srDecide(null); }
+  else if (k === 'j' || e.key === 'ArrowDown' || e.key === 'ArrowRight') { e.preventDefault(); srGo(1); }
+  else if (k === 'k' || e.key === 'ArrowUp' || e.key === 'ArrowLeft') { e.preventDefault(); srGo(-1); }
+  else if (k === '/') { e.preventDefault(); document.getElementById('sr-q')?.focus(); }
+  else if (/^[1-9]$/.test(k)) {
+    const reasons = SRV.stage === 'ta' ? SR.settings.reasonsTA : SR.settings.reasonsFT;
+    const x = reasons[+k - 1]; if (x) { e.preventDefault(); srToggleReason(x); }
+  }
+});
+
+/* ── export ──────────────────────────────────────────────────────────── */
+const SR_SETS = {
+  all:['All records (including duplicates)','Semua rekaman (termasuk duplikat)', r=>true],
+  unique:['Unique records (after deduplication)','Rekaman unik (setelah deduplikasi)', r=>!r.dup],
+  dups:['Removed duplicates','Duplikat yang dihapus', r=>!!r.dup],
+  ta_include:['Included at title/abstract','Disertakan pada judul/abstrak', r=>!r.dup && r.ta.d === 'include'],
+  ta_maybe:['Maybe at title/abstract','Mungkin pada judul/abstrak', r=>!r.dup && r.ta.d === 'maybe'],
+  ta_exclude:['Excluded at title/abstract','Dieksklusi pada judul/abstrak', r=>!r.dup && r.ta.d === 'exclude'],
+  ta_undecided:['Not yet screened','Belum ditapis', r=>!r.dup && !r.ta.d],
+  ft_include:['Final included studies (full text)','Studi final yang diikutkan (teks lengkap)', r=>!r.dup && r.ta.d === 'include' && r.ft.d === 'include'],
+  ft_exclude:['Excluded at full text','Dieksklusi pada teks lengkap', r=>!r.dup && r.ta.d === 'include' && r.ft.d === 'exclude'],
+  ft_nr:['Reports not retrieved','Laporan tidak diperoleh', r=>!r.dup && r.ta.d === 'include' && r.ft.d === 'nr']
+};
+function srDecLabel(d) { return ({ include:'Included', exclude:'Excluded', maybe:'Maybe', nr:'Not retrieved' })[d] || ''; }
+function srFinal(r) {
+  if (r.dup) return 'Duplicate';
+  if (srDual()) {
+    const sa = srStatus(r, 'ta');
+    if (sa === 'conflict') return 'Conflict (title/abstract)';
+    if (sa === 'awaiting' && !r.ta.d) return 'Awaiting reviewers (title/abstract)';
+    if (r.ta.d === 'include') { const sf = srStatus(r, 'ft'); if (sf === 'conflict') return 'Conflict (full text)'; if (sf === 'awaiting' && !r.ft.d) return 'Awaiting reviewers (full text)'; }
+  }
+  if (r.ta.d === 'exclude') return 'Excluded (title/abstract)';
+  if (r.ta.d !== 'include') return r.ta.d === 'maybe' ? 'Maybe (title/abstract)' : 'Not screened';
+  if (r.ft.d === 'include') return 'Included';
+  if (r.ft.d === 'exclude') return 'Excluded (full text)';
+  if (r.ft.d === 'nr') return 'Not retrieved';
+  return r.ft.d === 'maybe' ? 'Maybe (full text)' : 'Awaiting full text';
+}
+function srRows(set) {
+  const fn = SR_SETS[set][2], src = Object.fromEntries(SR.sources.map(s=>[s.id, s]));
+  return SR.records.filter(fn).map(r=>({
+    record_id:r.id, source_database:src[r.src]?.db || '', source_file:src[r.src]?.name || '', title:r.title,
+    authors:r.authors.join('; '), year:r.year || '', journal:r.journal, volume:r.volume, issue:r.issue, pages:r.pages,
+    doi:r.doi, pmid:r.pmid, url:r.url, keywords:r.keywords.join('; '), language:r.lang, type:r.ty, abstract:r.abstract,
+    duplicate_of:r.dup ? r.dup.of : '', duplicate_basis:r.dup ? r.dup.how : '',
+    ta_decision:srDecLabel(r.ta.d), ta_reasons:r.ta.r.join('; '), ta_notes:r.ta.n || '',
+    ft_decision:srDecLabel(r.ft.d), ft_reason:r.ft.r.join('; ') || (r.ft.d === 'exclude' ? 'Reason not recorded' : ''), ft_notes:r.ft.n || '',
+    final_status:srFinal(r),
+    ...srReviewerCols(r)
+  }));
+}
+function srCsvCell(v) { const s = String(v ?? ''); return /[",\n\r;]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
+function srExport(fmt) {
+  const set = SRV.exportSet, rows = srRows(set);
+  if (!rows.length) { alert(tl('No records in this set.','Tidak ada rekaman pada kelompok ini.')); return; }
+  const base = `metalens_screening_${set}_${srStamp()}`;
+  if (fmt === 'csv') {
+    const keys = Object.keys(rows[0]);
+    srDownload(base + '.csv', '\uFEFF' + [keys.join(','), ...rows.map(r=>keys.map(k=>srCsvCell(r[k])).join(','))].join('\r\n'), 'text/csv;charset=utf-8');
+  } else if (fmt === 'xlsx') {
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(rows);
+    ws['!cols'] = Object.keys(rows[0]).map(k=>({ wch: k === 'title' ? 60 : k === 'abstract' ? 80 : 16 }));
+    XLSX.utils.book_append_sheet(wb, ws, 'Records');
+    XLSX.writeFile(wb, base + '.xlsx');
+  } else if (fmt === 'ris') {
+    const fn = SR_SETS[set][2];
+    const out = [];
+    SR.records.filter(fn).forEach(r=>{
+      const L = (t, v)=>{ if (v !== '' && v != null) out.push(`${t}  - ${String(v).replace(/\s*\n\s*/g, ' ')}`); };
+      L('TY', /^[A-Z]{2,6}$/.test(r.ty) ? r.ty : 'JOUR');
+      L('TI', r.title); r.authors.forEach(a=>L('AU', a)); L('PY', r.year); L('T2', r.journal);
+      L('VL', r.volume); L('IS', r.issue);
+      const [sp, ep] = String(r.pages || '').split(/-+/); L('SP', sp); L('EP', ep);
+      L('DO', r.doi); L('AN', r.pmid); L('UR', r.url || (r.doi ? 'https://doi.org/' + r.doi : '')); L('LA', r.lang);
+      r.keywords.forEach(k=>L('KW', k)); L('AB', r.abstract);
+      const note = [`MetaLens #${r.id}`, `Status: ${srFinal(r)}`,
+        r.ta.d ? `Title/abstract: ${srDecLabel(r.ta.d)}${r.ta.r.length ? ' (' + r.ta.r.join('; ') + ')' : ''}` : '',
+        r.ft.d ? `Full text: ${srDecLabel(r.ft.d)}${r.ft.r.length ? ' (' + r.ft.r.join('; ') + ')' : ''}` : '',
+        r.ta.n ? 'TA note: ' + r.ta.n : '', r.ft.n ? 'FT note: ' + r.ft.n : ''].filter(Boolean).join(' | ');
+      L('N1', note);
+      out.push('ER  - ', '');
+    });
+    srDownload(base + '.ris', out.join('\r\n'), 'application/x-research-info-systems');
+  }
+}
+function srExtractionSheet() {
+  const type = document.getElementById('sr-ext-type').value;
+  const inc = SR.records.filter(SR_SETS.ft_include[2]);
+  if (!inc.length) { alert(tl('No studies are included at full-text stage yet.','Belum ada studi yang diikutkan pada tahap teks lengkap.')); return; }
+  const cols = [...IMPORT_COLS[type].required, ...IMPORT_COLS[type].optional, ...state.moderators.map(m=>m.name).filter(Boolean)];
+  const head = [...cols, 'title', 'doi', 'pmid', 'screening_id'];
+  const aoa = [head, ...inc.map(r=>head.map(h=>{
+    if (h === 'author') return srSurname(r.authors[0]) + (r.authors.length > 1 ? ' et al.' : '');
+    if (h === 'year') return r.year || '';
+    if (h === 'title') return r.title; if (h === 'doi') return r.doi; if (h === 'pmid') return r.pmid;
+    if (h === 'screening_id') return r.id;
+    return '';
+  }))];
+  const wb = XLSX.utils.book_new(), ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols'] = head.map(h=>({ wch: h === 'title' ? 60 : Math.max(12, h.length + 3) }));
+  XLSX.utils.book_append_sheet(wb, ws, TYPES[type].slice(0, 28));
+  XLSX.writeFile(wb, `metalens_extraction_${type}_${srStamp()}.xlsx`);
+}
+function srSaveProject() { srDownload(`metalens_screening_project_${srStamp()}.json`, JSON.stringify(SR), 'application/json'); }
+function srLoadProject(file) {
+  if (!file) return;
+  const rd = new FileReader();
+  rd.onload = e=>{
+    try {
+      const v = JSON.parse(e.target.result);
+      if (!v || !Array.isArray(v.records)) throw new Error('not a MetaLens screening project');
+      const same = v.projectId && v.projectId === SR.projectId;
+      if (SR.records.length && !confirm(same
+          ? tl('Update this project from the file? Your own newer decisions are kept.','Perbarui proyek ini dari berkas? Keputusan Anda yang lebih baru tetap disimpan.')
+          : tl('Replace the current screening project with this file?','Ganti proyek penapisan saat ini dengan berkas ini?'))) return;
+      if (same) srMergeOwnDecisions(v);
+      srAdopt(v); srReconcileAll(); srSave(); srRender();
+      if (v.packageFor) srToast(tl(`Reviewer package loaded. You are screening as ${srRvName(v.packageFor)} (blind).`, `Paket reviewer dimuat. Anda menapis sebagai ${srRvName(v.packageFor)} (buta).`));
+      else
+      srToast(tl(`Project loaded: ${SR.records.length} records.`, `Proyek dimuat: ${SR.records.length} rekaman.`));
+    } catch (err) { alert(tl('Could not load project: ','Proyek tidak dapat dimuat: ') + err.message); }
+  };
+  rd.readAsText(file);
+}
+function srReset() {
+  if (!SR.records.length) return;
+  if (!confirm(tl('Delete ALL screening records, decisions and sources? Save a project backup first if you may need them. This cannot be undone.',
+                  'Hapus SEMUA rekaman, keputusan, dan sumber penapisan? Simpan cadangan proyek terlebih dahulu bila mungkin masih diperlukan. Tindakan ini tidak dapat dibatalkan.'))) return;
+  SR = srBlank(); SRV.pending = []; srSave(); srRender();
+}
+function srViewExport() {
+  const counts = Object.fromEntries(Object.entries(SR_SETS).map(([k, v])=>[k, SR.records.filter(v[2]).length]));
+  return `${srSteps()}
+    <div class="grid-2" style="align-items:start">
+      <div class="card">
+        <div class="card-title">⬇️ ${tl('Export records','Ekspor rekaman')}</div>
+        <div class="sr-sets">${Object.entries(SR_SETS).map(([k, v])=>`<label class="sr-set ${SRV.exportSet === k ? 'on' : ''}">
+          <input type="radio" name="sr-set" value="${k}" ${SRV.exportSet === k ? 'checked' : ''} onchange="SRV.exportSet=this.value;srRender()">
+          <span>${tl(v[0], v[1])}</span><b class="mono">${counts[k]}</b></label>`).join('')}</div>
+        <div class="flex gap-2 mt-2" style="flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="srExport('csv')">CSV</button>
+          <button class="btn btn-primary" onclick="srExport('ris')">RIS</button>
+          <button class="btn btn-secondary" onclick="srExport('xlsx')">Excel</button>
+        </div>
+        <p class="text-xs mt-2">${tl('CSV and Excel include every field plus the screening decisions, reasons and notes. RIS imports into Zotero, Mendeley, EndNote, Rayyan or Covidence; decisions are written in the N1 note field.',
+          'CSV dan Excel memuat semua kolom beserta keputusan, alasan, dan catatan penapisan. RIS dapat diimpor ke Zotero, Mendeley, EndNote, Rayyan, atau Covidence; keputusan ditulis pada kolom catatan N1.')}</p>
+      </div>
+      <div>
+        <div class="card">
+          <div class="card-title">🧾 ${tl('Data extraction sheet','Lembar ekstraksi data')}</div>
+          <p class="text-xs mb-2">${tl('Creates an Excel sheet for the final included studies with the columns MetaLens needs. Fill it in, then load it under Import / Add Data.',
+            'Membuat lembar Excel untuk studi final dengan kolom yang dibutuhkan MetaLens. Isi lembar itu, lalu muat melalui Impor / Tambah Data.')}</p>
+          <div class="form-row"><label>${tl('Study type','Tipe studi')}</label><select id="sr-ext-type">${Object.keys(IMPORT_COLS).map(t=>`<option value="${t}">${srEsc(TYPES[t])}</option>`).join('')}</select></div>
+          <button class="btn btn-success" onclick="srExtractionSheet()">⬇️ ${tl('Download sheet','Unduh lembar')} (${counts.ft_include} ${tl('studies','studi')})</button>
+        </div>
+        <div class="card">
+          <div class="card-title">💾 ${tl('Project backup','Cadangan proyek')}</div>
+          <p class="text-xs mb-2">${tl('Screening data is stored in this browser only. Save a backup file to move it to another computer or share it with a co-reviewer.',
+            'Data penapisan hanya tersimpan di peramban ini. Simpan berkas cadangan untuk memindahkannya ke komputer lain atau berbagi dengan peninjau lain.')}</p>
+          <div class="flex gap-2" style="flex-wrap:wrap">
+            <button class="btn btn-secondary" onclick="srSaveProject()">💾 ${tl('Save project (.json)','Simpan proyek (.json)')}</button>
+            <label class="btn btn-secondary" style="margin:0">📂 ${tl('Load project','Muat proyek')}<input type="file" accept=".json,application/json" style="display:none" onchange="srLoadProject(this.files[0])"></label>
+            <button class="btn btn-danger" onclick="srReset()">🗑️ ${tl('Delete all','Hapus semua')}</button>
+          </div>
+          ${srDual() ? `<div class="flex gap-2 mt-2" style="flex-wrap:wrap"><button class="btn btn-primary" onclick="srExportMine()">⬆️ ${tl('Export my decisions','Ekspor keputusan saya')} (${srEsc(srMe().name)})</button>
+            <button class="btn btn-secondary" onclick="showScreen('team')">👥 ${tl('Reviewers & conflicts','Reviewer & konflik')}</button></div>` : ''}
+        </div>
+      </div>
+    </div>`;
+}
+
+/* ── shared UI bits ──────────────────────────────────────────────────── */
+function srToast(msg) {
+  let t = document.getElementById('sr-toast');
+  if (!t) { t = document.createElement('div'); t.id = 'sr-toast'; document.body.appendChild(t); }
+  t.textContent = msg; t.classList.add('on');
+  clearTimeout(t._h); t._h = setTimeout(()=>t.classList.remove('on'), 2600);
+}
+function srUpdateBadges() {
+  const set = (id, v)=>{ const el = document.getElementById(id); if (el) { el.textContent = v || ''; el.style.display = v ? '' : 'none'; } };
+  set('nav-sr-rec', SR.records.length);
+  set('nav-sr-dup', SR.dupPairs.filter(p=>!p.done).length);
+  set('nav-sr-ta', srStats('ta', true).undecided);
+  set('nav-sr-ft', srStats('ft', true).undecided);
+  set('nav-sr-conf', srDual() ? srStageCounts('ta').conflict + srStageCounts('ft').conflict : 0);
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  DUAL-REVIEWER BLIND SCREENING AND CONFLICT RESOLUTION
+// ═══════════════════════════════════════════════════════════════════════
+function srNewRid() { return 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+const SR_DEC_SHORT = d => ({ include:'✓ ' + tl('Include','Sertakan'), exclude:'✕ ' + tl('Exclude','Eksklusi'),
+  maybe:'? ' + tl('Maybe','Mungkin'), nr:'⌀ ' + tl('Not retrieved','Tidak diperoleh') })[d] || '—';
+
+function srDualEnable(on) {
+  if (on) {
+    if (!SR.reviewers.length) {
+      SR.reviewers = [{ id:srNewRid(), name:tl('Reviewer 1','Reviewer 1') }, { id:srNewRid(), name:tl('Reviewer 2','Reviewer 2') }];
+    } else if (SR.reviewers.length < 2) SR.reviewers.push({ id:srNewRid(), name:tl('Reviewer 2','Reviewer 2') });
+    if (!SR.reviewers.some(x=>x.id === SR.me)) SR.me = SR.reviewers[0].id;
+    const me = srMe();
+    /* decisions made in single-reviewer mode that this reviewer has not
+       recorded yet are kept as this reviewer's decisions */
+    const copy = [];
+    SR.records.forEach(r=>['ta','ft'].forEach(st=>{
+      const mine = srRv(r, me.id, st, false);
+      if (r[st].d && !r[st].res && !(mine && mine.d)) copy.push([r, st]);
+    }));
+    if (copy.length) {
+      if (!confirm(tl(`${copy.length} existing decisions will be kept as the decisions of "${me.name}" and become final only after the other reviewer agrees. Continue?`,
+                      `${copy.length} keputusan yang ada akan disimpan sebagai keputusan "${me.name}" dan baru menjadi final setelah reviewer lain setuju. Lanjutkan?`))) { srRender(); return; }
+      copy.forEach(([r, st])=>{ srRv(r, me.id, st, true); r.rv[me.id][st] = { d:r[st].d, r:r[st].r.slice(), n:r[st].n || '', t:r[st].t || new Date().toISOString() }; });
+    }
+    SR.dual.on = true;
+    srReconcileAll();
+  } else {
+    if (!confirm(tl('Switch back to single-reviewer screening? Final decisions are kept; records without a final decision take the decision of the reviewer selected on this computer. Reviewer decisions stay stored and return if you switch dual screening on again.',
+                    'Kembali ke penapisan satu reviewer? Keputusan final tetap disimpan; rekaman tanpa keputusan final memakai keputusan reviewer yang dipilih di komputer ini. Keputusan tiap reviewer tetap tersimpan dan kembali bila penapisan ganda diaktifkan lagi.'))) { srRender(); return; }
+    const me = srMe();
+    SR.records.forEach(r=>['ta','ft'].forEach(st=>{
+      const mine = me && srRv(r, me.id, st, false);
+      if (!r[st].d && mine && mine.d) r[st] = { d:mine.d, r:mine.r.slice(), n:mine.n || '', t:mine.t };
+    }));
+    SR.dual.on = false;
+  }
+  srSave(); srRender();
+}
+function srAddReviewer() {
+  SR.reviewers.push({ id:srNewRid(), name:tl('Reviewer ','Reviewer ') + (SR.reviewers.length + 1) });
+  srReconcileAll(); srSave(); srRender();
+}
+function srRenameReviewer(id, name) {
+  const x = SR.reviewers.find(v=>v.id === id); if (x) { x.name = name.trim() || x.name; srSave(); srUpdateBadges(); }
+}
+function srRemoveReviewer(id) {
+  const n = SR.records.filter(r=>r.rv && r.rv[id] && (r.rv[id].ta?.d || r.rv[id].ft?.d)).length;
+  if (SR.reviewers.length <= 2) { alert(tl('Dual screening needs at least two reviewers.','Penapisan ganda membutuhkan minimal dua reviewer.')); return; }
+  if (!confirm(tl(`Remove ${srRvName(id)}${n ? ` and their ${n} decisions` : ''}?`, `Hapus ${srRvName(id)}${n ? ` beserta ${n} keputusannya` : ''}?`))) return;
+  SR.reviewers = SR.reviewers.filter(v=>v.id !== id);
+  SR.records.forEach(r=>{ if (r.rv) delete r.rv[id]; });
+  if (SR.me === id) SR.me = SR.reviewers[0].id;
+  srReconcileAll(); srSave(); srRender();
+}
+function srSetMe(id) { SR.me = id; SRV.sel.clear(); SRV.cur = { ta:null, ft:null }; SRV.sticky = { ta:null, ft:null }; srSave(); srRender(); }
+function srSetBlind(on) {
+  if (!on && !confirm(tl('Turn blinding off? Everyone using this computer will see all reviewers\' decisions. Do this only when screening is finished and conflicts are to be resolved.',
+                          'Matikan mode buta? Semua pengguna komputer ini akan melihat keputusan semua reviewer. Lakukan hanya bila penapisan selesai dan konflik akan diselesaikan.'))) { srRender(); return; }
+  SR.dual.blind = on; srSave(); srRender();
+}
+
+/* bar above the screening list */
+function srReviewerBar(stage) {
+  if (!srDual()) return '';
+  const me = srMe();
+  const sc = srStageCounts(stage);
+  return `<div class="sr-rvbar">
+    <span>👤 ${tl('Screening as','Menapis sebagai')}</span>
+    <select onchange="srSetMe(this.value)">${SR.reviewers.map(v=>`<option value="${v.id}" ${v.id === me.id ? 'selected' : ''}>${srEsc(v.name)}</option>`).join('')}</select>
+    ${SR.dual.blind ? `<span class="tag tag-purple">🙈 ${tl('Blind — other reviewers hidden','Buta — reviewer lain disembunyikan')}</span>`
+      : `<span class="tag tag-yellow">👁️ ${tl('Unblinded','Tidak buta')}</span>`}
+    <span class="spacer"></span>
+    ${SR.dual.blind ? '' : `<span class="text-xs">${tl('Agreed','Sepakat')} ${sc.agreed + sc.resolved} · ${tl('conflicts','konflik')} ${sc.conflict} · ${tl('awaiting','menunggu')} ${sc.awaiting}</span>`}
+    <button class="btn btn-secondary btn-sm" onclick="showScreen('team')">👥 ${tl('Reviewers & conflicts','Reviewer & konflik')}</button>
+  </div>`;
+}
+/* other reviewers' decisions on the open record (only when unblinded) */
+function srOthersBox(r, stage) {
+  if (!srDual() || SR.dual.blind) return '';
+  const st = srStatus(r, stage);
+  const label = { agreed:tl('Agreed','Sepakat'), resolved:tl('Resolved','Diselesaikan'), conflict:tl('Conflict','Konflik'), awaiting:tl('Awaiting','Menunggu') }[st];
+  const cls = { agreed:'tag-green', resolved:'tag-blue', conflict:'tag-red', awaiting:'tag-gray' }[st];
+  return `<div class="sr-others"><span class="tag ${cls}">${label}</span>
+    ${SR.reviewers.filter(v=>v.id !== SR.me).map(v=>{ const d = srRv(r, v.id, stage, false);
+      return `<span class="sr-other"><b>${srEsc(v.name)}:</b> ${d && d.d ? SR_DEC_SHORT(d.d) : '—'}${d && d.r && d.r.length ? ' <small>(' + srEsc(d.r.map(srReasonLabel).join('; ')) + ')</small>' : ''}</span>`; }).join('')}
+    ${r[stage].res ? `<span class="sr-other"><b>${tl('Final','Final')}:</b> ${SR_DEC_SHORT(r[stage].d)}</span>` : ''}
+  </div>`;
+}
+function srReviewerCols(r) {
+  const o = {};
+  if (!SR.reviewers.length) return o;
+  SR.reviewers.forEach(v=>{
+    const a = srRv(r, v.id, 'ta', false), b = srRv(r, v.id, 'ft', false);
+    const k = v.name.replace(/[^\p{L}\p{N}]+/gu, '_');
+    o['ta_' + k] = a && a.d ? srDecLabel(a.d) + (a.r.length ? ' (' + a.r.join('; ') + ')' : '') : '';
+    o['ft_' + k] = b && b.d ? srDecLabel(b.d) + (b.r.length ? ' (' + b.r.join('; ') + ')' : '') : '';
+  });
+  o.ta_agreement = srDual() && !r.dup ? srStatus(r, 'ta') : '';
+  o.ft_agreement = srDual() && !r.dup && r.ta.d === 'include' ? srStatus(r, 'ft') : '';
+  o.ta_resolved_by = r.ta.res ? (r.ta.by || '') : '';
+  o.ft_resolved_by = r.ft.res ? (r.ft.by || '') : '';
+  return o;
+}
+
+/* ── agreement statistics ────────────────────────────────────────────── */
+function srAgreement(stage) {
+  const rv = SR.reviewers, pool = srPool(stage);
+  const rows = pool.map(r=>rv.map(v=>{ const d = srRv(r, v.id, stage, false); return d && d.d ? d.d : null; })).filter(x=>x.every(Boolean));
+  const n = rows.length;
+  const out = { n, agree:rows.filter(x=>x.every(d=>d === x[0])).length, kappa:null, method:rv.length === 2 ? "Cohen's κ" : "Fleiss' κ" };
+  out.pct = n ? out.agree / n : null;
+  if (n < 2) return out;
+  const cats = [...new Set(rows.flat())];
+  if (rv.length === 2) {
+    let pe = 0;
+    cats.forEach(c=>{ pe += (rows.filter(x=>x[0] === c).length / n) * (rows.filter(x=>x[1] === c).length / n); });
+    out.kappa = pe < 1 ? (out.pct - pe) / (1 - pe) : 1;
+  } else {
+    const m = rv.length;
+    const P = rows.map(x=>{ const cnt = cats.map(c=>x.filter(d=>d === c).length); return (cnt.reduce((s, k)=>s + k * (k - 1), 0)) / (m * (m - 1)); });
+    const Pbar = P.reduce((a, b)=>a + b, 0) / n;
+    const pj = cats.map(c=>rows.reduce((s, x)=>s + x.filter(d=>d === c).length, 0) / (n * m));
+    const Pe = pj.reduce((s, p)=>s + p * p, 0);
+    out.kappa = Pe < 1 ? (Pbar - Pe) / (1 - Pe) : 1;
+  }
+  return out;
+}
+function srKappaLabel(k) {
+  if (k == null) return '';
+  const t = k < 0 ? ['poor','buruk'] : k <= 0.2 ? ['slight','sangat lemah'] : k <= 0.4 ? ['fair','lemah'] : k <= 0.6 ? ['moderate','sedang']
+          : k <= 0.8 ? ['substantial','kuat'] : ['almost perfect','hampir sempurna'];
+  return tl(t[0], t[1]);
+}
+function srFmtPct(p) { return p == null ? '—' : (100 * p).toFixed(1) + '%'; }
+
+/* ── conflict resolution ─────────────────────────────────────────────── */
+function srResolve(id, stage, d) {
+  const r = srRec(id); if (!r) return;
+  let reason = [];
+  if (d === 'exclude' && stage === 'ft') {
+    const sel = document.getElementById('sr-res-reason-' + id);
+    const v = sel ? sel.value : '';
+    if (!v) { alert(tl('Choose the exclusion reason first.','Pilih alasan eksklusi terlebih dahulu.')); return; }
+    reason = [v];
+  } else if (d === 'exclude') {
+    reason = [...new Set(SR.reviewers.flatMap(v=>{ const x = srRv(r, v.id, stage, false); return x && x.d === 'exclude' ? x.r : []; }))];
+  }
+  const note = (document.getElementById('sr-res-note-' + id) || {}).value || '';
+  r[stage] = { d, r:reason, n:note, res:true, by:(srMe() || {}).name || '', t:new Date().toISOString() };
+  srSave(); srRender();
+}
+function srReopen(id, stage) {
+  const r = srRec(id); if (!r) return;
+  r[stage] = { d:null, r:[], n:'' }; srReconcile(r, stage); srSave(); srRender();
+}
+
+/* ── collaboration across computers ──────────────────────────────────── */
+function srStageComplete(stage) { const c = srStageCounts(stage); return !c.awaiting && !c.conflict; }
+function srPackage(rid) {
+  const v = JSON.parse(JSON.stringify(SR));
+  const who = SR.reviewers.find(x=>x.id === rid);
+  v.me = rid; v.dual.on = true; v.dual.blind = true; v.packageFor = rid; v.packagedAt = new Date().toISOString();
+  v.records.forEach(r=>{ if (r.rv) r.rv = r.rv[rid] ? { [rid]:r.rv[rid] } : {}; });
+  /* final decisions would reveal how others voted; only a finished stage is passed on */
+  ['ta','ft'].forEach(st=>{ if (!srStageComplete(st)) v.records.forEach(r=>{ r[st] = { d:null, r:[], n:'' }; }); });
+  srDownload(`metalens_review_${who.name.replace(/[^\p{L}\p{N}]+/gu, '_')}_${srStamp()}.json`, JSON.stringify(v), 'application/json');
+}
+function srExportMine() {
+  const me = srMe(); if (!me) return;
+  const dec = {};
+  SR.records.forEach(r=>{
+    const a = srRv(r, me.id, 'ta', false), b = srRv(r, me.id, 'ft', false);
+    if ((a && a.d) || (b && b.d) || (a && a.n) || (b && b.n)) dec[r.id] = { ti:srNormTitle(r.title).slice(0, 80), ta:a || undefined, ft:b || undefined };
+  });
+  const n = Object.keys(dec).length;
+  if (!n) { alert(tl('You have not made any decisions yet.','Anda belum membuat keputusan.')); return; }
+  srDownload(`metalens_decisions_${me.name.replace(/[^\p{L}\p{N}]+/gu, '_')}_${srStamp()}.json`,
+    JSON.stringify({ type:'metalens-decisions', version:1, projectId:SR.projectId, reviewer:me, exportedAt:new Date().toISOString(), decisions:dec }), 'application/json');
+  srToast(tl(`${n} decisions exported.`, `${n} keputusan diekspor.`));
+}
+function srImportDecisions(files) {
+  const list = [...files]; let done = 0; const report = [];
+  list.forEach(file=>{
+    const rd = new FileReader();
+    rd.onload = e=>{
+      try {
+        const v = JSON.parse(e.target.result);
+        if (!v || v.type !== 'metalens-decisions') throw new Error(tl('not a MetaLens decision file','bukan berkas keputusan MetaLens'));
+        if (v.projectId !== SR.projectId && !confirm(tl(`"${file.name}" comes from a different project. Match records by ID and title anyway?`, `"${file.name}" berasal dari proyek lain. Tetap cocokkan rekaman berdasarkan ID dan judul?`))) { report.push(file.name + ': ' + tl('skipped','dilewati')); return; }
+        let rv = SR.reviewers.find(x=>x.id === v.reviewer.id) || SR.reviewers.find(x=>x.name === v.reviewer.name);
+        if (!rv) { rv = { id:v.reviewer.id, name:v.reviewer.name }; SR.reviewers.push(rv); }
+        let ok = 0, miss = 0, newer = 0;
+        Object.entries(v.decisions).forEach(([id, d])=>{
+          const r = srRec(+id);
+          if (!r || (d.ti && srNormTitle(r.title).slice(0, 80) !== d.ti)) { miss++; return; }
+          ['ta','ft'].forEach(st=>{
+            if (!d[st]) return;
+            const cur = srRv(r, rv.id, st, false);
+            if (!cur || !cur.t || !d[st].t || d[st].t >= cur.t) { srRv(r, rv.id, st, true); r.rv[rv.id][st] = d[st]; newer++; }
+          });
+          ok++;
+        });
+        report.push(`${rv.name}: ${ok} ${tl('records','rekaman')}${miss ? `, ${miss} ${tl('not matched','tidak cocok')}` : ''}`);
+      } catch (err) { report.push(file.name + ': ' + err.message); }
+      finally {
+        if (++done === list.length) {
+          if (!SR.dual.on && SR.reviewers.length >= 2) SR.dual.on = true;
+          srReconcileAll(); srSave(); srRender();
+          alert(tl('Decisions imported:\n','Keputusan diimpor:\n') + report.join('\n'));
+        }
+      }
+    };
+    rd.readAsText(file);
+  });
+}
+
+/* ── team / conflicts view ───────────────────────────────────────────── */
+function srViewTeam() {
+  if (!SR.records.length) return srSteps() + srEmpty(tl('Import records first.','Impor rekaman terlebih dahulu.'), 'records');
+  const dual = srDual();
+  const setup = `<div class="card">
+    <div class="card-title">👥 ${tl('Dual-reviewer screening','Penapisan oleh dua reviewer')}</div>
+    <label class="pr-check" style="font-size:15px"><input type="checkbox" ${dual ? 'checked' : ''} onchange="srDualEnable(this.checked)">
+      <span><strong>${tl('Two or more reviewers screen every record independently','Dua reviewer atau lebih menapis setiap rekaman secara independen')}</strong><br>
+      <span class="text-xs">${tl('A decision becomes final only when all reviewers agree or a conflict is resolved. Only final decisions move records to full text and into PRISMA.',
+        'Keputusan menjadi final hanya bila semua reviewer sepakat atau konflik telah diselesaikan. Hanya keputusan final yang membawa rekaman ke teks lengkap dan ke PRISMA.')}</span></span></label>
+    ${dual ? `
+    <label class="pr-check"><input type="checkbox" ${SR.dual.blind ? 'checked' : ''} onchange="srSetBlind(this.checked)">
+      <span>🙈 <strong>${tl('Blind mode','Mode buta')}</strong> — ${tl('reviewers cannot see each other\'s decisions; conflicts are hidden until blinding is turned off','reviewer tidak dapat melihat keputusan reviewer lain; konflik disembunyikan sampai mode buta dimatikan')}</span></label>
+    <div class="table-wrap mt-2"><table><thead><tr><th>${tl('Reviewer','Reviewer')}</th><th>${tl('This computer','Komputer ini')}</th><th>${tl('Title/abstract','Judul/abstrak')}</th><th>${tl('Full text','Teks lengkap')}</th><th></th></tr></thead><tbody>
+      ${SR.reviewers.map(v=>{
+        const ta = srPool('ta'), ft = srPool('ft');
+        const nt = ta.filter(r=>{ const d = srRv(r, v.id, 'ta', false); return d && d.d; }).length;
+        const nf = ft.filter(r=>{ const d = srRv(r, v.id, 'ft', false); return d && d.d; }).length;
+        return `<tr><td><input value="${srEsc(v.name)}" onchange="srRenameReviewer('${v.id}', this.value)" style="min-width:140px"></td>
+          <td><label class="pr-check" style="margin:0"><input type="radio" name="sr-me" ${v.id === SR.me ? 'checked' : ''} onchange="srSetMe('${v.id}')"> ${v.id === SR.me ? tl('screening here','menapis di sini') : ''}</label></td>
+          <td class="mono">${nt} / ${ta.length}</td><td class="mono">${nf} / ${ft.length}</td>
+          <td class="flex gap-2"><button class="btn btn-secondary btn-sm" onclick="srPackage('${v.id}')" title="${tl('Project file for this reviewer, blinded','Berkas proyek untuk reviewer ini, dalam mode buta')}">📦 ${tl('Package','Paket')}</button>
+            <button class="btn btn-danger btn-sm" onclick="srRemoveReviewer('${v.id}')">✕</button></td></tr>`;
+      }).join('')}
+    </tbody></table></div>
+    <button class="btn btn-secondary btn-sm mt-2" onclick="srAddReviewer()">+ ${tl('Add reviewer','Tambah reviewer')}</button>` : ''}
+  </div>`;
+  if (!dual) return srSteps() + setup + srTeamHowTo();
+
+  const collab = `<div class="card">
+    <div class="card-title">🔁 ${tl('Reviewers on separate computers','Reviewer di komputer berbeda')}</div>
+    <ol class="sr-howto">
+      <li>${tl('Lead reviewer: click <b>📦 Package</b> for each reviewer and send them the file.','Reviewer utama: klik <b>📦 Paket</b> untuk tiap reviewer lalu kirimkan berkasnya.')}</li>
+      <li>${tl('Each reviewer opens MetaLens → Export Records → <b>Load project</b>, screens, then clicks <b>Export my decisions</b> and sends that file back.','Tiap reviewer membuka MetaLens → Ekspor Rekaman → <b>Muat proyek</b>, menapis, lalu klik <b>Ekspor keputusan saya</b> dan mengirim berkas itu kembali.')}</li>
+      <li>${tl('Lead reviewer: <b>Import decisions</b> below, turn blinding off and resolve conflicts. Send new packages for the full-text round.','Reviewer utama: <b>Impor keputusan</b> di bawah, matikan mode buta, lalu selesaikan konflik. Kirim paket baru untuk putaran teks lengkap.')}</li>
+    </ol>
+    <div class="flex gap-2" style="flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="srExportMine()">⬆️ ${tl('Export my decisions','Ekspor keputusan saya')} (${srEsc(srMe().name)})</button>
+      <label class="btn btn-secondary" style="margin:0">⬇️ ${tl('Import decisions','Impor keputusan')}<input type="file" multiple accept=".json,application/json" style="display:none" onchange="srImportDecisions(this.files)"></label>
+    </div>
+  </div>`;
+
+  const stage = SRV.confStage || 'ta';
+  const ag = srAgreement(stage), sc = srStageCounts(stage);
+  const agree = `<div class="grid-4 mb-2">
+      <div class="stat-box"><div class="val">${sc.agreed + sc.resolved}</div><div class="lbl">${tl('Final decisions','Keputusan final')}</div><div class="sub">${sc.agreed} ${tl('agreed','sepakat')} · ${sc.resolved} ${tl('resolved','diselesaikan')}</div></div>
+      <div class="stat-box"><div class="val" style="color:var(--danger)">${sc.conflict}</div><div class="lbl">${tl('Open conflicts','Konflik terbuka')}</div></div>
+      <div class="stat-box"><div class="val" style="color:var(--text3)">${sc.awaiting}</div><div class="lbl">${tl('Awaiting a reviewer','Menunggu reviewer')}</div></div>
+      <div class="stat-box"><div class="val">${ag.kappa == null ? '—' : ag.kappa.toFixed(2)}</div><div class="lbl">${ag.method}</div>
+        <div class="sub">${srFmtPct(ag.pct)} ${tl('agreement','kesepakatan')} · n = ${ag.n}${ag.kappa != null ? ' · ' + srKappaLabel(ag.kappa) : ''}</div></div>
+    </div>`;
+  const tabs = `<div class="tabs">
+    <div class="tab ${stage === 'ta' ? 'active' : ''}" onclick="SRV.confStage='ta';srRender()">📝 ${tl('Title / abstract','Judul / abstrak')} (${srStageCounts('ta').conflict})</div>
+    <div class="tab ${stage === 'ft' ? 'active' : ''}" onclick="SRV.confStage='ft';srRender()">📄 ${tl('Full text','Teks lengkap')} (${srStageCounts('ft').conflict})</div></div>`;
+  let body;
+  if (SR.dual.blind) {
+    body = `<div class="notice notice-info"><span>🙈</span><div>${tl('Blind mode is on, so decisions and conflicts are hidden. Turn it off when all reviewers have finished this stage.','Mode buta aktif, sehingga keputusan dan konflik disembunyikan. Matikan setelah semua reviewer menyelesaikan tahap ini.')}
+      <button class="btn btn-secondary btn-sm" style="margin-left:8px" onclick="srSetBlind(false)">👁️ ${tl('Unblind and show conflicts','Buka mode buta dan tampilkan konflik')}</button></div></div>`;
+  } else {
+    const show = SRV.confShow || 'open';
+    const pool = srPool(stage).filter(r=>{ const s = srStatus(r, stage); return show === 'open' ? s === 'conflict' : show === 'resolved' ? s === 'resolved' : s !== 'awaiting'; });
+    const reasons = stage === 'ta' ? SR.settings.reasonsTA : SR.settings.reasonsFT;
+    body = `<div class="sr-chips" style="justify-content:flex-start;margin-bottom:10px">
+        ${[['open', tl('Open conflicts','Konflik terbuka')], ['resolved', tl('Resolved','Diselesaikan')], ['all', tl('All decided','Semua yang diputuskan')]].map(([k, l])=>`<button class="sr-chip ${show === k ? 'on' : ''}" onclick="SRV.confShow='${k}';srRender()">${l}</button>`).join('')}
+      </div>` + (pool.length ? pool.slice(0, 100).map(r=>{
+        const s = srStatus(r, stage), fin = r[stage];
+        return `<div class="sr-conf ${s}">
+          <div class="sr-conf-title">${srEsc(r.title)}</div>
+          <div class="sr-meta">${srEsc(srShort(r))}${r.journal ? ' · <em>' + srEsc(r.journal) + '</em>' : ''} <span class="text-xs">#${r.id}</span>
+            ${r.doi ? ` · <a href="https://doi.org/${encodeURI(r.doi)}" target="_blank" rel="noopener">DOI ↗</a>` : ''}</div>
+          ${r.abstract ? `<details class="mt-2"><summary class="text-xs" style="cursor:pointer">${tl('Abstract','Abstrak')}</summary><div class="sr-mini-ab">${srHighlight(r.abstract)}</div></details>` : ''}
+          <div class="sr-conf-votes">${SR.reviewers.map(v=>{ const d = srRv(r, v.id, stage, false);
+            return `<div class="sr-vote sr-vote-${d && d.d || 'none'}"><b>${srEsc(v.name)}</b><span>${d && d.d ? SR_DEC_SHORT(d.d) : '—'}</span>
+              ${d && d.r && d.r.length ? `<small>${srEsc(d.r.map(srReasonLabel).join('; '))}</small>` : ''}${d && d.n ? `<small>📝 ${srEsc(d.n)}</small>` : ''}</div>`; }).join('')}</div>
+          ${s === 'resolved' ? `<div class="sr-conf-final">✅ ${tl('Final','Final')}: <b>${SR_DEC_SHORT(fin.d)}</b>${fin.r.length ? ' (' + srEsc(fin.r.map(srReasonLabel).join('; ')) + ')' : ''}
+              <span class="text-xs">${tl('by','oleh')} ${srEsc(fin.by || '')}${fin.n ? ' — ' + srEsc(fin.n) : ''}</span>
+              <button class="btn btn-secondary btn-sm" onclick="srReopen(${r.id},'${stage}')">↺ ${tl('Reopen','Buka kembali')}</button></div>`
+            : s === 'agreed' ? `<div class="sr-conf-final">🤝 ${tl('Agreed','Sepakat')}: <b>${SR_DEC_SHORT(fin.d)}</b></div>`
+            : `<div class="sr-conf-act">
+              <input id="sr-res-note-${r.id}" placeholder="${tl('Resolution note (optional), e.g. discussed / third reviewer','Catatan penyelesaian (opsional), mis. diskusi / reviewer ketiga')}">
+              <button class="btn btn-success btn-sm" onclick="srResolve(${r.id},'${stage}','include')">✓ ${tl('Include','Sertakan')}</button>
+              ${stage === 'ft' ? `<select id="sr-res-reason-${r.id}"><option value="">${tl('Exclusion reason…','Alasan eksklusi…')}</option>${reasons.map(x=>`<option value="${srEsc(x)}">${srEsc(srReasonLabel(x))}</option>`).join('')}</select>` : ''}
+              <button class="btn btn-danger btn-sm" onclick="srResolve(${r.id},'${stage}','exclude')">✕ ${tl('Exclude','Eksklusi')}</button>
+              ${stage === 'ft' ? `<button class="btn btn-secondary btn-sm" onclick="srResolve(${r.id},'ft','nr')">⌀ ${tl('Not retrieved','Tidak diperoleh')}</button>` : ''}
+            </div>`}
+        </div>`;
+      }).join('') + (pool.length > 100 ? `<p class="text-xs">${tl('Showing 100 of','Menampilkan 100 dari')} ${pool.length}</p>` : '')
+      : `<div class="notice notice-success"><span>✅</span><div>${show === 'open' ? tl('No open conflicts at this stage.','Tidak ada konflik terbuka pada tahap ini.') : tl('Nothing to show.','Tidak ada yang ditampilkan.')}</div></div>`);
+  }
+  return srSteps() + setup + collab + `<div class="card"><div class="card-title">⚖️ ${tl('Agreement and conflicts','Kesepakatan dan konflik')}</div>${tabs}${agree}${body}</div>`;
+}
+function srTeamHowTo() {
+  return `<div class="card"><div class="card-title">ℹ️ ${tl('How dual screening works','Cara kerja penapisan ganda')}</div>
+    <ol class="sr-howto">
+      <li>${tl('Switch dual screening on and name the reviewers.','Aktifkan penapisan ganda dan beri nama reviewer.')}</li>
+      <li>${tl('Each reviewer screens blind, either on this computer (choose "Screening as") or on their own computer using a reviewer package.','Tiap reviewer menapis dalam mode buta, di komputer ini (pilih "Menapis sebagai") atau di komputer masing-masing memakai paket reviewer.')}</li>
+      <li>${tl('Records where everyone agrees become final automatically. Disagreements and "maybe" decisions appear as conflicts for the lead reviewer to resolve.','Rekaman yang disepakati semua reviewer otomatis menjadi final. Perbedaan dan keputusan "mungkin" muncul sebagai konflik yang diselesaikan reviewer utama.')}</li>
+      <li>${tl('Agreement (Cohen\'s κ for two reviewers, Fleiss\' κ for more) is reported here and in the PRISMA methods text.','Kesepakatan (κ Cohen untuk dua reviewer, κ Fleiss untuk lebih) dilaporkan di sini dan pada teks metode PRISMA.')}</li>
+    </ol></div>`;
+}
+
+/* loading a reviewer package on the reviewer's computer keeps any newer
+   local decisions of that reviewer */
+function srMergeOwnDecisions(incoming) {
+  if (!incoming || incoming.projectId !== SR.projectId) return;
+  const me = incoming.me; if (!me) return;
+  const local = new Map(SR.records.map(r=>[r.id, r]));
+  incoming.records.forEach(r=>{
+    const l = local.get(r.id); if (!l || !l.rv || !l.rv[me]) return;
+    ['ta','ft'].forEach(st=>{
+      const a = l.rv[me][st], b = r.rv && r.rv[me] && r.rv[me][st];
+      if (a && a.t && (!b || !b.t || a.t > b.t)) { r.rv = r.rv || {}; r.rv[me] = r.rv[me] || {}; r.rv[me][st] = a; }
+    });
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  PRISMA 2020 FLOW DIAGRAM
+// ═══════════════════════════════════════════════════════════════════════
+/* Counts come from the screening module; every number can be overridden,
+   so the diagram also works for reviews screened in another tool.        */
+const PR_FIELDS = ['registers','dupRemoved','autoRemoved','otherRemoved','screened','taExcluded','sought','notRetrieved',
+  'assessed','included','reportsIncluded','metaIncluded','oWebsites','oOrgs','oCitation','oSought','oNotRetrieved','oAssessed','oIncluded'];
+
+function prAuto() {
+  const src = Object.fromEntries(SR.sources.map(s=>[s.id, s]));
+  const dbs = {}; let registers = 0;
+  SR.records.forEach(r=>{
+    const s = src[r.src];
+    if (s && s.kind === 'register') registers++;
+    else { const n = (s && s.db) || 'Other'; dbs[n] = (dbs[n] || 0) + 1; }
+  });
+  const live = srLive();
+  const ta = srStats('ta'), ft = srStats('ft');
+  const reasons = {};
+  live.forEach(r=>{ if (r.ta.d === 'include' && r.ft.d === 'exclude') { const k = r.ft.r[0] || 'Reason not recorded'; reasons[k] = (reasons[k] || 0) + 1; } });
+  return { dbs, registers, dupRemoved:SR.records.length - live.length, autoRemoved:0, otherRemoved:0,
+    screened:live.length, taExcluded:ta.exclude, sought:ta.include, notRetrieved:ft.nr, assessed:ft.total - ft.nr,
+    reasons, included:ft.include, reportsIncluded:ft.include, metaIncluded:'',
+    oWebsites:'', oOrgs:'', oCitation:'', oSought:'', oNotRetrieved:'', oAssessed:'', oIncluded:'',
+    warn:{ taUndecided:srDual() ? 0 : ta.undecided, taMaybe:ta.maybe, ftUndecided:srDual() ? 0 : ft.undecided, ftMaybe:ft.maybe,
+      ftNoReason:live.filter(r=>r.ta.d === 'include' && r.ft.d === 'exclude' && !r.ft.r.length).length,
+      dual:srDual() ? { ta:srStageCounts('ta'), ft:srStageCounts('ft') } : null } };
+}
+function prParseLines(txt) {
+  const out = [];
+  String(txt || '').split('\n').forEach(l=>{
+    const m = l.match(/^\s*(.+?)\s*[:=]\s*(\d+)\s*$/);
+    if (m) out.push([m[1], +m[2]]);
+  });
+  return out;
+}
+function prValues() {
+  const a = prAuto(), o = SR.prisma.v || {};
+  const v = {};
+  PR_FIELDS.forEach(k=>{ v[k] = (o[k] !== undefined && o[k] !== '') ? +o[k] : a[k]; });
+  v.dbList = (o.dbText !== undefined && o.dbText !== '') ? prParseLines(o.dbText) : Object.entries(a.dbs).sort((x,y)=>y[1]-x[1]);
+  v.dbTotal = (o.dbTotal !== undefined && o.dbTotal !== '') ? +o.dbTotal : v.dbList.reduce((s,x)=>s + x[1], 0);
+  v.reasons = (o.reasonsText !== undefined && o.reasonsText !== '') ? prParseLines(o.reasonsText)
+    : Object.entries(a.reasons).sort((x,y)=>y[1]-x[1]).map(([k,n])=>[srReasonLabel(k), n]);
+  v.oReasons = prParseLines(o.oReasonsText || '');
+  v.warn = a.warn;
+  return v;
+}
+function prSet(k, val) { SR.prisma.v[k] = val; srSave(); prDraw(); }
+function prOpt(k, on) { SR.prisma[k] = on; srSave(); renderPrisma(); }
+function prOverrides() { return Object.entries(SR.prisma.v || {}).filter(([k, x])=>x !== '' && x != null).length; }
+function prReset() {
+  if (prOverrides() && !confirm(tl('Clear all manual numbers and use the counts from screening?','Hapus semua angka manual dan gunakan hitungan dari penapisan?'))) return;
+  SR.prisma.v = {}; srSave(); renderPrisma();
+  srToast(tl('All counts now come from the screening results.','Semua angka kini diambil dari hasil penapisan.'));
+}
+
+/* text measurement for wrapping inside SVG boxes */
+let prCtx = null;
+function prMeasure(text, bold) {
+  if (!prCtx) prCtx = document.createElement('canvas').getContext('2d');
+  prCtx.font = (bold ? 'bold ' : '') + '13px Arial, Helvetica, sans-serif';
+  return prCtx.measureText(text).width;
+}
+function prWrap(text, width, bold) {
+  const words = String(text).split(/\s+/), lines = [];
+  let cur = '';
+  words.forEach(w=>{
+    const t = cur ? cur + ' ' + w : w;
+    if (prMeasure(t, bold) <= width || !cur) cur = t; else { lines.push(cur); cur = w; }
+  });
+  if (cur) lines.push(cur);
+  return lines;
+}
+/* a box = list of {t, b(old), i(ndent)} lines, wrapped to the box width */
+function prBox(lines, w) {
+  const PAD = 10, LH = 17, out = [];
+  lines.forEach(l=>{
+    if (l.gap) { out.push({ gap:true }); return; }
+    prWrap(l.t, w - 2 * PAD - (l.i || 0), l.b).forEach((t, k)=>out.push({ t, b:l.b, i:(l.i || 0) + (k ? 8 : 0) }));
+  });
+  const h = 2 * PAD + out.reduce((s, l)=>s + (l.gap ? 7 : LH), 0);
+  return { lines:out, w, h };
+}
+function prBoxSvg(b, x, y, opt) {
+  opt = opt || {};
+  const PAD = 10, LH = 17;
+  let s = `<rect x="${x}" y="${y}" width="${b.w}" height="${b.h}" rx="${opt.rx || 3}" fill="${opt.fill || '#ffffff'}" stroke="${opt.stroke || '#1f2937'}" stroke-width="1.3"/>`;
+  let cy = y + PAD;
+  b.lines.forEach(l=>{
+    if (l.gap) { cy += 7; return; }
+    cy += LH;
+    const tx = opt.center ? x + b.w / 2 : x + PAD + (l.i || 0);
+    s += `<text x="${tx}" y="${cy - 4.5}" ${opt.center ? 'text-anchor="middle"' : ''} font-weight="${l.b ? 'bold' : 'normal'}">${srEsc(l.t)}</text>`;
+  });
+  return s;
+}
+function prN(v) { return (v === '' || v == null || isNaN(v)) ? '(n = )' : `(n = ${v})`; }
+function prLabels() {
+  return {
+    hdrA: tl('Identification of studies via databases and registers','Identifikasi studi melalui basis data dan registri'),
+    hdrB: tl('Identification of studies via other methods','Identifikasi studi melalui metode lain'),
+    ph: [tl('Identification','Identifikasi'), tl('Screening','Penapisan'), tl('Included','Diikutkan')],
+    idFrom: tl('Records identified from*:','Rekaman teridentifikasi dari*:'), dbs: tl('Databases','Basis data'), regs: tl('Registers','Registri'),
+    removed: tl('Records removed before screening:','Rekaman dihapus sebelum penapisan:'),
+    dup: tl('Duplicate records removed','Rekaman duplikat dihapus'),
+    auto: tl('Records marked as ineligible by automation tools','Rekaman ditandai tidak layak oleh perangkat otomatis'),
+    other: tl('Records removed for other reasons','Rekaman dihapus karena alasan lain'),
+    screened: tl('Records screened','Rekaman ditapis'), excl: tl('Records excluded**','Rekaman dieksklusi**'),
+    sought: tl('Reports sought for retrieval','Laporan dicari untuk diperoleh'), nr: tl('Reports not retrieved','Laporan tidak diperoleh'),
+    assessed: tl('Reports assessed for eligibility','Laporan dinilai kelayakannya'), rexcl: tl('Reports excluded:','Laporan dieksklusi:'),
+    inc: tl('Studies included in review','Studi yang diikutkan dalam tinjauan'),
+    incRep: tl('Reports of included studies','Laporan dari studi yang diikutkan'),
+    meta: tl('Studies included in meta-analysis','Studi yang diikutkan dalam meta-analisis'),
+    oFrom: tl('Records identified from:','Rekaman teridentifikasi dari:'), web: tl('Websites','Situs web'), org: tl('Organisations','Organisasi'),
+    cit: tl('Citation searching','Penelusuran sitasi'),
+    fn1: tl('* Records are listed per database or register searched.','* Rekaman dirinci per basis data atau registri yang ditelusuri.'),
+    fn2: tl('** Records excluded at title and abstract screening.','** Rekaman yang dieksklusi pada penapisan judul dan abstrak.'),
+    src: tl('Template: Page MJ, et al. The PRISMA 2020 statement. BMJ 2021;372:n71.','Templat: Page MJ, dkk. The PRISMA 2020 statement. BMJ 2021;372:n71.')
+  };
+}
+function prSvg() {
+  const v = prValues(), L = prLabels(), P = SR.prisma, other = !!P.showOther;
+  const PHW = 30, X0 = 12, AX = X0 + PHW + 16, AW = 300, GAP = 54, SW = 280;
+  const ASX = AX + AW + GAP, BX = ASX + SW + 44, BW = 260, BSX = BX + BW + GAP, BSW = 250;
+  const W = (other ? BSX + BSW : ASX + SW) + 14;
+  const hdrFill = '#fbe3a1', hdrStroke = '#c79a1e', phFill = '#bcd5f2', phStroke = '#4f7fb8';
+
+  const idA = [{ t:L.idFrom, b:true }, { t:`${L.dbs} ${prN(v.dbTotal)}`, i:6 }];
+  if (P.showDbBreakdown !== false && v.dbList.length) v.dbList.forEach(([n, c])=>idA.push({ t:`${n} (n = ${c})`, i:18 }));
+  idA.push({ t:`${L.regs} ${prN(v.registers)}`, i:6 });
+  const rows = [
+    { a:prBox(idA, AW), s:prBox([{ t:L.removed, b:true }, { t:`${L.dup} ${prN(v.dupRemoved)}`, i:6 }, { t:`${L.auto} ${prN(v.autoRemoved)}`, i:6 }, { t:`${L.other} ${prN(v.otherRemoved)}`, i:6 }], SW),
+      b: other ? prBox([{ t:L.oFrom, b:true }, { t:`${L.web} ${prN(v.oWebsites)}`, i:6 }, { t:`${L.org} ${prN(v.oOrgs)}`, i:6 }, { t:`${L.cit} ${prN(v.oCitation)}`, i:6 }], BW) : null },
+    { a:prBox([{ t:L.screened }, { t:prN(v.screened) }], AW), s:prBox([{ t:L.excl }, { t:prN(v.taExcluded) }], SW) },
+    { a:prBox([{ t:L.sought }, { t:prN(v.sought) }], AW), s:prBox([{ t:L.nr }, { t:prN(v.notRetrieved) }], SW),
+      b: other ? prBox([{ t:L.sought }, { t:prN(v.oSought) }], BW) : null, bs: other ? prBox([{ t:L.nr }, { t:prN(v.oNotRetrieved) }], BSW) : null },
+    { a:prBox([{ t:L.assessed }, { t:prN(v.assessed) }], AW),
+      s:prBox([{ t:L.rexcl, b:true }, ...(v.reasons.length ? v.reasons.map(([k, n])=>({ t:`${k} (n = ${n})`, i:6 })) : [{ t:'(n = )', i:6 }])], SW),
+      b: other ? prBox([{ t:L.assessed }, { t:prN(v.oAssessed) }], BW) : null,
+      bs: other ? prBox([{ t:L.rexcl, b:true }, ...(v.oReasons.length ? v.oReasons.map(([k, n])=>({ t:`${k} (n = ${n})`, i:6 })) : [{ t:'(n = )', i:6 }])], BSW) : null },
+    { a:prBox([{ t:L.inc }, { t:prN(v.included) }, { gap:true }, { t:L.incRep }, { t:prN(v.reportsIncluded) },
+        ...(P.showMeta ? [{ gap:true }, { t:L.meta }, { t:prN(v.metaIncluded) }] : [])], AW) }
+  ];
+  const hA = prBox([{ t:L.hdrA, b:true }], ASX + SW - AX), hB = other ? prBox([{ t:L.hdrB, b:true }], BSX + BSW - BX) : null;
+  const HY = 12, HH = Math.max(hA.h, hB ? hB.h : 0);
+  let y = HY + HH + 26;
+  const VG = 34;
+  rows.forEach(r=>{ r.h = Math.max(r.a.h, r.s ? r.s.h : 0, r.b ? r.b.h : 0, r.bs ? r.bs.h : 0); r.y = y; r.cy = y + r.h / 2; y += r.h + VG; });
+  const H0 = y - VG + 16;
+  const fnLines = [L.fn1, L.fn2, L.src];
+  const H = H0 + fnLines.length * 16 + 8;
+
+  let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" font-family="Arial, Helvetica, sans-serif" font-size="13" fill="#111827">
+  <defs><marker id="pr-ah" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8 z" fill="#1f2937"/></marker></defs>
+  <rect x="0" y="0" width="${W}" height="${H}" fill="#ffffff"/>`;
+  s += prBoxSvg(hA, AX, HY + (HH - hA.h) / 2, { fill:hdrFill, stroke:hdrStroke, rx:8, center:true });
+  if (hB) s += prBoxSvg(hB, BX, HY + (HH - hB.h) / 2, { fill:hdrFill, stroke:hdrStroke, rx:8, center:true });
+  /* phase bars */
+  const bar = (y1, y2, label)=>{
+    const cx = X0 + PHW / 2, cy = (y1 + y2) / 2;
+    return `<rect x="${X0}" y="${y1}" width="${PHW}" height="${y2 - y1}" rx="7" fill="${phFill}" stroke="${phStroke}" stroke-width="1.2"/>
+      <text x="${cx}" y="${cy}" transform="rotate(-90 ${cx} ${cy})" text-anchor="middle" dominant-baseline="central" font-weight="bold">${srEsc(label)}</text>`;
+  };
+  s += bar(rows[0].y, rows[0].y + rows[0].h, L.ph[0]);
+  s += bar(rows[1].y, rows[3].y + rows[3].h, L.ph[1]);
+  s += bar(rows[4].y, rows[4].y + rows[4].h, L.ph[2]);
+  const line = (x1, y1, x2, y2)=>`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#1f2937" stroke-width="1.4" marker-end="url(#pr-ah)"/>`;
+  const box = (b, x, r)=> prBoxSvg(b, x, r.y + (r.h - b.h) / 2);
+  rows.forEach((r, i)=>{
+    s += box(r.a, AX, r);
+    if (r.s) { s += box(r.s, ASX, r); s += line(AX + AW, r.cy, ASX - 2, r.cy); }
+    if (r.b) s += box(r.b, BX, r);
+    if (r.bs) { s += box(r.bs, BSX, r); s += line(BX + BW, r.cy, BSX - 2, r.cy); }
+    if (i < rows.length - 1) {
+      const n = rows[i + 1];
+      s += line(AX + AW / 2, r.y + (r.h + r.a.h) / 2, AX + AW / 2, n.y + (n.h - n.a.h) / 2 - 2);
+    }
+  });
+  if (other) {
+    const r0 = rows[0], r2 = rows[2], r3 = rows[3], r4 = rows[4], bx = BX + BW / 2;
+    s += line(bx, r0.y + (r0.h + r0.b.h) / 2, bx, r2.y + (r2.h - r2.b.h) / 2 - 2);
+    s += line(bx, r2.y + (r2.h + r2.b.h) / 2, bx, r3.y + (r3.h - r3.b.h) / 2 - 2);
+    s += `<polyline points="${bx},${r3.y + (r3.h + r3.b.h) / 2} ${bx},${r4.cy} ${AX + AW + 2},${r4.cy}" fill="none" stroke="#1f2937" stroke-width="1.4" marker-end="url(#pr-ah)"/>`;
+  }
+  fnLines.forEach((t, i)=>{ s += `<text x="${X0}" y="${H0 + i * 16 + 4}" font-size="11" fill="#4b5563">${srEsc(t)}</text>`; });
+  s += '</svg>';
+  return { svg:s, W, H, v };
+}
+function prDraw() {
+  const el = document.getElementById('prisma-svg'); if (!el) return;
+  const { svg, W, v } = prSvg();
+  el.innerHTML = svg;
+  const s = el.querySelector('svg'); s.removeAttribute('height'); s.style.width = '100%'; s.style.maxWidth = W + 'px'; s.style.height = 'auto';
+  const w = v.warn, msgs = [];
+  if (w.taUndecided) msgs.push(`${w.taUndecided} ${tl('records not yet screened on title/abstract','rekaman belum ditapis judul/abstraknya')}`);
+  if (w.taMaybe) msgs.push(`${w.taMaybe} ${tl('records still "maybe" at title/abstract','rekaman masih "mungkin" pada judul/abstrak')}`);
+  if (w.ftUndecided || w.ftMaybe) msgs.push(`${w.ftUndecided + w.ftMaybe} ${tl('reports without a final full-text decision','laporan tanpa keputusan akhir teks lengkap')}`);
+  if (w.dual) {
+    if (w.dual.ta.conflict) msgs.push(`${w.dual.ta.conflict} ${tl('unresolved title/abstract conflicts between reviewers','konflik judul/abstrak antar-reviewer belum diselesaikan')}`);
+    if (w.dual.ta.awaiting) msgs.push(`${w.dual.ta.awaiting} ${tl('records not yet screened by every reviewer (title/abstract)','rekaman belum ditapis oleh semua reviewer (judul/abstrak)')}`);
+    if (w.dual.ft.conflict) msgs.push(`${w.dual.ft.conflict} ${tl('unresolved full-text conflicts','konflik teks lengkap belum diselesaikan')}`);
+    if (w.dual.ft.awaiting) msgs.push(`${w.dual.ft.awaiting} ${tl('reports not yet assessed by every reviewer','laporan belum dinilai oleh semua reviewer')}`);
+  }
+  if (w.ftNoReason) msgs.push(`${w.ftNoReason} ${tl('full-text exclusions without a reason','eksklusi teks lengkap tanpa alasan')}`);
+  const sum = v.screened - v.taExcluded - v.sought;
+  if (SR.records.length && sum !== 0 && !msgs.length) msgs.push(tl('Records screened ≠ excluded + sought for retrieval. Check the manual numbers.','Rekaman ditapis ≠ dieksklusi + dicari untuk diperoleh. Periksa angka manual.'));
+  const so = document.getElementById('prisma-status');
+  if (so) {
+    const n = prOverrides();
+    so.innerHTML = (SR.records.length ? `<span class="tag tag-green">🔗 ${tl('Filled automatically from screening','Terisi otomatis dari penapisan')}${srDual() ? ' · ' + tl('final (consensus) decisions','keputusan final (konsensus)') : ''}</span>`
+        : `<span class="tag tag-gray">${tl('No screening data — enter the counts manually','Belum ada data penapisan — isi angka secara manual')}</span>`)
+      + (n ? ` <span class="tag tag-yellow">✎ ${n} ${tl('manual value(s)','nilai manual')}</span> <button class="btn btn-secondary btn-sm" onclick="prReset()">↺ ${tl('Use screening counts','Pakai angka penapisan')}</button>` : '');
+  }
+  const mt = document.getElementById('prisma-methods'); if (mt) mt.textContent = prMethodsText(v);
+  const wb = document.getElementById('prisma-warn');
+  if (wb) wb.innerHTML = msgs.length ? `<div class="notice notice-warn"><span>⚠️</span><div>${tl('The diagram is incomplete:','Diagram belum lengkap:')}<ul style="margin:4px 0 0 18px">${msgs.map(m=>`<li>${m}</li>`).join('')}</ul></div></div>` : '';
+}
+function prField(k, label, auto) {
+  const o = SR.prisma.v[k];
+  return `<div class="pr-field"><label>${label}</label><input type="number" min="0" value="${o !== undefined && o !== '' ? srEsc(o) : ''}" placeholder="${auto === '' || auto == null ? '—' : auto}" oninput="prSet('${k}', this.value)"></div>`;
+}
+function renderPrisma() {
+  const el = document.getElementById('prisma-body'); if (!el) return;
+  const a = prAuto(), L = prLabels(), P = SR.prisma, o = P.v;
+  const autoDb = Object.entries(a.dbs).sort((x,y)=>y[1]-x[1]).map(([k,n])=>`${k}: ${n}`).join('\n');
+  const autoRs = Object.entries(a.reasons).sort((x,y)=>y[1]-x[1]).map(([k,n])=>`${srReasonLabel(k)}: ${n}`).join('\n');
+  el.innerHTML = `
+    <div class="notice notice-info"><span>🔀</span><div>${tl('Numbers are filled in from the screening module. Type in any box to override it; leave it empty to use the automatic count (shown in grey).',
+      'Angka diisi otomatis dari modul penapisan. Ketik di kotak mana pun untuk menggantinya; kosongkan untuk memakai hitungan otomatis (abu-abu).')}</div></div>
+    <div class="pr-layout">
+      <div class="pr-form card">
+        <div class="pr-group"><h4>${L.ph[0]}</h4>
+          <div class="pr-field"><label>${tl('Records per database (name: n, one per line)','Rekaman per basis data (nama: n, satu per baris)')}</label>
+            <textarea rows="4" placeholder="${srEsc(autoDb || 'PubMed: 120\nScopus: 340')}" oninput="prSet('dbText', this.value)">${srEsc(o.dbText || '')}</textarea></div>
+          ${prField('dbTotal', tl('Databases total','Total basis data'), Object.values(a.dbs).reduce((s,n)=>s + n, 0))}
+          ${prField('registers', L.regs, a.registers)}
+          ${prField('dupRemoved', L.dup, a.dupRemoved)}
+          ${prField('autoRemoved', L.auto, 0)}
+          ${prField('otherRemoved', L.other, 0)}
+        </div>
+        <div class="pr-group"><h4>${L.ph[1]}</h4>
+          ${prField('screened', L.screened, a.screened)}
+          ${prField('taExcluded', L.excl.replace('**', ''), a.taExcluded)}
+          ${prField('sought', L.sought, a.sought)}
+          ${prField('notRetrieved', L.nr, a.notRetrieved)}
+          ${prField('assessed', L.assessed, a.assessed)}
+          <div class="pr-field"><label>${tl('Reports excluded, with reasons (reason: n)','Laporan dieksklusi beserta alasan (alasan: n)')}</label>
+            <textarea rows="4" placeholder="${srEsc(autoRs || tl('Wrong outcome: 4','Luaran tidak sesuai: 4'))}" oninput="prSet('reasonsText', this.value)">${srEsc(o.reasonsText || '')}</textarea></div>
+        </div>
+        <div class="pr-group"><h4>${L.ph[2]}</h4>
+          ${prField('included', L.inc, a.included)}
+          ${prField('reportsIncluded', L.incRep, a.reportsIncluded)}
+          <label class="pr-check"><input type="checkbox" ${P.showMeta ? 'checked' : ''} onchange="prOpt('showMeta', this.checked)"> ${tl('Show "studies included in meta-analysis"','Tampilkan "studi dalam meta-analisis"')}</label>
+          ${P.showMeta ? prField('metaIncluded', L.meta, '') : ''}
+        </div>
+        <div class="pr-group"><h4>${tl('Layout','Tata letak')}</h4>
+          <label class="pr-check"><input type="checkbox" ${P.showDbBreakdown !== false ? 'checked' : ''} onchange="prOpt('showDbBreakdown', this.checked)"> ${tl('List each database','Rinci tiap basis data')}</label>
+          <label class="pr-check"><input type="checkbox" ${P.showOther ? 'checked' : ''} onchange="prOpt('showOther', this.checked)"> ${tl('Add "other methods" column (websites, citation searching)','Tambah kolom "metode lain" (situs web, penelusuran sitasi)')}</label>
+          ${P.showOther ? `
+            ${prField('oWebsites', L.web, '')}${prField('oOrgs', L.org, '')}${prField('oCitation', L.cit, '')}
+            ${prField('oSought', L.sought, '')}${prField('oNotRetrieved', L.nr, '')}${prField('oAssessed', L.assessed, '')}
+            <div class="pr-field"><label>${tl('Other-methods reports excluded (reason: n)','Laporan metode lain dieksklusi (alasan: n)')}</label>
+              <textarea rows="3" oninput="prSet('oReasonsText', this.value)">${srEsc(o.oReasonsText || '')}</textarea></div>` : ''}
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="prReset()">↺ ${tl('Fill all from screening results','Isi semua dari hasil penapisan')}</button>
+      </div>
+      <div class="pr-view">
+        <div class="flex gap-2 mb-2" style="flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="prExport('png')">⬇️ PNG (${tl('high resolution','resolusi tinggi')})</button>
+          <button class="btn btn-secondary" onclick="prExport('svg')">⬇️ SVG (${tl('vector','vektor')})</button>
+          <button class="btn btn-secondary" onclick="showScreen('${SR.records.length ? 'ta' : 'records'}')">📝 ${tl('Back to screening','Kembali ke penapisan')}</button>
+        </div>
+        <div class="pr-status" id="prisma-status"></div>
+        <div id="prisma-warn"></div>
+        <div class="prisma-wrap" id="prisma-svg"></div>
+        <div class="card mt-2">
+          <div class="card-title">✍️ ${tl('Methods / results text','Teks metode / hasil')} <span>— ${tl('generated from the same numbers','dibuat dari angka yang sama')}</span></div>
+          <div class="pr-methods" id="prisma-methods"></div>
+          <button class="btn btn-secondary btn-sm mt-2" onclick="prCopyMethods()">📋 ${tl('Copy text','Salin teks')}</button>
+        </div>
+      </div>
+    </div>`;
+  prDraw();
+}
+function prExport(fmt) {
+  const { svg, W, H } = prSvg();
+  const name = `prisma_2020_flow_${srStamp()}`;
+  if (fmt === 'svg') { srDownload(name + '.svg', svg, 'image/svg+xml'); return; }
+  const img = new Image();
+  img.onload = ()=>{
+    const c = document.createElement('canvas');
+    c.width = W; c.height = H;           /* backing store is scaled up by the hi-res canvas patch */
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, H);
+    ctx.drawImage(img, 0, 0, W, H);
+    c.toBlob(b=>srDownload(name + '.png', b, 'image/png'), 'image/png');
+  };
+  img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+}
+
+/* A methods/results paragraph built from the same numbers as the diagram */
+function prMethodsText(v) {
+  v = v || prValues();
+  const P = SR.prisma, dual = srDual(), id = currentLang === 'id';
+  const names = SR.reviewers.map(x=>x.name);
+  const list = a => a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + (id ? ' dan ' : ' and ') + a[a.length - 1];
+  const dbs = v.dbList.map(([n, c])=>`${n}: n = ${c}`);
+  const exclFt = v.reasons.reduce((s, x)=>s + x[1], 0);
+  const reasons = v.reasons.map(([k, n])=>`${String(k).toLowerCase()} (n = ${n})`).join(', ');
+  const ag = st => { const a = dual ? srAgreement(st) : null; return a && a.kappa != null ? a : null; };
+  const ag1 = ag('ta'), ag2 = ag('ft');
+  const res1 = dual ? srLive().filter(r=>r.ta.res).length : 0, res2 = dual ? srPool('ft').filter(r=>r.ft.res).length : 0;
+  const k = a => `${a.method} = ${a.kappa.toFixed(2)}`;
+  const total = v.dbTotal + (v.registers || 0);
+  if (!id) {
+    let t = `The searches identified ${total} records from ${dbs.length} database${dbs.length === 1 ? '' : 's'}${dbs.length ? ' (' + dbs.join('; ') + ')' : ''}${v.registers ? ` and ${v.registers} records from trial registers` : ''}. `;
+    t += `${v.dupRemoved ? `After ${v.dupRemoved} duplicates were removed` : 'No duplicates were found'}${v.autoRemoved ? `, ${v.autoRemoved} records were marked ineligible by automation tools` : ''}${v.otherRemoved ? ` and ${v.otherRemoved} were removed for other reasons` : ''}${v.dupRemoved ? ',' : ', and'} ${v.screened} records were screened by title and abstract`;
+    t += dual ? ` independently by ${names.length} reviewers (${list(names)}), each blinded to the others' decisions.${ag1 ? ` Agreement was ${srFmtPct(ag1.pct)} (${k(ag1)}, ${srKappaLabel(ag1.kappa)}).` : ''} Disagreements${res1 ? ` (n = ${res1})` : ''} were resolved by discussion or by a third reviewer. ` : '. ';
+    t += `Of these, ${v.taExcluded} records were excluded and ${v.sought} reports were sought for retrieval; ${v.notRetrieved} could not be retrieved. `;
+    t += `A total of ${v.assessed} reports were assessed for eligibility in full text${dual ? ` by the same reviewers${ag2 ? ` (agreement ${srFmtPct(ag2.pct)}, ${k(ag2)}${res2 ? `; ${res2} disagreements resolved` : ''})` : ''}` : ''}, and ${exclFt} were excluded${reasons ? ': ' + reasons : ''}. `;
+    t += `In total, ${v.included} ${v.included === 1 ? 'study was' : 'studies were'} included in the review${v.reportsIncluded !== v.included ? ` (${v.reportsIncluded} reports)` : ''}${P.showMeta && v.metaIncluded !== '' && !isNaN(v.metaIncluded) ? `, of which ${v.metaIncluded} contributed to the meta-analysis` : ''}.`;
+    if (P.showOther && (v.oWebsites || v.oOrgs || v.oCitation)) t += ` Other methods (websites, organisations and citation searching) identified ${(+v.oWebsites || 0) + (+v.oOrgs || 0) + (+v.oCitation || 0)} further records.`;
+    return t;
+  }
+  let t = `Penelusuran mengidentifikasi ${total} rekaman dari ${dbs.length} basis data${dbs.length ? ' (' + dbs.join('; ') + ')' : ''}${v.registers ? ` dan ${v.registers} rekaman dari registri uji klinis` : ''}. `;
+  t += `${v.dupRemoved ? `Setelah ${v.dupRemoved} duplikat dihapus` : 'Tidak ditemukan duplikat'}${v.autoRemoved ? `, ${v.autoRemoved} rekaman ditandai tidak layak oleh perangkat otomatis` : ''}${v.otherRemoved ? ` dan ${v.otherRemoved} dihapus karena alasan lain` : ''}${v.dupRemoved ? ',' : ', dan'} ${v.screened} rekaman ditapis berdasarkan judul dan abstrak`;
+  t += dual ? ` secara independen oleh ${names.length} reviewer (${list(names)}) yang tidak mengetahui keputusan satu sama lain.${ag1 ? ` Kesepakatan antar-reviewer sebesar ${srFmtPct(ag1.pct)} (${k(ag1)}, ${srKappaLabel(ag1.kappa)}).` : ''} Perbedaan keputusan${res1 ? ` (n = ${res1})` : ''} diselesaikan melalui diskusi atau oleh reviewer ketiga. ` : '. ';
+  t += `Sebanyak ${v.taExcluded} rekaman dieksklusi dan ${v.sought} laporan dicari untuk diperoleh; ${v.notRetrieved} laporan tidak dapat diperoleh. `;
+  t += `Sebanyak ${v.assessed} laporan dinilai kelayakannya melalui teks lengkap${dual ? ` oleh reviewer yang sama${ag2 ? ` (kesepakatan ${srFmtPct(ag2.pct)}, ${k(ag2)}${res2 ? `; ${res2} perbedaan diselesaikan` : ''})` : ''}` : ''}, dan ${exclFt} dieksklusi${reasons ? ': ' + reasons : ''}. `;
+  t += `Secara keseluruhan, ${v.included} studi diikutkan dalam tinjauan${v.reportsIncluded !== v.included ? ` (${v.reportsIncluded} laporan)` : ''}${P.showMeta && v.metaIncluded !== '' && !isNaN(v.metaIncluded) ? `, dan ${v.metaIncluded} di antaranya dianalisis dalam meta-analisis` : ''}.`;
+  if (P.showOther && (v.oWebsites || v.oOrgs || v.oCitation)) t += ` Metode lain (situs web, organisasi, dan penelusuran sitasi) mengidentifikasi ${(+v.oWebsites || 0) + (+v.oOrgs || 0) + (+v.oCitation || 0)} rekaman tambahan.`;
+  return t;
+}
+function prCopyMethods() {
+  const t = prMethodsText();
+  (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(
+    ()=>srToast(tl('Text copied.','Teks disalin.')),
+    ()=>{ const ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); srToast(tl('Text copied.','Teks disalin.')); });
+}
+
+
+Object.assign(i18n.en, {
+  nav_sr:'Systematic Review', nav_sr_records:'Import Records', nav_sr_dedup:'Duplicates', nav_sr_ta:'Title / Abstract',
+  nav_sr_ft:'Full-text', nav_sr_team:'Dual Review & Conflicts', nav_sr_export:'Export Records', nav_sr_prisma:'PRISMA Flow Diagram',
+  import_drop:'Click or drag & drop Excel / CSV',
+  import_drop_hint:'Supports .xlsx, .xls, .csv, .tsv — you can choose the sheet and check the data before importing'
+});
+Object.assign(i18n.id, {
+  nav_sr:'Tinjauan Sistematis', nav_sr_records:'Impor Rekaman', nav_sr_dedup:'Duplikat', nav_sr_ta:'Judul / Abstrak',
+  nav_sr_ft:'Teks Lengkap', nav_sr_team:'Reviu Ganda & Konflik', nav_sr_export:'Ekspor Rekaman', nav_sr_prisma:'Diagram Alir PRISMA',
+  import_drop:'Klik atau seret & letakkan Excel / CSV',
+  import_drop_hint:'Mendukung .xlsx, .xls, .csv, .tsv — Anda dapat memilih sheet dan memeriksa data sebelum mengimpor'
+});
+document.addEventListener('click', e=>{ if (e.target.closest('.nav-item')) document.body.classList.remove('nav-open'); });
+
+// ═══════════════════════════════════════════════════════════════════════
 //  INIT
 // ═══════════════════════════════════════════════════════════════════════
 function init() {
@@ -7242,6 +9705,7 @@ function init() {
     if (savedLang === 'id') { currentLang = 'id'; }
   } catch(e) {}
   applyTranslations();
+  srLoad();
 }
 
 init();
